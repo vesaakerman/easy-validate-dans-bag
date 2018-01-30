@@ -41,6 +41,7 @@ EXAMPLES
     Bag URI: file:///some/path/to/bag1
     Bag: bag1
     Profile version: 0
+    InfoPackageType: SIP
     Result: COMPLIANT
 
     $ easy-validate-dans-bag bag2
@@ -48,6 +49,7 @@ EXAMPLES
     Bag URI: file:///some/path/to/bag2
     Bag: bag2
     Profile version: 0
+    InfoPackageType: AIP
     Result: NOT COMPLIANT
     Rule violations:
     - [1.2.1] No bag-info.txt found.
@@ -59,6 +61,7 @@ EXAMPLES
         bag_uri: "file:///some/path/to/bag2",
         bag: "bag2",
         profile_version: 0,
+        info_package_type: "AIP",
         result: "NOT COMPLIANT",
         rule_violations: {
            "1.2.1": "No bag-info.txt found.",
