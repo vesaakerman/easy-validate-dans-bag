@@ -36,7 +36,45 @@ ARGUMENTS
 EXAMPLES
 --------
 
-    easy-validate-dans-bag -o value
+    $ easy-validate-dans-bag bag1
+    OK: bag1 complies with DANS BagIt Profile v1.
+    Bag URI: file:///some/path/to/bag1
+    Bag: bag1
+    Profile version: 0
+    Result: COMPLIANT
+
+    $ easy-validate-dans-bag bag2
+    ERROR: bag2 does NOT comply with DANS BagIt Profile v0.
+    Bag URI: file:///some/path/to/bag2
+    Bag: bag2
+    Profile version: 0
+    Result: NOT COMPLIANT
+    Rule violations:
+    - [1.2.1] No bag-info.txt found.
+    - [2.2] Directory "metadata" contains undocumented file "extra-metadata.xml".
+
+    $ easy-validate-dans-bag --response-format json bag2
+    ERROR: bag2 does NOT comply with DANS BagIt Profile v0.
+    {
+        bag_uri: "file:///some/path/to/bag2",
+        bag: "bag2",
+        profile_version: 0,
+        result: "NOT COMPLIANT",
+        rule_violations: {
+           "1.2.1": "No bag-info.txt found.",
+           "2.2": "Directory \"metadata\" contains undocumented file \"extra-metadata.xml\"."
+        }
+    }
+
+    $ curl http://localhost:20180/validate?uri=file:///var/opt/dans.knaw.nl/tmp/\
+       easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-54e8dc73a672/bag
+    {
+       bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
+          54e8dc73a672/bag",
+       bag: "bag",
+       profile_version: 0,
+       result: "COMPLIANT"
+    }
 
 
 INSTALLATION AND CONFIGURATION
