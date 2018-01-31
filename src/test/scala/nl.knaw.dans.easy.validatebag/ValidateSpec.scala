@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.validatebag.v0
+package nl.knaw.dans.easy.validatebag
 
-class BagItRelatedRulesSpec {
+import java.nio.file.Paths
+
+import org.scalatest.{ FlatSpec, Matchers }
+
+import scala.util.Failure
+
+class ValidateSpec extends FlatSpec with Matchers {
 
 
-
+  "validateDansBag" should "return a Failure if bag directory is not found" in {
+    validateDansBag(Paths.get("/non-existent")) shouldBe a[Failure[_]]
+  }
 
 
 }
