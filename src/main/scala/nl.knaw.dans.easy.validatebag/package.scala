@@ -64,29 +64,13 @@ package object validatebag extends DebugEnhancedLogging {
    * are created above.
    */
   val rules: Map[ProfileVersion, RuleBase] = {
-    /**
-     * Helper function for concisely triggering a rule violation.
-     *
-     * @param details details about the rule violation
-     */
     def fail(details: String): Unit = throw RuleViolationDetailsException(details)
 
-
-    /**
-     * Helper function for concisely creating a rule.
-     *
-     * @param numberedRule    pair of RuleNumber and Rule
-     * @param infoPackageType the type(s) of Information Package that the rule applies to
-     * @return all the details about the rule
-     */
     def numberedRule(numberedRule: (RuleNumber, Rule), infoPackageType: InfoPackageType = BOTH): (RuleNumber, Rule, InfoPackageType) = {
       val (nr, r) = numberedRule
       (nr, r, infoPackageType)
     }
 
-    /**
-     * The rule functions for all versions of the profile.
-     */
     val bagMustBeValid = (b: Path) => Try {
       // TODO: check that the bag is VALID according to BagIt.
     }
@@ -127,7 +111,7 @@ package object validatebag extends DebugEnhancedLogging {
    * @param asInfoPackageType validate as SIP (default) or AIP
    * @param isReadable        function to check the readability of a file (added for unit testing purposes)
    * @return Success if compliant, Failure if not compliant or an error occurred. The Failure will contain
-   *         [[nl.knaw.dans.lib.error.CompositeException]], which will contain a [[RuleViolationException]]
+   *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
   def validateDansBag(bag: Path, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
