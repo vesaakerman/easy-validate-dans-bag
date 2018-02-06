@@ -15,15 +15,11 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.scalatra._
+import org.scalatest.{ FlatSpec, Matchers }
 
-class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraServlet with DebugEnhancedLogging {
-  import app._
-  import logger._
+class BagItRulesSpec extends FlatSpec with Matchers {
 
-  get("/") {
-    contentType = "text/plain"
-    Ok("EASY Validate DANS Bag Service running...")
-  }
+
+
+
 }

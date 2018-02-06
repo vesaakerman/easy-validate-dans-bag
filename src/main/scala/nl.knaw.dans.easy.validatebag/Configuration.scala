@@ -26,8 +26,7 @@ case class Configuration(version: String, properties: PropertiesConfiguration)
 
 object Configuration {
 
-  def apply(): Configuration = {
-    val home = Paths.get(System.getProperty("app.home"))
+  def apply(home: Path): Configuration = {
     val cfgPath = Seq(
       Paths.get(s"/etc/opt/dans.knaw.nl/easy-validate-dans-bag/"),
       home.resolve("cfg"))
@@ -36,7 +35,10 @@ object Configuration {
 
     new Configuration(
       version = managed(Source.fromFile(home.resolve("bin/version").toFile)).acquireAndGet(_.mkString),
-      properties = new PropertiesConfiguration(cfgPath.resolve("application.properties").toFile)
+      properties = new PropertiesConfiguration() {
+        setDelimiterParsingDisabled(true)
+        load(cfgPath.resolve("application.properties").toFile)
+      }
     )
   }
 }

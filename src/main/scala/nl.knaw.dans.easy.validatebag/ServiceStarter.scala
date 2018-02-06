@@ -15,10 +15,12 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import org.apache.commons.daemon.{Daemon, DaemonContext}
-import org.slf4j.{Logger, LoggerFactory}
+import java.nio.file.Paths
 
+import org.apache.commons.daemon.{ Daemon, DaemonContext }
+import org.slf4j.{ Logger, LoggerFactory }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.lib.error._
 import org.apache.commons.daemon.{ Daemon, DaemonContext }
 
 class ServiceStarter extends Daemon with DebugEnhancedLogging {
@@ -27,7 +29,7 @@ class ServiceStarter extends Daemon with DebugEnhancedLogging {
 
   override def init(context: DaemonContext): Unit = {
     logger.info("Initializing service...")
-    val configuration = Configuration()
+    val configuration = Configuration(Paths.get(System.getProperty("app.home")))
     app = new EasyValidateDansBagApp(configuration)
     service = new EasyValidateDansBagService(configuration.properties.getInt("daemon.http.port"), app)
     logger.info("Service initialized.")
