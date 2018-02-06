@@ -17,6 +17,21 @@ object ValidatorAPI extends DebugEnhancedLogging {
     (ruleNumber, rule, infoPackageType)
   }
 
+  def validateDansBag(bag: BagDir, rules: Seq[Rules], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+    def merge[K, V](map1: Map[K, Seq[V]], map2: Map[K, Seq[V]]): Map[K, Seq[V]] = {
+      map2.foldLeft(map1) {
+        case (map, entry @ (key, values)) =>
+          map.get(key)
+            .map(seq1 => map.updated(key, seq1 ++ values))
+            .getOrElse(map + entry)
+      }
+    }
+
+    val rulesMap: Map[ProfileVersion, RuleBase] = rules.foldLeft(Map.empty[ProfileVersion, RuleBase])((map, rules) => merge(map, rules.rules))
+
+    validateDansBag(bag, rulesMap, asInfoPackageType)
+  }
+
   /**
    * Validates if the bag pointed to compliant with the DANS BagIt Profile version it claims to
    * adhere to. If no claim is made, by default it is assumed that the bag is supposed to comply
@@ -40,21 +55,6 @@ object ValidatorAPI extends DebugEnhancedLogging {
       _ <- checkIfValidationCanProceed(bag)
       result <- evaluateRules(bag, rules, asInfoPackageType)
     } yield result
-  }
-
-  def validateDansBag(bag: BagDir, rules: Seq[Rules], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
-    def merge[K, V](map1: Map[K, Seq[V]], map2: Map[K, Seq[V]]): Map[K, Seq[V]] = {
-      map2.foldLeft(map1) {
-        case (map, entry @ (key, values)) =>
-          map.get(key)
-            .map(seq1 => map.updated(key, seq1 ++ values))
-            .getOrElse(map + entry)
-      }
-    }
-
-    val rulesMap: Map[ProfileVersion, RuleBase] = rules.foldLeft(Map.empty[ProfileVersion, RuleBase])((map, rules) => merge(map, rules.rules))
-
-    validateDansBag(bag, rulesMap, asInfoPackageType)
   }
 
   private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, RuleBase], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
