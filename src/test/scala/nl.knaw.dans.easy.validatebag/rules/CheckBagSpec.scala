@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.validatebag
+package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.attribute.PosixFilePermissions
 import java.nio.file.{ Files, Path, Paths }
 
-import nl.knaw.dans.lib.error.CompositeException
+import nl.knaw.dans.easy.validatebag.TestSupportFixture
 import org.apache.commons.io.FileUtils
 
 import scala.util.Failure
 
-class ValidateSpec extends TestSupportFixture {
+class CheckBagSpec extends TestSupportFixture {
   FileUtils.copyDirectoryToDirectory(Paths.get("src/test/resources/bags/minimal").toFile, testDir.toFile)
 
   private def expectUnreadable(unreadables: Path*)(path: Path): Boolean = {
     !unreadables.contains(path) && Files.isReadable(path)
   }
 
-  "validateDansBag" should "fail if bag directory is not found" in {
-    val result = validateDansBag(testDir.resolve("/non-existent"))
+  "checkBag" should "fail if bag directory is not found" in {
+    val result = checkBag(testDir.resolve("/non-existent"))
     result shouldBe a[Failure[_]]
     inside(result) {
       case Failure(e) => e shouldBe a[IllegalArgumentException]
@@ -40,7 +39,7 @@ class ValidateSpec extends TestSupportFixture {
 
   it should "fail if the bag directory is unreadable" in {
     val minimal = testDir.resolve("minimal")
-    val result = validateDansBag(testDir.resolve("minimal"))(expectUnreadable(minimal))
+    val result = checkBag(testDir.resolve("minimal"))(expectUnreadable(minimal))
     result shouldBe a[Failure[_]]
     inside(result) {
       case Failure(iae) =>
@@ -52,7 +51,7 @@ class ValidateSpec extends TestSupportFixture {
   it should "fail if there is a non-readable file in the bag directory" in {
     val minimal = testDir.resolve("minimal")
     val leegTxt = minimal.resolve("data/leeg.txt")
-    val result = validateDansBag(testDir.resolve("minimal"))(expectUnreadable(leegTxt))
+    val result = checkBag(testDir.resolve("minimal"))(expectUnreadable(leegTxt))
     result shouldBe a[Failure[_]]
     inside(result) {
       case Failure(iae) =>
@@ -60,6 +59,4 @@ class ValidateSpec extends TestSupportFixture {
         iae.getMessage should include("non-readable")
     }
   }
-
-
 }

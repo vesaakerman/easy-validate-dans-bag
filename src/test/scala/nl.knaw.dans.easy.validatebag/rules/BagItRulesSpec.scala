@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.validatebag.lib
+package nl.knaw.dans.easy.validatebag.rules
 
-object InfoPackageType extends Enumeration {
-  type InfoPackageType = Value
-  val SIP, AIP, BOTH = Value
+import nl.knaw.dans.easy.validatebag.TestSupportFixture
+
+class BagItRulesSpec extends TestSupportFixture {
+
+
+
+
 }
