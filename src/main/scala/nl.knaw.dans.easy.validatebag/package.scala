@@ -34,6 +34,8 @@ package object validatebag extends DebugEnhancedLogging {
   type ProfileVersion = Int
   type RuleNumber = String
   type ErrorMessage = String
+  type BagDir = Path
+  type BagStoreBaseDir = Path
   type Rule = Path => Try[Unit]
   type RuleBase = Seq[(RuleNumber, Rule, InfoPackageType)]
 
@@ -55,12 +57,6 @@ package object validatebag extends DebugEnhancedLogging {
    */
   case class RuleViolationException(ruleNr: RuleNumber, details: String) extends Exception(s"[$ruleNr] $details")
 
-  /**
-   * Helper function for concisely triggering a rule violation.
-   *
-   * @param details details about the rule violation
-   */
-  private def fail(details: String): Unit = throw RuleViolationDetailsException(details)
 
 
   /**
@@ -68,6 +64,14 @@ package object validatebag extends DebugEnhancedLogging {
    * are created above.
    */
   val rules: Map[ProfileVersion, RuleBase] = {
+    /**
+     * Helper function for concisely triggering a rule violation.
+     *
+     * @param details details about the rule violation
+     */
+    def fail(details: String): Unit = throw RuleViolationDetailsException(details)
+
+
     /**
      * Helper function for concisely creating a rule.
      *
@@ -83,23 +87,21 @@ package object validatebag extends DebugEnhancedLogging {
     /**
      * The rule functions for all versions of the profile.
      */
-    val bagMustBeValid = (b: Path) => Try {}
-
-    /**
-     * For now, we only support a test for virtual-validity of bags stored in a bag store. Local file URIs will be
-     * resolved relative to that bag store.
-     */
-    val bagMustBeVirtuallyValid = (b: Path) => Try {}
+    val bagMustBeValid = (b: Path) => Try {
+      // TODO: check that the bag is VALID according to BagIt.
+    }
+    val bagMustBeVirtuallyValid = (b: Path) => Try {
+      // TODO: same als bagMustBeValid, but when NON-VALID warn that "virtually-only-valid" bags cannot not be recognized by the service yet.
+    }
     val bagMustContainBagInfoTxt = (b: Path) => Try {}
 
     def bagInfoTxtMustContainBagItProfileVersion(version: String)(b: Path) = Try {
 
     }
 
-
     val bagMustContainMetadataDir = (b: Path) => Try {
       if (Files.isDirectory(b.resolve("metadata"))) ()
-      else fail("Mandatory directory 'metadata' not found in bag")
+      else fail("Mandatory directory 'metadata' not found in bag.")
     }
 
 
