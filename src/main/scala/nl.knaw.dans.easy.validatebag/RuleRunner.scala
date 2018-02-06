@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag
 
+import java.nio.file.Files
+
 import nl.knaw.dans.easy.validatebag.lib.ValidatorAPI
 import nl.knaw.dans.easy.validatebag.rules.{ Rules1, Rules2 }
 
@@ -29,6 +31,6 @@ object RuleRunner {
     val r1 = Rules1
     val r2 = Rules2
 
-    ValidatorAPI.validateDansBag(bag, Seq(r1, r2))
+    ValidatorAPI.validate(bag, Seq(r1, r2))(Files.isReadable)
   }
 }

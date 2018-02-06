@@ -32,7 +32,7 @@ object ValidatorAPI extends DebugEnhancedLogging {
     (ruleNumber, rule, infoPackageType)
   }
 
-  def validateDansBag(bag: BagDir, rules: Seq[Rules], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def validate(bag: BagDir, rules: Seq[Rules], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
     def merge[K, V](map1: Map[K, Seq[V]], map2: Map[K, Seq[V]]): Map[K, Seq[V]] = {
       map2.foldLeft(map1) {
         case (map, entry @ (key, values)) =>
