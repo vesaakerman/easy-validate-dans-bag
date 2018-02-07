@@ -4,7 +4,6 @@ easy-validate-dans-bag
 
 Determines whether a DANS bag is valid according to the DANS BagIt Profile.
 
-
 SYNOPSIS
 --------
 
@@ -25,7 +24,12 @@ The HTTP interface supports the following path patterns and methods:
 Path                                                    | Method | Description
 --------------------------------------------------------|--------|------------------------------------------------------
 `/`                                                     | `GET`  | Returns a message stating that the server is running.
-`/validate?[infoPackageType=AIP|SIP]&uri=<bag-dir-uri>` | `GET`  | Validates the bag at `<bag-dir-uri>` an returns the result as a JSON-document.
+`/validate?[infoPackageType=AIP|SIP]&uri=<bag-uri>`     | `GET`  | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
+
+`<bag-uri>` may be a file-URI to a directory (e.g., `file:///some/path/to/bagdir`). In fact, this is the only type of URI
+that will be implemented in the first version.
+
+TODO: status messages
 
 ### Response message
 The response message has the following structure:
@@ -39,7 +43,33 @@ Information package type | Enum   | `SIP` or `AIP`: the type of information pack
 Result                   | Enum   | `COMPLIANT` or `NOT COMPLIANT`.
 Rule violations          | Map    | The rules that were violated. The violations are (rule number, violation details) pairs. This field is absent if Result is `COMPLIANT`.
 
-The Bag URI
+This message can be serialized in one of two formats: plain text or JSON. A general description follows. See the [EXAMPLES](#examples) section for
+concrete examples of what the output should look like.
+
+#### Plain text format
+The plain text serialization has the following layout for simple value fields (i.e. everything except "Rule violations"):
+
+    <field-name>: <field-value>
+
+And for the "Rule violations" map:
+
+    Rule violations:
+        - [<rule-number>] <rule-details>
+
+where the pattern on the second line is instantiated for for each violation.
+
+#### JSON format
+The JSON serialization is a map from `<field-name>` to `<field-value>`
+
+    {
+        "<field-name>": "<field-value>" [, "<field-name>": "<field-value>"...]
+    }
+
+The `<field-value>` of "Rule violations" is itself a map from `<rule-number>` to `<rule-details>`:
+
+    {
+        "<rule-number>"; "
+    }
 
 
 ARGUMENTS
@@ -56,7 +86,8 @@ ARGUMENTS
 
 EXAMPLES
 --------
-
+Note that the first line of each response (introduced by `OK:` or `ERROR:`) is returned on the STDERR. It is following by the
+response message
 
 
     $ easy-validate-dans-bag bag1
@@ -66,8 +97,6 @@ EXAMPLES
     Profile version: 0.0.0
     Information package type: SIP
     Result: COMPLIANT
-
-
 
     $ easy-validate-dans-bag bag2
     ERROR: bag2 does NOT comply with DANS BagIt Profile v0.
@@ -85,7 +114,7 @@ EXAMPLES
     {
         bag_uri: "file:///some/path/to/bag2",
         bag: "bag2",
-        profile_version: 0.0.0,
+        profile_version: "0.0.0",
         info_package_type: "AIP",
         result: "NOT COMPLIANT",
         rule_violations: {
@@ -100,7 +129,7 @@ EXAMPLES
        bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
           54e8dc73a672/bag",
        bag: "bag",
-       profile_version: 1.0.0,
+       profile_version: "1.0.0",
        result: "COMPLIANT"
     }
 
@@ -110,7 +139,7 @@ EXAMPLES
        bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
           54e8dc73a672/bag",
        bag: "bag",
-       profile_version: 1.0.0,
+       profile_version: "1.0.0",
        result: "COMPLIANT"
     }
 
