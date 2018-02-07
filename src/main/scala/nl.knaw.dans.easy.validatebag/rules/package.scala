@@ -24,7 +24,17 @@ import nl.knaw.dans.easy.validatebag.validation._
 import scala.util.Try
 
 package object rules {
+
+  /**
+   * Checks the bags using the rules specified in the sub-packages of this package.
+   *
+   * @param b the bag directory to check
+   * @param asInfoPackageType check as AIP or SIP
+   * @param isReadable the function that checks if a file is readable
+   * @return Success or Failure
+   */
   def checkBag(b: BagDir, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+    require(asInfoPackageType != BOTH, "asInfoPackageType must be either SIP (default) or AIP")
     validation.checkRules(b, allRules, asInfoPackageType)
   }
 

@@ -11,14 +11,35 @@ SYNOPSIS
     easy-validate-dans-bag [--aip] [--response-format json|text] <bag>
     easy-validate-dans-bag run-service
 
-TODO: ability to skip non-local validation??
 
 DESCRIPTION
 -----------
 
 Determines whether a DANS bag is valid according to the DANS BagIt Profile v0 or v1. If the bag
 does not specify what version of the profile it claims to comply with, v0 is assumed. This module has
-both a command line and an HTTP interface.
+both a command line and an HTTP interface. The command line interface is documented in the
+[ARGUMENTS](#arguments) section below.
+
+The HTTP interface supports the following path patterns and methods:
+
+Path                                                    | Method | Description
+--------------------------------------------------------|--------|------------------------------------------------------
+`/`                                                     | `GET`  | Returns a message stating that the server is running.
+`/validate?[infoPackageType=AIP|SIP]&uri=<bag-dir-uri>` | `GET`  | Validates the bag at `<bag-dir-uri>` an returns the result as a JSON-document.
+
+### Response message
+The response message has the following structure:
+
+Field                    | Type   | Description
+-------------------------|--------|-----------------------------------
+Bag                      | String | The name of the bag.
+Bag URI                  | URI    | The URI of the bag to validate.
+Profile version          | String | The version of the profile used in the validation.
+Information package type | Enum   | `SIP` or `AIP`: the type of information package the bag was validated as.
+Result                   | Enum   | `COMPLIANT` or `NOT COMPLIANT`.
+Rule violations          | Map    | The rules that were violated. The violations are (rule number, violation details) pairs. This field is absent if Result is `COMPLIANT`.
+
+The Bag URI
 
 
 ARGUMENTS
@@ -36,20 +57,24 @@ ARGUMENTS
 EXAMPLES
 --------
 
+
+
     $ easy-validate-dans-bag bag1
     OK: bag1 complies with DANS BagIt Profile v1.
     Bag URI: file:///some/path/to/bag1
     Bag: bag1
-    Profile version: 0
-    InfoPackageType: SIP
+    Profile version: 0.0.0
+    Information package type: SIP
     Result: COMPLIANT
+
+
 
     $ easy-validate-dans-bag bag2
     ERROR: bag2 does NOT comply with DANS BagIt Profile v0.
     Bag URI: file:///some/path/to/bag2
     Bag: bag2
-    Profile version: 0
-    InfoPackageType: AIP
+    Profile version: 0.0.0
+    Information package type: AIP
     Result: NOT COMPLIANT
     Rule violations:
     - [1.2.1] No bag-info.txt found.
@@ -60,7 +85,7 @@ EXAMPLES
     {
         bag_uri: "file:///some/path/to/bag2",
         bag: "bag2",
-        profile_version: 0,
+        profile_version: 0.0.0,
         info_package_type: "AIP",
         result: "NOT COMPLIANT",
         rule_violations: {
@@ -75,9 +100,20 @@ EXAMPLES
        bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
           54e8dc73a672/bag",
        bag: "bag",
-       profile_version: 0,
+       profile_version: 1.0.0,
        result: "COMPLIANT"
     }
+
+    $ curl http://localhost:20180/validate?infoPackageType=aip&uri=file:///var/opt/dans.knaw.nl/tmp/\
+       easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-54e8dc73a672/bag
+    {
+       bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
+          54e8dc73a672/bag",
+       bag: "bag",
+       profile_version: 1.0.0,
+       result: "COMPLIANT"
+    }
+
 
 
 INSTALLATION AND CONFIGURATION
