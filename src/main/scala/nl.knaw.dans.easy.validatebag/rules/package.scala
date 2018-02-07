@@ -40,10 +40,11 @@ package object rules {
 
   private val allRules: Map[ProfileVersion, RuleBase] = Map(
     0 -> Seq(
-      numberedRule("1.1.1", bagMustBeValid(), SIP),
-      numberedRule("1.1.2", bagMustBeVirtuallyValid(), AIP),
-      numberedRule("1.2.1", bagMustContainBagInfoTxt()),
+      numberedRule("1.1.1", bagMustBeValid, SIP),
+      numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
+      numberedRule("1.2.1", bagMustContainBagInfoTxt),
       numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion("0.0.0"))
     )
+
   )
 }

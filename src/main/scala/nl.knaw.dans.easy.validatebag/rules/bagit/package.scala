@@ -26,19 +26,19 @@ import scala.util.Try
  * Rules that refer back to the BagIt specifications.
  */
 package object bagit {
-  def bagMustBeValid()(b: BagDir) = Try {
+  def bagMustBeValid(b: BagDir) = Try {
     // TODO: check that the bag is VALID according to BagIt.
   }
 
-  def bagMustBeVirtuallyValid()(b: BagDir) = Try {
+  def bagMustBeVirtuallyValid(b: BagDir) = Try {
     // TODO: same als bagMustBeValid, but when NON-VALID warn that "virtually-only-valid" bags cannot not be recognized by the service yet.
   }
 
-  def bagMustContainBagInfoTxt()(b: BagDir) = Try {}
+  def bagMustContainBagInfoTxt(b: BagDir) = Try {}
 
   def bagInfoTxtMustContainBagItProfileVersion(version: String)(b: BagDir) = Try {}
 
-  def bagMustContainMetadataDir()(b: BagDir) = Try {
+  def bagMustContainMetadataDir(b: BagDir) = Try {
     if (Files.isDirectory(b.resolve("metadata"))) ()
     else fail("Mandatory directory 'metadata' not found in bag.")
   }
