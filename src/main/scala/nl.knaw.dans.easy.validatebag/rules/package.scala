@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.{ Files, Path }
+import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
@@ -43,7 +43,9 @@ package object rules {
       numberedRule("1.1.1", bagMustBeValid, SIP),
       numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
       numberedRule("1.2.1", bagMustContainBagInfoTxt),
-      numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion("0.0.0"))
+      numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion),
+      numberedRule("1.2.3", bagInfoTxtMustContainBagItProfileURI)
+
     )
 
   )

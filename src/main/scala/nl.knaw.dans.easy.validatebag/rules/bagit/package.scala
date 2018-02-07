@@ -15,10 +15,12 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.Files
+import java.nio.file.{ Files, Paths }
 
 import nl.knaw.dans.easy.validatebag.BagDir
-import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.easy.validatebag.validation.fail
+import org.apache.commons.configuration.PropertiesConfiguration
+import org.joda.time.{ DateTime, Duration, Interval }
 
 import scala.util.Try
 
@@ -34,9 +36,40 @@ package object bagit {
     // TODO: same als bagMustBeValid, but when NON-VALID warn that "virtually-only-valid" bags cannot not be recognized by the service yet.
   }
 
-  def bagMustContainBagInfoTxt(b: BagDir) = Try {}
 
-  def bagInfoTxtMustContainBagItProfileVersion(version: String)(b: BagDir) = Try {}
+  def bagMustContainBagInfoTxt(b: BagDir)= Try {
+    if(Files.exists(b.resolve("bag-info.txt"))) ()
+    else fail("Mandatory file 'bag-info.txt' not found in bag. ")
+  }
+
+  def bagInfoTxtMustContainBagItProfileVersion(b: BagDir ) = Try {
+    val bagInfoProperties = new PropertiesConfiguration(Paths.get(b.resolve("bag-info.txt").toUri).toFile)
+    if (bagInfoProperties.containsKey("BagIt-Profile-Version")) {
+         if (bagInfoProperties.getString("BagIt-Profile-Version").equals("1.0.0")|| bagInfoProperties.getString("BagIt-Profile-Version").equals("0.0.0")) ()
+         else fail("version is not '1.0.0' or '0.0.0' ")
+    }
+    else fail(" 'BagIt-Profile-Version' not found in 'bag-info.txt'. ")
+  }
+
+  def bagInfoTxtMustContainBagItProfileURI(b: BagDir ) = Try {
+    val bagInfoProperties = new PropertiesConfiguration(Paths.get(b.resolve("bag-info.txt").toUri).toFile)
+    if (bagInfoProperties.containsKey("BagIt-Profile-URI")) {
+      if (bagInfoProperties.getString("BagIt-Profile-URI").equals("doi:<TODO MINT DOI FOR THIS SPEC>")) ()
+      else fail("BagIt-Profile-URI is not equal to 'doi:<TODO MINT DOI FOR THIS SPEC>' ")
+    }
+    else fail(" 'BagIt-Profile-URI' not found in 'bag-info.txt'. ")
+  }
+
+  /*
+  def bagInfoTxtMustContainCreatedISO8601(b: BagDir ) = Try {
+    val bagInfoProperties = new PropertiesConfiguration(Paths.get(b.resolve("bag-info.txt").toUri).toFile)
+    if (bagInfoProperties.containsKey("Created")) {
+      val createdValue = new DateTime(bagInfoProperties.getString("Created"))
+      if (createdValue.toDateTimeISO.
+
+      else fail("  ")
+  }
+  */
 
   def bagMustContainMetadataDir(b: BagDir) = Try {
     if (Files.isDirectory(b.resolve("metadata"))) ()

@@ -42,7 +42,7 @@ package object validation extends DebugEnhancedLogging {
    *
    * @param details details about the violation
    */
-  private case class RuleViolationDetailsException(details: String) extends Exception(details)
+  case class RuleViolationDetailsException(details: String) extends Exception(details)
 
   /**
    * Signals a rule violation. This function should be called from the rule functions to indicate that
