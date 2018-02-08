@@ -18,9 +18,9 @@ package nl.knaw.dans.easy.validatebag.rules.bagit
 
 import java.nio.file.Paths
 
+import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.BagDir
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
-import org.apache.commons.configuration.PropertiesConfiguration
 //EasyValidateDansBagApp
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
@@ -84,14 +84,23 @@ class BagItRulesSpec extends TestSupportFixture {
   }
 
 
+  private val bagReader: BagReader = new BagReader
 
-   /*
   "print" should "return" in {
-    val bagInfoProperties = new PropertiesConfiguration(Paths.get(testDirOfWrongBagItProfileURI.resolve("bag-info.txt").toUri).toFile)
+   // val bagInfoProperties = new PropertiesConfiguration(Paths.get(testDirOfWrongBagItProfileURI.resolve("bag-info.txt").toUri).toFile)
 
-      bagInfoProperties.getString("BagIt-Profile-URI").equals("doi:wrongDoi") shouldBe true
+   //   bagInfoProperties.getString("BagIt-Profile-URI").equals("doi:wrongDoi") shouldBe true
+      //val b = Paths.get(testDirOfWrongBagItProfileURI.resolve("bag-info.txt").toUri)
+
+    //val b2 = Paths.get(testDirOfWrongBagItProfileURI.toUri)
+    val b2 = Paths.get(testDirOfWrongBagItProfileVersion.toUri)
+      //resolve("bag-info.txt")
+
+    bagReader.read(b2).getMetadata.get("BagIt-Profile-Version").get(0) shouldBe "9.9.9"
+
+
+      //bagReader.read(b2).getMetadata.get("BagIt-Profile-URI") shouldBe "doi:wrongDoi"
   }
-  */
 
 
 
