@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.{ Files, Path }
+import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
@@ -28,9 +28,9 @@ package object rules {
   /**
    * Checks the bags using the rules specified in the sub-packages of this package.
    *
-   * @param b the bag directory to check
+   * @param b                 the bag directory to check
    * @param asInfoPackageType check as AIP or SIP
-   * @param isReadable the function that checks if a file is readable
+   * @param isReadable        the function that checks if a file is readable
    * @return Success or Failure
    */
   def checkBag(b: BagDir, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
@@ -38,13 +38,27 @@ package object rules {
     validation.checkRules(b, allRules, asInfoPackageType)
   }
 
-  private val allRules: Map[ProfileVersion, RuleBase] = Map(
-    0 -> Seq(
-      numberedRule("1.1.1", bagMustBeValid, SIP),
-      numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
-      numberedRule("1.2.1", bagMustContainBagInfoTxt),
-      numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion("0.0.0"))
+  private val allRules: Map[ProfileVersion, ValidationAlgebra] = {
+    Map(
+      0 -> all(
+        sub(
+          either(
+            numberedRule("1.1.1", bagMustBeValid, SIP),
+            numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP)
+          ),
+          all(
+            sub(
+              numberedRule("1.2.1", bagMustContainBagInfoTxt),
+              all(
+                numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion("0.0.0"))
+                // TODO add other rules regarding bagInfo here
+              )
+            )
+            // TODO add sha1 and payload rules here
+          )
+        )
+        // TODO add the others
+      )
     )
-
-  )
+  }
 }
