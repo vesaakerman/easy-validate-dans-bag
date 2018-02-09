@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import org.rogach.scallop.{ScallopConf, ScallopOption, Subcommand, singleArgConverter}
+import org.rogach.scallop.{ ScallopConf, Subcommand }
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
@@ -25,7 +25,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Determines whether a DANS bag is valid according to the DANS BagIt Profile."""
   val synopsis: String =
     s"""
-       |  $printedName [--aip] [--response-format json|text] <bag>
+       |  $printedName [--aip] [--response-format,-f json|text] <bag>
        |  $printedName run-service""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
@@ -39,7 +39,16 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |
        |Options:
        |""".stripMargin)
-  //val url = opt[String]("someOption", noshort = true, descr = "Description of the option", default = app.someProperty)
+  val aip = opt[Boolean]("aip", noshort = true,
+    descr = "Validate as AIP (instead of as SIP)")
+
+  val responseFormat = opt[String]("response-format", short = 'f',
+    descr = "Format for the result report", default = Some("text"))
+  validate(responseFormat) { f =>
+    val allowedFormats = Seq("json", "text")
+    if(allowedFormats contains f) Right(Unit)
+    else Left(s"Format '$f' not one of ${allowedFormats.mkString(", ")}")
+  }
 
   val runService = new Subcommand("run-service") {
     descr(
