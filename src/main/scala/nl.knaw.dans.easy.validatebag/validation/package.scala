@@ -140,6 +140,8 @@ package object validation extends DebugEnhancedLogging {
 
   private def checkIfValidationCanProceed(bag: BagDir)(implicit isReadable: Path => Boolean): Try[Unit] = Try {
     trace(bag)
+    debug(s"Checking existence of $bag")
+    require(Files.exists(bag), "Bag does not exist")
     debug(s"Checking readability of $bag")
     require(isReadable(bag), s"Bag is non-readable")
     debug(s"Checking if $bag is directory")
@@ -155,26 +157,49 @@ package object validation extends DebugEnhancedLogging {
 
   private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, ValidationAlgebra], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
 
+    def ruleApplies(ipType: InfoPackageType) = {
+      ipType == asInfoPackageType || ipType == BOTH
+    }
+
+    def ruleNotApplicableToSuccess: PartialFunction[Throwable, Try[Unit]] = {
+      case RuleNotApplicableException() => Success(())
+    }
+
     def evaluate(algebra: ValidationAlgebra): Try[Unit] = {
       algebra match {
-        case Eval((nr, rule, ipType)) if ipType == asInfoPackageType || ipType == BOTH =>
+        case Eval((nr, rule, ipType)) if ruleApplies(ipType) =>
           rule(bag).recoverWith {
             case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
           }
-        case Eval(_) => Failure(RuleNotApplicableException())
+        case Eval(_) =>
+          Failure(RuleNotApplicableException())
         case OneOf(left, right) =>
-          evaluate(eval(left)).recoverWith { case _ => evaluate(eval(right)) }
+          evaluate(eval(left)).recoverWith {
+            case _: RuleNotApplicableException => evaluate(eval(right))
+            case e => evaluate(eval(right)).recoverWith {
+              case _: RuleNotApplicableException => Failure(e)
+              case e2 => Failure(new CompositeException(e, e2))
+            }
+          }
         case All(head, tail @ _*) =>
-          val Seq(h, t @ _*) = (head +: tail).map(eval)
-          evaluate(all(h, t: _*))
+          (head +: tail).withFilter { case (_, _, ipType) => ruleApplies(ipType) }.map(eval) match {
+            case Seq() => Success(())
+            case Seq(h, t @ _*) => evaluate(all(h, t: _*))
+          }
         case Sub(parent, child) =>
-          evaluate(parent).map(_ => evaluate(child))
+          evaluate(parent).recoverWith(ruleNotApplicableToSuccess).flatMap(_ => evaluate(child))
         case AllAlgs(head, tail @ _*) =>
-          (head +: tail).map(alg => evaluate(alg).recoverWith { case RuleNotApplicableException() => Success(()) }).collectResults.map(_ => ())
+          (head +: tail)
+            .map(alg => evaluate(alg).recoverWith(ruleNotApplicableToSuccess))
+            .collectResults
+            .map(_ => ())
       }
     }
 
     evaluate(rules(getProfileVersion(bag)))
+      .recoverWith {
+        case _: RuleNotApplicableException => Success(())
+      }
   }
 
   private def getProfileVersion(bag: BagDir): ProfileVersion = {
