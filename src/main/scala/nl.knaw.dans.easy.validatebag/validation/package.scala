@@ -60,6 +60,7 @@ package object validation extends DebugEnhancedLogging {
    * @param infoPackageType the Information Package type(s) that this rule applies to
    * @return
    */
+
   def numberedRule(ruleNumber: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH): NumberedRule = {
     (ruleNumber, rule, infoPackageType)
   }
@@ -77,6 +78,7 @@ package object validation extends DebugEnhancedLogging {
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
+
   def checkRules(bag: BagDir, rules: Map[ProfileVersion, RuleBase], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
     /**
      * `isReadable` was added because unit testing this by actually setting files on the file system to non-readable and back
@@ -89,6 +91,7 @@ package object validation extends DebugEnhancedLogging {
       result <- evaluateRules(bag, rules, asInfoPackageType)
     } yield result
   }
+
 
   private def checkIfValidationCanProceed(bag: BagDir)(implicit isReadable: Path => Boolean): Try[Unit] = Try {
     trace(bag)
@@ -104,6 +107,7 @@ package object validation extends DebugEnhancedLogging {
       }
     }
   }
+
 
   private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, RuleBase], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
     rules(getProfileVersion(bag))

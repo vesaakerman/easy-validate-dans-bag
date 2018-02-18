@@ -19,7 +19,8 @@ import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
-import nl.knaw.dans.easy.validatebag.validation._
+//import nl.knaw.dans.easy.validatebag.rules.bagit.baseBag
+import nl.knaw.dans.easy.validatebag.validation.numberedRule
 
 import scala.util.Try
 
@@ -43,10 +44,17 @@ package object rules {
       numberedRule("1.1.1", bagMustBeValid, SIP),
       numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
       numberedRule("1.2.1", bagMustContainBagInfoTxt),
-      numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion),
-      numberedRule("1.2.3", bagInfoTxtMustContainBagItProfileURI)
-
+      numberedRule("1.2.2", bagInfoTxtMayContainBagItProfileVersionV0),
+      numberedRule("1.2.3", bagInfoTxtMayContainBagItProfileURIV0),
+      numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf)
+    ),
+    1 -> Seq(
+      numberedRule("1.1.1", bagMustBeValid, SIP),
+      numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
+      numberedRule("1.2.1", bagMustContainBagInfoTxt),
+      numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersionV1),
+      numberedRule("1.2.3", bagInfoTxtMustContainBagItProfileURIV1),
+      numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf)
     )
-
   )
 }
