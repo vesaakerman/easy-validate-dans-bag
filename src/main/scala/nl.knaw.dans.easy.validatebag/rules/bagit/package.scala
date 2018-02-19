@@ -52,6 +52,7 @@ package object bagit {
 
   def counterOfTheSameKeys(b: BagDir, nameOfKey: String): Int = {
     val readBag = bagReader.read(Paths.get(b.toUri))
+
     var counter = 0
     readBag.getMetadata.getAll.forEach { k =>
       if (k.getKey.equals(nameOfKey))

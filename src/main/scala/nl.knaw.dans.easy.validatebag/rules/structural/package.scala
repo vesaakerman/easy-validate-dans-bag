@@ -15,6 +15,31 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
+import java.nio.file.Files
+
+import gov.loc.repository.bagit.reader.BagReader
+import nl.knaw.dans.easy.validatebag.BagDir
+import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException, fail }
+
+import scala.util.Try
+
 package object structural {
+
+  val bagReader: BagReader = new BagReader
+
+  def bagMustContainMetadataFile(b: BagDir) = Try {
+    if (!Files.exists(b.resolve("metadata")))
+      fail("Mandatory file 'metadata' not found in bag. ")
+    if(Files.exists(b.resolve("metadata"))){
+      val fileName = b.resolve("metadata").toRealPath().getFileName()
+      if(fileName.toString.trim()!= fileName.toString)
+        fail("No space is allowed in the file name 'metadata' ")
+      if(fileName.toString.toLowerCase != fileName.toString) {
+        println(fileName.toString)
+        fail("Uppercase chars are not allowed in the file name 'metadata' ")
+      }
+    }
+
+  }
 
 }

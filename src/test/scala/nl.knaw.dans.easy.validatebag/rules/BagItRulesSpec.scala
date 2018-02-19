@@ -469,8 +469,6 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
 
 
 
-
-
     //val valueOfCreatedNonIso = new DateTime("2018/01/29")
     //println(valueOfCreatedNonIso.toDateTimeISO
 
