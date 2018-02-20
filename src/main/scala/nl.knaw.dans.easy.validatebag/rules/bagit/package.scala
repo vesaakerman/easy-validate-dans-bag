@@ -19,7 +19,10 @@ import java.nio.file.{ Files, Paths }
 
 import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.validation
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
 
+import scala.language.postfixOps
 import scala.util.{ Failure, Success }
 //import gov.loc.repository.bagit.domain.Bag
 //import gov.loc.repository.bagit.exceptions._
@@ -170,6 +173,24 @@ package object bagit {
       }
     }
   }
+
+  def bagMustContainSHA1(b: BagDir) = Try {
+    if (!Files.exists(b.resolve("manifest-sha1.txt")))
+      fail("Mandatory file 'manifest-sha1.txt' not found in bag. ")
+    else {
+      val readBag = bagReader.read(Paths.get(b.toUri))
+      FileUtils.listFilesAndDirs(b.resolve("data").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
+        if(i.isFile){
+          if(!readBag.getPayLoadManifests.toString.contains(i.toString))
+            fail("Mandatory payload manifest is missing for " + i)
+        }
+      )
+
+    }
+  }
+
+
+
 
 
 

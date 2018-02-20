@@ -35,11 +35,11 @@ import java.nio.file.Files
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 import nl.knaw.dans.easy.validatebag.rules.bagit
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
 import org.scalatest.{ FlatSpec, PrivateMethodTester }
-
+//import org.apache.commons.io.filefilter.IOFileFilter.makeFileOnly
 import scala.util.{ Failure, Try }
-
-
 class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
 
   val testDirOfMissingBagInfo: BagDir = Paths.get("src/test/resources/bags/missingBagInfo")
@@ -58,6 +58,9 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   val testDirOfMissingTimeAndTimeZoneInCreated: BagDir = Paths.get("src/test/resources/bags/missingTimeAndTimeZoneInCreated")
   val testDirOfViolatedISO806: BagDir = Paths.get("src/test/resources/bags/violatedISO806inCreated")
   val testDirOfLastModTimeNotEqualToCreated: BagDir = Paths.get("src/test/resources/bags/lastModTimeNotEqualToCreated")
+  val testDirOfNonexistingManifestSHA1: BagDir = Paths.get("src/test/resources/bags/nonexistingManifestSHA1")
+  val testDirOfExistingManifestSHA1: BagDir = Paths.get("src/test/resources/bags/existingManifestSHA1")
+  val testDirOfExistingManifestSHA1missingPayloadEntries: BagDir = Paths.get("src/test/resources/bags/existingManifestSHA1missingPayloadEntries")
 
   //val testDirOfWrongUUID: BagDir = Paths.get("src/test/resources/bags/bag-store/d5/e8f0fbc37486eb918cb06dd5ae5e71/archivedBag1")
   // val error = RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true)
@@ -355,6 +358,38 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
 
   /*----------------------------------------------------------------*/
 
+  "bagMustContainSHA1" should "fail if 'manifest-sha1.txt' is not found in the bag" in {
+    val result = bagMustContainSHA1(testDirOfNonexistingManifestSHA1)
+    result shouldBe a[Failure[_]]
+    inside(result) {
+      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    }
+  }
+
+  it should " not fail if 'manifest-sha1.txt' is found in the bag" in {
+    val result = bagMustContainSHA1(testDirOfExistingManifestSHA1)
+    val b: BagDir = Paths.get(testDirOfExistingManifestSHA1.toUri)
+    val readBag = bagReader.read(Paths.get(b.toUri))
+    println(readBag.getPayLoadManifests)
+    result should not be a[Failure[_]]
+  }
+
+  it should " fail if one of the payload manifests is missing in 'manifest-sha1.txt' " in {
+    val result = bagMustContainSHA1(testDirOfExistingManifestSHA1missingPayloadEntries)
+    val b: BagDir = Paths.get(testDirOfExistingManifestSHA1missingPayloadEntries.toUri)
+    val readBag = bagReader.read(Paths.get(b.toUri))
+    println(readBag.getPayLoadManifests)
+    FileUtils.listFilesAndDirs(b.resolve("data").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
+      if(i.isFile){
+        if(readBag.getPayLoadManifests.toString.contains(i.toString))
+        println(i)
+      }
+    )
+    result shouldBe a[Failure[_]]
+    inside(result) {
+      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    }
+  }
 
   val bagReader: BagReader = new BagReader
 
