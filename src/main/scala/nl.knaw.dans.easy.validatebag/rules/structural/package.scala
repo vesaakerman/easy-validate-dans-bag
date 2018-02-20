@@ -19,7 +19,7 @@ import java.nio.file.Files
 
 import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.BagDir
-import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException, fail }
+import nl.knaw.dans.easy.validatebag.validation.{RuleViolationDetailsException, fail}
 
 import scala.util.Try
 
@@ -42,4 +42,26 @@ package object structural {
 
   }
 
-}
+  def metadataFileMustContainDatasetAndFiles(b:BagDir) = Try {
+    if (bagMustContainMetadataFile(b).isSuccess) {
+      val pathOfMetadata = b.resolve("metadata")
+      if(!Files.exists(pathOfMetadata.toRealPath().resolve("dataset.xml")))
+        fail(" Mandatory file 'dataset.xml' is not found in metadata file ")
+      if(Files.exists(pathOfMetadata.toRealPath().resolve("dataset.xml"))) {
+        val pathOfDataset = pathOfMetadata.toRealPath().resolve("dataset.xml").toRealPath()
+        pathOfMetadata.toRealPath().resolve("dataset.xml").toRealPath().toFile.delete
+      }
+      if(!Files.exists(pathOfMetadata.toRealPath().resolve("files.xml")))
+        fail(" Mandatory file 'files.xml' is not found in metadata file ")
+      if(Files.exists(pathOfMetadata.toRealPath().resolve("files.xml"))) {
+        val pathOfDataset = pathOfMetadata.toRealPath().resolve("files.xml").toRealPath()
+        pathOfMetadata.toRealPath().resolve("files.xml").toRealPath().toFile.delete
+      }
+      if(pathOfMetadata.toRealPath().toFile.listFiles().nonEmpty){
+        fail(" Excessive files found. Only 'dataset.xml' and 'files.xml' can exist in metadata ")
+      }
+
+    }
+  }
+
+  }
