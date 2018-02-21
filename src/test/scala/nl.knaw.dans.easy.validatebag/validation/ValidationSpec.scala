@@ -45,24 +45,24 @@ class ValidationSpec extends TestSupportFixture {
     (f, ran)
   }
 
-  def atomicSuccess(infoPackageType: InfoPackageType = BOTH): (ValidationAlgebra, AtomicBoolean) = {
+  def atomicSuccess(infoPackageType: InfoPackageType = BOTH): (RuleExpression, AtomicBoolean) = {
     val (f, ran) = successRule
-    (eval(numberedRule("1.1.1", f, infoPackageType)), ran)
+    (atom(numberedRule("1.1.1", f, infoPackageType)), ran)
   }
 
-  def atomicFailure(ruleNumber: RuleNumber, msg: String, infoPackageType: InfoPackageType = BOTH): (ValidationAlgebra, AtomicBoolean) = {
+  def atomicFailure(ruleNumber: RuleNumber, msg: String, infoPackageType: InfoPackageType = BOTH): (RuleExpression, AtomicBoolean) = {
     val (f, ran) = failedRule(msg)
-    (eval(numberedRule(ruleNumber, f, infoPackageType)), ran)
+    (atom(numberedRule(ruleNumber, f, infoPackageType)), ran)
   }
 
-  private implicit def ruleToMap(rule: ValidationAlgebra): Map[Int, ValidationAlgebra] = {
+  private implicit def ruleToMap(rule: RuleExpression): Map[Int, RuleExpression] = {
     Map(0 -> rule)
   }
 
   // success case will be covered by the validation algebra tests
   "checkIfValidationCanProceed" should "fail when the bag is not readable" in {
     val (rule1, ran1) = successRule
-    val rule = eval(numberedRule("1.1.1", rule1))
+    val rule = atom(numberedRule("1.1.1", rule1))
 
     inside(checkRules(testDir, rule)(isReadable = _ => false)) {
       case Failure(e: IllegalArgumentException) =>
@@ -74,7 +74,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "fail when the bag does not exist" in {
     val bagDir = testDir.resolve("not-exists")
     val (rule1, ran1) = successRule
-    val rule = eval(numberedRule("1.1.1", rule1))
+    val rule = atom(numberedRule("1.1.1", rule1))
 
     inside(checkRules(bagDir, rule)) {
       case Failure(e: IllegalArgumentException) =>
@@ -88,7 +88,7 @@ class ValidationSpec extends TestSupportFixture {
     Files.write(file, "this is not a directory".getBytes)
 
     val (rule1, ran1) = successRule
-    val rule = eval(numberedRule("1.1.1", rule1))
+    val rule = atom(numberedRule("1.1.1", rule1))
 
     inside(checkRules(file, rule)) {
       case Failure(e: IllegalArgumentException) =>
@@ -105,7 +105,7 @@ class ValidationSpec extends TestSupportFixture {
     def fileNotReadable(path: Path): Boolean = path != file
 
     val (rule1, ran1) = successRule
-    val rule = eval(numberedRule("1.1.1", rule1))
+    val rule = atom(numberedRule("1.1.1", rule1))
 
     inside(checkRules(bag, rule)(fileNotReadable)) {
       case Failure(e: IllegalArgumentException) =>
@@ -116,7 +116,7 @@ class ValidationSpec extends TestSupportFixture {
 
   "checkRules with atomic" should "succeed with a successful rule for the same IPT" in {
     val (rule1, ran1) = successRule
-    val rule = eval("1.1.1", rule1, SIP)
+    val rule = atom("1.1.1", rule1, SIP)
 
     checkRules(testDir, rule, SIP) shouldBe a[Success[_]]
     ran1.get shouldBe true
@@ -124,7 +124,7 @@ class ValidationSpec extends TestSupportFixture {
 
   it should "succeed with a successful rule if the rule has IPT=BOTH" in {
     val (rule1, ran1) = successRule
-    val rule = eval("1.1.1", rule1, BOTH)
+    val rule = atom("1.1.1", rule1, BOTH)
 
     checkRules(testDir, rule, SIP) shouldBe a[Success[_]]
     ran1.get shouldBe true
@@ -132,7 +132,7 @@ class ValidationSpec extends TestSupportFixture {
 
   it should "not run the rule if the IPT is not the same" in {
     val (rule1, ran1) = successRule
-    val rule = eval("1.1.1", rule1, AIP)
+    val rule = atom("1.1.1", rule1, AIP)
 
     checkRules(testDir, rule, SIP) shouldBe a[Success[_]]
     ran1.get shouldBe false
@@ -140,7 +140,7 @@ class ValidationSpec extends TestSupportFixture {
 
   it should "fail if the rule fails and it has the same IPT" in {
     val (rule1, ran1) = failedRule("err1")
-    val rule = eval("1.1.2", rule1, SIP)
+    val rule = atom("1.1.2", rule1, SIP)
 
     checkRules(testDir, rule, SIP) should matchPattern {
       case Failure(RuleViolationException("1.1.2", "err1")) =>
@@ -151,7 +151,7 @@ class ValidationSpec extends TestSupportFixture {
   "checkRules with either" should "succeed when neither one of the rules apply" in {
     val (rule1, ran1) = successRule
     val (rule2, ran2) = successRule
-    val rule = either(
+    val rule = or(
       numberedRule("1.1.1", rule1, SIP),
       numberedRule("1.1.2", rule2, SIP)
     )
@@ -164,7 +164,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "succeed when the first rule succeeds (don't even evaluate the second rule)" in {
     val (rule1, ran1) = successRule
     val (rule2, ran2) = failedRule("err")
-    val rule = either(
+    val rule = or(
       numberedRule("1.1.1", rule1),
       numberedRule("1.1.2", rule2)
     )
@@ -177,7 +177,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "succeed when the first rule fails, but the second one succeeds" in {
     val (rule1, ran1) = failedRule("err")
     val (rule2, ran2) = successRule
-    val rule = either(
+    val rule = or(
       numberedRule("1.1.1", rule1),
       numberedRule("1.1.2", rule2)
     )
@@ -190,7 +190,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "succeed when the first rule doesn't apply, but the second one does" in {
     val (rule1, ran1) = failedRule("err")
     val (rule2, ran2) = successRule
-    val rule = either(
+    val rule = or(
       numberedRule("1.1.1", rule1, SIP),
       numberedRule("1.1.2", rule2, AIP)
     )
@@ -203,7 +203,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "fail when only the second rule applies, but fails" in {
     val (rule1, ran1) = failedRule("err1")
     val (rule2, ran2) = failedRule("err2")
-    val rule = either(
+    val rule = or(
       numberedRule("1.1.1", rule1, SIP),
       numberedRule("1.1.2", rule2, AIP)
     )
@@ -218,7 +218,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "fail when both rules apply, but fail" in {
     val (rule1, ran1) = failedRule("err1")
     val (rule2, ran2) = failedRule("err2")
-    val rule = either(
+    val rule = or(
       numberedRule("1.1.1", rule1),
       numberedRule("1.1.2", rule2)
     )
@@ -333,7 +333,7 @@ class ValidationSpec extends TestSupportFixture {
   "checkRules with sub" should "succeed when both parent and child succeed" in {
     val (rule1, ran1) = successRule
     val (rule2, ran2) = successRule
-    val rule = sub(
+    val rule = ifThenAlso(
       numberedRule("1.1", rule1),
       numberedRule("1.1.1", rule2)
     )
@@ -346,7 +346,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "success when the parent doesn't apply (the child is still evaluated!)" in {
     val (rule1, ran1) = successRule
     val (rule2, ran2) = successRule
-    val rule = sub(
+    val rule = ifThenAlso(
       numberedRule("1.1", rule1, SIP),
       numberedRule("1.1.1", rule2)
     )
@@ -359,7 +359,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "succeed when the child doesn't apply" in {
     val (rule1, ran1) = successRule
     val (rule2, ran2) = successRule
-    val rule = sub(
+    val rule = ifThenAlso(
       numberedRule("1.1", rule1),
       numberedRule("1.1.1", rule2, SIP)
     )
@@ -372,7 +372,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "fail when the parent fails (the child is not evaluated)" in {
     val (rule1, ran1) = failedRule("err1")
     val (rule2, ran2) = successRule
-    val rule = sub(
+    val rule = ifThenAlso(
       numberedRule("1.1", rule1),
       numberedRule("1.1.1", rule2)
     )
@@ -387,7 +387,7 @@ class ValidationSpec extends TestSupportFixture {
   it should "fail when the child fails after the parent succeeded" in {
     val (rule1, ran1) = successRule
     val (rule2, ran2) = failedRule("err2")
-    val rule = sub(
+    val rule = ifThenAlso(
       numberedRule("1.1", rule1),
       numberedRule("1.1.1", rule2)
     )

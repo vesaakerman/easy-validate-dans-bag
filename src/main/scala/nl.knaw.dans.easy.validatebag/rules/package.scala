@@ -38,16 +38,16 @@ package object rules {
     validation.checkRules(b, allRules, asInfoPackageType)
   }
 
-  private val allRules: Map[ProfileVersion, ValidationAlgebra] = {
+  private val allRules: Map[ProfileVersion, RuleExpression] = {
     Map(
       0 -> all(
-        sub(
-          either(
+        ifThenAlso(
+          or(
             numberedRule("1.1.1", bagMustBeValid, SIP),
             numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP)
           ),
           all(
-            sub(
+            ifThenAlso(
               numberedRule("1.2.1", bagMustContainBagInfoTxt),
               all(
                 numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion("0.0.0"))

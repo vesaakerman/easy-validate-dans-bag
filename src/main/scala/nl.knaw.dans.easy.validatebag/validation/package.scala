@@ -65,51 +65,59 @@ package object validation extends DebugEnhancedLogging {
     (ruleNumber, rule, infoPackageType)
   }
 
-  sealed abstract class ValidationAlgebra
-  case class Eval(rule: NumberedRule) extends ValidationAlgebra
-  case class OneOf(left: NumberedRule, right: NumberedRule) extends ValidationAlgebra
-  case class All(head: NumberedRule, tail: NumberedRule*) extends ValidationAlgebra
-  case class Sub(parent: ValidationAlgebra, child: ValidationAlgebra) extends ValidationAlgebra
-  case class AllAlgs(head: ValidationAlgebra, tail: ValidationAlgebra*) extends ValidationAlgebra
+  /**
+   * A rule expression is one rule or a composite rule. Rules can be combined in several ways:
+   *
+   * - Or: one of the rules must succeed
+   * - All: all rules must succeed
+   * - IfThenAlso: If the first rule succeeds, the rest must also succeed
+   *
+   */
+  sealed abstract class RuleExpression
+  case class Atom(rule: NumberedRule) extends RuleExpression
+  case class Or(left: NumberedRule, right: NumberedRule) extends RuleExpression
+  case class AllRules(head: NumberedRule, tail: NumberedRule*) extends RuleExpression
+  case class IfThenAlso(parent: RuleExpression, child: RuleExpression) extends RuleExpression
+  case class AllExpr(head: RuleExpression, tail: RuleExpression*) extends RuleExpression
 
   // atomic action
-  def eval(rule: NumberedRule): ValidationAlgebra = {
-    Eval(rule)
+  def atom(rule: NumberedRule): RuleExpression = {
+    Atom(rule)
   }
 
   // either the left or right rule should succeed
-  def either(left: NumberedRule, right: NumberedRule): ValidationAlgebra = {
-    OneOf(left, right)
+  def or(left: NumberedRule, right: NumberedRule): RuleExpression = {
+    Or(left, right)
   }
 
   // all these rules should succeed
-  def all(head: NumberedRule, tail: NumberedRule*): ValidationAlgebra = {
-    All(head, tail: _*)
+  def all(head: NumberedRule, tail: NumberedRule*): RuleExpression = {
+    AllRules(head, tail: _*)
   }
 
   // all validations should succeed
-  def all(head: ValidationAlgebra, tail: ValidationAlgebra*): ValidationAlgebra = {
-    AllAlgs(head, tail: _*)
+  def all(head: RuleExpression, tail: RuleExpression*): RuleExpression = {
+    AllExpr(head, tail: _*)
   }
 
   // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
-  def sub(parent: NumberedRule, child: NumberedRule): ValidationAlgebra = {
-    Sub(eval(parent), eval(child))
+  def ifThenAlso(parent: NumberedRule, child: NumberedRule): RuleExpression = {
+    IfThenAlso(atom(parent), atom(child))
   }
 
   // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
-  def sub(parent: NumberedRule, child: ValidationAlgebra): ValidationAlgebra = {
-    Sub(eval(parent), child)
+  def ifThenAlso(parent: NumberedRule, child: RuleExpression): RuleExpression = {
+    IfThenAlso(atom(parent), child)
   }
 
   // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
-  def sub(parent: ValidationAlgebra, child: NumberedRule): ValidationAlgebra = {
-    Sub(parent, eval(child))
+  def ifThenAlso(parent: RuleExpression, child: NumberedRule): RuleExpression = {
+    IfThenAlso(parent, atom(child))
   }
 
   // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
-  def sub(parent: ValidationAlgebra, child: ValidationAlgebra): ValidationAlgebra = {
-    Sub(parent, child)
+  def ifThenAlso(parent: RuleExpression, child: RuleExpression): RuleExpression = {
+    IfThenAlso(parent, child)
   }
 
   /**
@@ -125,7 +133,7 @@ package object validation extends DebugEnhancedLogging {
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
-  def checkRules(bag: BagDir, rules: Map[ProfileVersion, ValidationAlgebra], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkRules(bag: BagDir, rules: Map[ProfileVersion, RuleExpression], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
     /**
      * `isReadable` was added because unit testing this by actually setting files on the file system to non-readable and back
      * can get messy. After a failed build one might be left with a target folder that refuses to be cleaned. Unless you are
@@ -155,7 +163,7 @@ package object validation extends DebugEnhancedLogging {
     }
   }
 
-  private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, ValidationAlgebra], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
+  private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, RuleExpression], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
 
     def ruleApplies(ipType: InfoPackageType) = {
       ipType == asInfoPackageType || ipType == BOTH
@@ -165,30 +173,30 @@ package object validation extends DebugEnhancedLogging {
       case RuleNotApplicableException() => Success(())
     }
 
-    def evaluate(algebra: ValidationAlgebra): Try[Unit] = {
-      algebra match {
-        case Eval((nr, rule, ipType)) if ruleApplies(ipType) =>
+    def evaluate(expression: RuleExpression): Try[Unit] = {
+      expression match {
+        case Atom((nr, rule, ipType)) if ruleApplies(ipType) =>
           rule(bag).recoverWith {
             case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
           }
-        case Eval(_) =>
+        case Atom(_) =>
           Failure(RuleNotApplicableException())
-        case OneOf(left, right) =>
-          evaluate(eval(left)).recoverWith {
-            case _: RuleNotApplicableException => evaluate(eval(right))
-            case e => evaluate(eval(right)).recoverWith {
+        case Or(left, right) =>
+          evaluate(atom(left)).recoverWith {
+            case _: RuleNotApplicableException => evaluate(atom(right))
+            case e => evaluate(atom(right)).recoverWith {
               case _: RuleNotApplicableException => Failure(e)
               case e2 => Failure(new CompositeException(e, e2))
             }
           }
-        case All(head, tail @ _*) =>
-          (head +: tail).withFilter { case (_, _, ipType) => ruleApplies(ipType) }.map(eval) match {
+        case AllRules(head, tail @ _*) =>
+          (head +: tail).withFilter { case (_, _, ipType) => ruleApplies(ipType) }.map(atom) match {
             case Seq() => Success(())
             case Seq(h, t @ _*) => evaluate(all(h, t: _*))
           }
-        case Sub(parent, child) =>
+        case IfThenAlso(parent, child) =>
           evaluate(parent).recoverWith(ruleNotApplicableToSuccess).flatMap(_ => evaluate(child))
-        case AllAlgs(head, tail @ _*) =>
+        case AllExpr(head, tail @ _*) =>
           (head +: tail)
             .map(alg => evaluate(alg).recoverWith(ruleNotApplicableToSuccess))
             .collectResults
