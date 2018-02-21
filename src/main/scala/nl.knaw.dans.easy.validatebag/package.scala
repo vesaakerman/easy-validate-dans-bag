@@ -28,7 +28,6 @@ package object validatebag {
   type BagDir = Path
   type Rule = BagDir => Try[Unit]
   type NumberedRule = (RuleNumber, Rule, InfoPackageType)
-  type RuleBase = Seq[NumberedRule]
 
   object InfoPackageType extends Enumeration {
     type InfoPackageType = Value
