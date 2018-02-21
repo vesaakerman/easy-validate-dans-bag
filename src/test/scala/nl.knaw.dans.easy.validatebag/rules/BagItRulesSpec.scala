@@ -61,6 +61,13 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   val testDirOfNonexistingManifestSHA1: BagDir = Paths.get("src/test/resources/bags/nonexistingManifestSHA1")
   val testDirOfExistingManifestSHA1: BagDir = Paths.get("src/test/resources/bags/existingManifestSHA1")
   val testDirOfExistingManifestSHA1missingPayloadEntries: BagDir = Paths.get("src/test/resources/bags/existingManifestSHA1missingPayloadEntries")
+  val testDirOfExistingManifestAndTagManifestsMD5SHA1: BagDir = Paths.get("src/test/resources/bags/existingManifestsAndTagmanifestsMD5SHA1")
+  val testDirOfMissingOptionalManifestAndTagManifests: BagDir = Paths.get("src/test/resources/bags/missingOptionalManifestsAndTagmanifests")
+  val testDirOfMissingContentTagmanifestSHA1: BagDir = Paths.get("src/test/resources/bags/missingContentTagmanifestSHA1")
+  val testDirOfMissingContentTagmanifestMD5: BagDir = Paths.get("src/test/resources/bags/missingContentTagmanifestMD5")
+  val testDirOfMissingContentManifestMD5: BagDir = Paths.get("src/test/resources/bags/missingContentManifestMD5")
+
+
 
   //val testDirOfWrongUUID: BagDir = Paths.get("src/test/resources/bags/bag-store/d5/e8f0fbc37486eb918cb06dd5ae5e71/archivedBag1")
   // val error = RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true)
@@ -390,6 +397,91 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
       case Failure(e) => e shouldBe a[RuleViolationDetailsException]
     }
   }
+
+  /*----------------------------------------------------------------*/
+
+  "bagMayContainOtherManifestsAndTagManifests" should "not fail if 'tagmanifest-sha1.txt' is found and contains all tag manifests" in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfExistingManifestAndTagManifestsMD5SHA1)
+    val b: BagDir = Paths.get(testDirOfExistingManifestAndTagManifestsMD5SHA1.toUri)
+    val readBag = bagReader.read(Paths.get(b.toUri))
+    //println(readBag.getTagManifests)
+    readBag.getTagManifests.toArray().foreach(i => println(i))
+    //println(readBag.getTagManifests.toArray().splitAt(1)._2.toString())
+    result should not be a[Failure[_]]
+  }
+
+  it should "not fail if 'tagmanifest-md5.txt' is found and contains all tag manifests" in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfExistingManifestAndTagManifestsMD5SHA1)
+    val b: BagDir = Paths.get(testDirOfExistingManifestAndTagManifestsMD5SHA1.toUri)
+    val readBag = bagReader.read(Paths.get(b.toUri))
+    //println(readBag.getTagManifests)
+    //println(readBag.getTagManifests.addAll(MD5))
+    result should not be a[Failure[_]]
+  }
+
+  it should "not fail if 'manifest-md5.txt' is found and contains all payload manifests" in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfExistingManifestAndTagManifestsMD5SHA1)
+    val b: BagDir = Paths.get(testDirOfExistingManifestAndTagManifestsMD5SHA1.toUri)
+    val readBag = bagReader.read(Paths.get(b.toUri))
+    //println(readBag.getPayLoadManifests)
+    result should not be a[Failure[_]]
+  }
+
+  it should " not fail if 'tagmanifest-sha1.txt' is missing " in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfMissingOptionalManifestAndTagManifests)
+    result should not be a[Failure[_]]
+  }
+
+  it should " not fail if 'tagmanifest-md5.txt' is missing " in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfMissingOptionalManifestAndTagManifests)
+    result should not be a[Failure[_]]
+  }
+
+  it should " not fail if 'manifest-md5.txt' is missing " in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfMissingOptionalManifestAndTagManifests)
+    result should not be a[Failure[_]]
+  }
+
+  it should " fail if 'tagmanifest-sha1.txt' exists but a part of the content missing " in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfMissingContentTagmanifestSHA1)
+    result shouldBe a[Failure[_]]
+    inside(result) {
+      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    }
+  }
+
+  it should " fail if 'tagmanifest-md5.txt' exists but a part of the content missing " in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfMissingContentTagmanifestMD5)
+    result shouldBe a[Failure[_]]
+    inside(result) {
+      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    }
+  }
+
+  it should " fail if 'manifest-md5.txt' exists but a part of the content missing " in {
+    val result = bagMayContainOtherManifestsAndTagManifests(testDirOfMissingContentManifestMD5)
+    result shouldBe a[Failure[_]]
+    inside(result) {
+      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    }
+  }
+
+
+
+  /*----------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   val bagReader: BagReader = new BagReader
 

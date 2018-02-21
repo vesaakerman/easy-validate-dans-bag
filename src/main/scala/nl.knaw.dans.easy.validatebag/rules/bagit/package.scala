@@ -18,13 +18,13 @@ package nl.knaw.dans.easy.validatebag.rules
 import java.nio.file.{ Files, Paths }
 
 import gov.loc.repository.bagit.reader.BagReader
+//import gov.loc.repository.bagit.reader.ManifestReader
 import nl.knaw.dans.easy.validatebag.validation
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.filefilter.TrueFileFilter
+import org.apache.commons.io.filefilter.{ DirectoryFileFilter, NotFileFilter, TrueFileFilter, WildcardFileFilter }
+import org.apache.commons.io.{ FileUtils, IOCase }
 
 import scala.language.postfixOps
 import scala.util.{ Failure, Success }
-//import gov.loc.repository.bagit.domain.Bag
 //import gov.loc.repository.bagit.exceptions._
 import nl.knaw.dans.easy.validatebag.BagDir
 import nl.knaw.dans.easy.validatebag.validation.fail
@@ -182,15 +182,71 @@ package object bagit {
       FileUtils.listFilesAndDirs(b.resolve("data").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
         if(i.isFile){
           if(!readBag.getPayLoadManifests.toString.contains(i.toString))
-            fail("Mandatory payload manifest is missing for " + i)
+            fail("Mandatory payload manifest is missing for " + i + " manifest-sha1.txt ")
         }
       )
 
     }
   }
 
+  def bagMayContainOtherManifestsAndTagManifests(b: BagDir) = Try {
 
+    if (Files.exists(b.resolve("tagmanifest-sha1.txt"))) {
+      val readBag = bagReader.read(Paths.get(b.toUri))
+      FileUtils.listFilesAndDirs(b.resolve("metadata").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
+        if (i.isFile) {
+          readBag.getTagManifests.toArray().foreach(j =>
+            if(j.toString.contains("algorithm=SHA1") && (!j.toString.contains(i.toString)))
+               fail("Mandatory tag manifest is missing for " + i + " in tagmanifest-sha1.txt ")
+            )
+        }
+      )
+      FileUtils.listFiles(b.toRealPath().toFile,
+        new WildcardFileFilter("*.txt", IOCase.SENSITIVE),
+        new NotFileFilter(DirectoryFileFilter.DIRECTORY)).forEach(i =>
+        if(i != b.resolve("tagmanifest-sha1.txt").toRealPath().toFile){
+          readBag.getTagManifests.toArray().foreach(j =>
+            if(j.toString.contains("algorithm=SHA1") && (!j.toString.contains(i.toString)))
+              fail("Mandatory tag manifest is missing for " + i + " in tagmanifest-sha1.txt ")
+          )
+        }
+      )
+    }
 
+    if (Files.exists(b.resolve("tagmanifest-md5.txt"))) {
+      val readBag = bagReader.read(Paths.get(b.toUri))
+      FileUtils.listFilesAndDirs(b.resolve("metadata").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
+        if (i.isFile) {
+          readBag.getTagManifests.toArray().foreach(j =>
+            if(j.toString.contains("algorithm=MD5") && (!j.toString.contains(i.toString)))
+            fail("Mandatory tag manifest is missing for " + i + " in tagmanifest-md5.txt ")
+          )
+        }
+      )
+      FileUtils.listFiles(b.toRealPath().toFile,
+        new WildcardFileFilter("*.txt", IOCase.SENSITIVE),
+        new NotFileFilter(DirectoryFileFilter.DIRECTORY)).forEach(i =>
+        if (i != b.resolve("tagmanifest-md5.txt").toRealPath().toFile) {
+          readBag.getTagManifests.toArray().foreach(j =>
+            if(j.toString.contains("algorithm=MD5") && (!j.toString.contains(i.toString)))
+            fail("Mandatory tag manifest is missing for " + i + " in tagmanifest-md5.txt ")
+          )
+        }
+      )
+    }
+
+    if (Files.exists(b.resolve("manifest-md5.txt"))) {
+        val readBag = bagReader.read(Paths.get(b.toUri))
+        FileUtils.listFilesAndDirs(b.resolve("data").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
+          if(i.isFile){
+            readBag.getPayLoadManifests.toArray().foreach(j =>
+              if(j.toString.contains("algorithm=MD5") && (!j.toString.contains(i.toString)))
+              fail("Mandatory payload manifest is missing for " + i + " in manifest-md5.txt ")
+            )
+          }
+        )
+      }
+  }
 
 
 

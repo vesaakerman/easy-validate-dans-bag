@@ -49,6 +49,8 @@ package object rules {
       numberedRule("1.2.3", bagInfoTxtMayContainBagItProfileURIV0),
       numberedRule("1.2.4", bagInfoTxtMustContainCreated),
       numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf),
+      numberedRule("1.3.1", bagMustContainSHA1),
+      numberedRule("1.3.2", bagMayContainOtherManifestsAndTagManifests),
       numberedRule("2.0.1", bagMustContainMetadataFile),
       numberedRule("2.0.2", metadataFileMustContainDatasetAndFiles)
     ),
