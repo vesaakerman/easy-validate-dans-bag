@@ -15,8 +15,27 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import nl.knaw.dans.easy.validatebag.TestSupportFixture
+import java.nio.file.Paths
+
+import nl.knaw.dans.easy.validatebag.{ BagDir, TestSupportFixture }
+import nl.knaw.dans.easy.validatebag.rules.metadata.parseNoWS
+
+import scala.xml.{ NodeSeq, XML }
+
 
 class MetadataRulesSpec extends TestSupportFixture {
+
+  " datasetMustAdhereToVersion2017_09ofDDMxmlschema" should "parse dataset.xml" in {
+    val testDirOfMissingOptionalManifestAndTagManifests: BagDir = Paths.get("src/test/resources/bags/missingOptionalManifestsAndTagmanifests")
+    val b: BagDir = Paths.get(testDirOfMissingOptionalManifestAndTagManifests.toUri)
+    val pathOfMetadata = b.resolve("metadata")
+    val pathOfDatasetXml = pathOfMetadata.toRealPath().resolve("dataset.xml")
+    val parsedDatasetXml: NodeSeq = parseNoWS(XML.loadFile(pathOfDatasetXml.toString).toString)
+
+    //parsedDatasetXml.seq shouldBe "sth"
+
+
+  }
+
 
 }

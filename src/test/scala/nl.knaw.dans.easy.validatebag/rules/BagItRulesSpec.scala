@@ -69,41 +69,6 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
 
 
 
-  //val testDirOfWrongUUID: BagDir = Paths.get("src/test/resources/bags/bag-store/d5/e8f0fbc37486eb918cb06dd5ae5e71/archivedBag1")
-  // val error = RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true)
-  // Failure(error)
-  // def visibleForTestRuleVioExc = {
-  // RuleViolationException.getClass.getDeclaredMethods.foreach { m =>
-  // m.setAccessible(true)
-  // }
-  // var y: Method = RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true).getClass.getEnclosingMethod
-  // var ret: Array[Type] = y.getGenericExceptionTypes
-  // val error: Array[Class[_]] = m.getExceptionTypes
-  // error.foreach{
-  //er => if(er == RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true).getClass)
-  //val exc = er
-  // }
-  // val x = RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true).foreach(meth => meth.invoke(meth, new Exception))
-  // x
-  // }
-  //private val exception = RuleViolationDetailsException
-  //RuleViolationException.getClass.getDeclaredMethods.foreach(_.setAccessible(true))
-  //validation.getClass.getPackage()
-  // g.foreach(_.setAccessible(true))
-  // validation.getClass.getDeclaredMethods.foreach { m =>
-  //  m.setAccessible(true)
-  //}
-  //case class err() {
-  //  RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true).getClass.newInstance()
-  //def error = new err()
-  //}
-  //val ee: Array[Method] = RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true).getClass.newInstance()
-  //val ee2 = RuleViolationException.getClass.getDeclaredMethods
-  //ee2 shouldBe RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true)
-  //RuleViolationException.getClass.getDeclaredMethods.foreach (m => m.setAccessible(true))
-  //val x = RuleViolationException.getClass.getDeclaredMethods.filter(RuleViolationDetailsException => true).foreach(meth => meth.invoke(meth, new Exception))
-  //RuleViolationException.getClass.getDeclaredMethods.foreach (m => m.setAccessible(true))
-
   "bagMustContainBagInfoTxt" should "fail if bag-info.txt is not found" in {
 
     val result = bagMustContainBagInfoTxt(testDirOfMissingBagInfo)
@@ -415,7 +380,6 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
     val b: BagDir = Paths.get(testDirOfExistingManifestAndTagManifestsMD5SHA1.toUri)
     val readBag = bagReader.read(Paths.get(b.toUri))
     //println(readBag.getTagManifests)
-    //println(readBag.getTagManifests.addAll(MD5))
     result should not be a[Failure[_]]
   }
 
@@ -465,8 +429,6 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
       case Failure(e) => e shouldBe a[RuleViolationDetailsException]
     }
   }
-
-
 
   /*----------------------------------------------------------------*/
 
