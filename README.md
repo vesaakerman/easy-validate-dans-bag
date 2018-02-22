@@ -7,7 +7,7 @@ Determines whether a DANS bag is valid according to the DANS BagIt Profile.
 SYNOPSIS
 --------
 
-    easy-validate-dans-bag [--aip] [--response-format json|text] <bag>
+    easy-validate-dans-bag [--aip] [--response-format,-f json|text] <bag>
     easy-validate-dans-bag run-service
 
 
@@ -77,11 +77,13 @@ ARGUMENTS
 
     Options:
 
-        --help      Show help message
-        --version   Show version of this program
+          --aip                      Validate as AIP (instead of as SIP)
+      -f, --response-format  <arg>   Format for the result report (default = text)
+          --help                     Show help message
+          --version                  Show version of this program
 
     Subcommand: run-service - Starts EASY Validate Dans Bag as a daemon that services HTTP requests
-        --help   Show help message
+          --help   Show help message
     ---
 
 EXAMPLES

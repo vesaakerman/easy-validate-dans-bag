@@ -30,9 +30,9 @@ package object rules {
   /**
    * Checks the bags using the rules specified in the sub-packages of this package.
    *
-   * @param b the bag directory to check
+   * @param b                 the bag directory to check
    * @param asInfoPackageType check as AIP or SIP
-   * @param isReadable the function that checks if a file is readable
+   * @param isReadable        the function that checks if a file is readable
    * @return Success or Failure
    */
   def checkBag(b: BagDir, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
@@ -40,7 +40,7 @@ package object rules {
     validation.checkRules(b, allRules, asInfoPackageType)
   }
 
-  private val allRules: Map[ProfileVersion, RuleBase] = Map(
+  /*private val allRules: Map[ProfileVersion, RuleBase] = Map(
     0 -> Seq(
       numberedRule("1.1.1", bagMustBeValid, SIP),
       numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
@@ -63,5 +63,52 @@ package object rules {
       numberedRule("1.2.4", bagInfoTxtMustContainCreated),
       numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf)
     )
-  )
+  )*/
+
+  private val allRules: Map[ProfileVersion, RuleExpression] = {
+    Map(
+      0 -> all(
+        ifThenAlso(
+          or(
+            numberedRule("1.1.1", bagMustBeValid, SIP),
+            numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP)
+          ),
+          all(
+            ifThenAlso(
+              numberedRule("1.2.1", bagMustContainBagInfoTxt),
+              all(
+                numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersion("0.0.0"))
+                // TODO add other rules regarding bagInfo here
+              )
+            )
+            // TODO add sha1 and payload rules here
+          )
+        )
+        // TODO add the others
+      )
+    )
+  }
+
+  /*
+   * - (1.1.1, The bag MUST be VALID according to ...,          SIP) \/ (1.1.2, The bag MUST be virtually-valid in the ...,    AIP)
+   *     - (1.2.1, The bag MUST contain a bag-info.txt file..., BOTH)
+   *         - (1.2.2, The bag-info.txt file MAY contain  ...,  BOTH)
+   *         - (1.2.3, The bag-info.txt file MAY contain  ...,  BOTH)
+   *         - (1.2.4, The bag-info.txt file MUST contain ...,  BOTH)
+   *         - (1.2.5, The bag-info.txt file MAY contain  ...,  BOTH)
+   *     - (1.3.1, The bag MUST have a SHA-1 payload ...,       BOTH)
+   *     - (1.3.2, The bag MAY have other payload manifests..., BOTH)
+   * - (2.1.1, The bag MUST have a tag-directory ...,           BOTH)
+   *     - (2.1.2, The metadata directory MUST contain ...,     BOTH)
+   *         - (3.1.1, The file metadata/dataset.xml MUST ...,  BOTH)
+   *         - (3.1.2, The file metadata/dataset.xml MAY ...,   BOTH)
+   *         - (3.1.3, The file metadata/dataset.xml MUST ...,  AIP)
+   *         - (3.2.1, ...
+   *         - (3.2.2, ...
+   *         - (3.2.3, ...
+   *         - (3.2.4, ...
+   *         - (3.2.5, ...
+   *         - (3.2.6, ...
+   *         - (3.2.7, ...
+   */
 }

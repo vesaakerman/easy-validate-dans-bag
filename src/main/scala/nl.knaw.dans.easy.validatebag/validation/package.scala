@@ -17,15 +17,14 @@ package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.{ Files, Path }
 
+import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 package object validation extends DebugEnhancedLogging {
-
-  import InfoPackageType._
 
   /**
    * Exception specifying the rule violated and what the violation consisted of. The number refers back
@@ -44,6 +43,8 @@ package object validation extends DebugEnhancedLogging {
    */
   case class RuleViolationDetailsException(details: String) extends Exception(details)
 
+  private case class RuleNotApplicableException() extends Exception("rule not applicable, testing for something else")
+
   /**
    * Signals a rule violation. This function should be called from the rule functions to indicate that
    * the rule was not met.
@@ -55,14 +56,69 @@ package object validation extends DebugEnhancedLogging {
   /**
    * Creates a NumberedRule.
    *
-   * @param ruleNumber the number of the rule in the profile version
-   * @param rule the rule function
+   * @param ruleNumber      the number of the rule in the profile version
+   * @param rule            the rule function
    * @param infoPackageType the Information Package type(s) that this rule applies to
    * @return
    */
 
   def numberedRule(ruleNumber: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH): NumberedRule = {
     (ruleNumber, rule, infoPackageType)
+  }
+
+  /**
+   * A rule expression is one rule or a composite rule. Rules can be combined in several ways:
+   *
+   * - Or: one of the rules must succeed
+   * - All: all rules must succeed
+   * - IfThenAlso: If the first rule succeeds, the rest must also succeed
+   *
+   */
+  sealed abstract class RuleExpression
+  case class Atom(rule: NumberedRule) extends RuleExpression
+  case class Or(left: NumberedRule, right: NumberedRule) extends RuleExpression
+  case class AllRules(head: NumberedRule, tail: NumberedRule*) extends RuleExpression
+  case class IfThenAlso(parent: RuleExpression, child: RuleExpression) extends RuleExpression
+  case class AllExpr(head: RuleExpression, tail: RuleExpression*) extends RuleExpression
+
+  // atomic action
+  def atom(rule: NumberedRule): RuleExpression = {
+    Atom(rule)
+  }
+
+  // either the left or right rule should succeed
+  def or(left: NumberedRule, right: NumberedRule): RuleExpression = {
+    Or(left, right)
+  }
+
+  // all these rules should succeed
+  def all(head: NumberedRule, tail: NumberedRule*): RuleExpression = {
+    AllRules(head, tail: _*)
+  }
+
+  // all validations should succeed
+  def all(head: RuleExpression, tail: RuleExpression*): RuleExpression = {
+    AllExpr(head, tail: _*)
+  }
+
+  // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
+  def ifThenAlso(parent: NumberedRule, child: NumberedRule): RuleExpression = {
+    IfThenAlso(atom(parent), atom(child))
+  }
+
+  // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
+  def ifThenAlso(parent: NumberedRule, child: RuleExpression): RuleExpression = {
+    IfThenAlso(atom(parent), child)
+  }
+
+  // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
+  def ifThenAlso(parent: RuleExpression, child: NumberedRule): RuleExpression = {
+    IfThenAlso(parent, atom(child))
+  }
+
+  // if parent succeeds, child should also succeed; if parent fails, child is not evaluated
+  def ifThenAlso(parent: RuleExpression, child: RuleExpression): RuleExpression = {
+    IfThenAlso(parent, child)
   }
 
   /**
@@ -78,8 +134,7 @@ package object validation extends DebugEnhancedLogging {
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
-
-  def checkRules(bag: BagDir, rules: Map[ProfileVersion, RuleBase], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkRules(bag: BagDir, rules: Map[ProfileVersion, RuleExpression], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
     /**
      * `isReadable` was added because unit testing this by actually setting files on the file system to non-readable and back
      * can get messy. After a failed build one might be left with a target folder that refuses to be cleaned. Unless you are
@@ -95,6 +150,8 @@ package object validation extends DebugEnhancedLogging {
 
   private def checkIfValidationCanProceed(bag: BagDir)(implicit isReadable: Path => Boolean): Try[Unit] = Try {
     trace(bag)
+    debug(s"Checking existence of $bag")
+    require(Files.exists(bag), "Bag does not exist")
     debug(s"Checking readability of $bag")
     require(isReadable(bag), s"Bag is non-readable")
     debug(s"Checking if $bag is directory")
@@ -108,21 +165,54 @@ package object validation extends DebugEnhancedLogging {
     }
   }
 
+  private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, RuleExpression], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
 
-  private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, RuleBase], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
-    rules(getProfileVersion(bag))
-      .collect {
-        case (nr, rule, ipType) if ipType == asInfoPackageType || ipType == BOTH =>
+    def ruleApplies(ipType: InfoPackageType) = {
+      ipType == asInfoPackageType || ipType == BOTH
+    }
+
+    def ruleNotApplicableToSuccess: PartialFunction[Throwable, Try[Unit]] = {
+      case RuleNotApplicableException() => Success(())
+    }
+
+    def evaluate(expression: RuleExpression): Try[Unit] = {
+      expression match {
+        case Atom((nr, rule, ipType)) if ruleApplies(ipType) =>
           rule(bag).recoverWith {
             case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
           }
+        case Atom(_) =>
+          Failure(RuleNotApplicableException())
+        case Or(left, right) =>
+          evaluate(atom(left)).recoverWith {
+            case _: RuleNotApplicableException => evaluate(atom(right))
+            case e => evaluate(atom(right)).recoverWith {
+              case _: RuleNotApplicableException => Failure(e)
+              case e2 => Failure(new CompositeException(e, e2))
+            }
+          }
+        case AllRules(head, tail @ _*) =>
+          (head +: tail).withFilter { case (_, _, ipType) => ruleApplies(ipType) }.map(atom) match {
+            case Seq() => Success(())
+            case Seq(h, t @ _*) => evaluate(all(h, t: _*))
+          }
+        case IfThenAlso(parent, child) =>
+          evaluate(parent).recoverWith(ruleNotApplicableToSuccess).flatMap(_ => evaluate(child))
+        case AllExpr(head, tail @ _*) =>
+          (head +: tail)
+            .map(alg => evaluate(alg).recoverWith(ruleNotApplicableToSuccess))
+            .collectResults
+            .map(_ => ())
       }
-      .collectResults
-      .map(_ => ())
+    }
+
+    evaluate(rules(getProfileVersion(bag)))
+      .recoverWith {
+        case _: RuleNotApplicableException => Success(())
+      }
   }
 
-
-  private def getProfileVersion(bag: BagDir): Int = {
+  private def getProfileVersion(bag: BagDir): ProfileVersion = {
     0 // TODO: retrieve actual version
   }
 }
