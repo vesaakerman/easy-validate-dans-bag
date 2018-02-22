@@ -17,10 +17,11 @@ package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.{ Files, Path, Paths }
 
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.io.FileUtils
 import org.scalatest._
 
-trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInstancePerTest {
+trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInstancePerTest with DebugEnhancedLogging {
   lazy val testDir: Path = {
     val path = Paths.get(s"target/test/${ getClass.getSimpleName }").toAbsolutePath
     FileUtils.deleteQuietly(path.toFile)
@@ -28,5 +29,5 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInst
     path
   }
 
-  implicit val isReable: Path => Boolean = Files.isReadable
+  implicit val isReadable: Path => Boolean = Files.isReadable
 }

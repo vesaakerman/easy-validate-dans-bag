@@ -179,10 +179,10 @@ package object bagit {
       fail("Mandatory file 'manifest-sha1.txt' not found in bag. ")
     else {
       val readBag = bagReader.read(Paths.get(b.toUri))
-      FileUtils.listFilesAndDirs(b.resolve("data").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
-        if(i.isFile){
-          if(!readBag.getPayLoadManifests.toString.contains(i.toString))
-            fail("Mandatory payload manifest is missing for " + i + " manifest-sha1.txt ")
+      FileUtils.listFilesAndDirs(b.resolve("data").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(file =>
+        if(file.isFile){
+          if(!readBag.getPayLoadManifests.toString.contains(file.toString))
+            fail(s"Mandatory payload manifest entry is missing for $file manifest-sha1.txt ")
         }
       )
 

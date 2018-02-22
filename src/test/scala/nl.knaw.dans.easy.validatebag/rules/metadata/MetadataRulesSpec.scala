@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.validatebag.rules
+package nl.knaw.dans.easy.validatebag.rules.metadata
 
 import java.nio.file.Paths
 
 import nl.knaw.dans.easy.validatebag.{ BagDir, TestSupportFixture }
-import nl.knaw.dans.easy.validatebag.rules.metadata.parseNoWS
 
 import scala.xml.{ NodeSeq, XML }
 

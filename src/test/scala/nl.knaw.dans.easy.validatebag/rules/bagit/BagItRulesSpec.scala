@@ -15,34 +15,21 @@
  */
 package nl.knaw.dans.easy.validatebag.rules.bagit
 
-
-import java.nio.file.Paths
-
-import org.joda.time.DateTime
-import org.scalatest.exceptions.TestFailedException
-//import com.google.common.annotations
-//import com.google.common.annotations.VisibleForTesting
-import java.lang.Object
+import java.nio.file.{ Files, Paths }
 
 import gov.loc.repository.bagit.reader.BagReader
-import nl.knaw.dans.easy.validatebag.BagDir
-import nl.knaw.dans.easy.validatebag.InfoPackageType._
+import nl.knaw.dans.easy.validatebag.{ BagDir, TestSupportFixture }
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
-//RuleViolationDetailsException
-//EasyValidateDansBagApp
-
-import java.nio.file.Files
-
-import nl.knaw.dans.easy.validatebag.TestSupportFixture
-import nl.knaw.dans.easy.validatebag.rules.bagit
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
-import org.scalatest.{ FlatSpec, PrivateMethodTester }
-//import org.apache.commons.io.filefilter.IOFileFilter.makeFileOnly
-import scala.util.{ Failure, Try }
-class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
+import org.scalatest.exceptions.TestFailedException
 
-  val testDirOfMissingBagInfo: BagDir = Paths.get("src/test/resources/bags/missingBagInfo")
+import scala.util.{ Failure, Success, Try }
+
+class BagItRulesSpec extends TestSupportFixture {
+  private val bagsDir = Paths.get("src/test/resources/bags")
+
+  val testDirOfMissingBagInfo: BagDir = bagsDir.resolve("missingBagInfo")
   val testDirOfMissingBagItProfileVersion: BagDir = Paths.get("src/test/resources/bags/minimal")
   val testDirOfWrongBagItProfileVersion: BagDir = Paths.get("src/test/resources/bags/wrongBagItProfileVersion")
   val testDirOfBagItProfileVersionWithNoValue: BagDir = Paths.get("src/test/resources/bags/BagItProfileVersionWithNoValue")
@@ -66,7 +53,6 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   val testDirOfMissingContentTagmanifestSHA1: BagDir = Paths.get("src/test/resources/bags/missingContentTagmanifestSHA1")
   val testDirOfMissingContentTagmanifestMD5: BagDir = Paths.get("src/test/resources/bags/missingContentTagmanifestMD5")
   val testDirOfMissingContentManifestMD5: BagDir = Paths.get("src/test/resources/bags/missingContentManifestMD5")
-
 
 
   "bagMustContainBagInfoTxt" should "fail if bag-info.txt is not found" in {
@@ -266,7 +252,7 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   }
 
   it should " not fail if the urn in 'Is-Version-Of' points to an existing base bag in bag-store" in {
-    val baseDir : BagDir = Paths.get("src/test/resources/bags/bag-store")
+    val baseDir: BagDir = Paths.get("src/test/resources/bags/bag-store")
     val result = bagInfoTxtMayContainIsVersionOf(testDirOfUuidPointingToExistingBaseBag, baseDir)
     result should not be a[Failure[_]]
   }
@@ -307,20 +293,20 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   //TODO but I was not able to integrate that function into this project. Do I really need that?
   //TODO Any suggestions?
 
-  def bagInfoTxtMayContainIsVersionOf(b: BagDir, bb : BagDir ) = Try {
+  def bagInfoTxtMayContainIsVersionOf(b: BagDir, bb: BagDir) = Try {
     val readBag = bagReader.read(Paths.get(b.toUri))
     val dirOfBagStore = Paths.get(bb.toUri)
     println("dirOfBagStore: " + dirOfBagStore)
     if (counterOfTheSameKeys(b, "Is-Version-Of") <= 1) {
-      if (readBag.getMetadata.contains("Is-Version-Of") ) {
-        if (readBag.getMetadata.get("Is-Version-Of").get(0).contains("urn:uuid:") ) {
+      if (readBag.getMetadata.contains("Is-Version-Of")) {
+        if (readBag.getMetadata.get("Is-Version-Of").get(0).contains("urn:uuid:")) {
           val uuid = readBag.getMetadata.get("Is-Version-Of").get(0).stripPrefix("urn:uuid:").replaceAll("-", "").trim()
           println(uuid)
-          val dirOfBaseBag : BagDir = Paths.get(dirOfBagStore + "/" + uuid.splitAt(2)._1 + "/" + uuid.splitAt(2)._2)
+          val dirOfBaseBag: BagDir = Paths.get(dirOfBagStore + "/" + uuid.splitAt(2)._1 + "/" + uuid.splitAt(2)._2)
           println("dirOfBaseBag: " + dirOfBaseBag)
-          if(Files.notExists(dirOfBaseBag))
+          if (Files.notExists(dirOfBaseBag))
             fail(" Violation of rule 1.2.5 in v1 and v0: uuid points to a nonexisting base-id ")
-            println(Files.notExists(dirOfBaseBag))
+          println(Files.notExists(dirOfBaseBag))
         }
         else fail("Violation of rule 1.2.5 in v1 and v0: 'urn:uuid:' title is missing in the value of the key'Is-Version-Of' ")
       }
@@ -338,12 +324,8 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
     }
   }
 
-  it should " not fail if 'manifest-sha1.txt' is found in the bag" in {
-    val result = bagMustContainSHA1(testDirOfExistingManifestSHA1)
-    val b: BagDir = Paths.get(testDirOfExistingManifestSHA1.toUri)
-    val readBag = bagReader.read(Paths.get(b.toUri))
-    println(readBag.getPayLoadManifests)
-    result should not be a[Failure[_]]
+  it should "succeed if 'manifest-sha1.txt' is correct" in {
+    bagMustContainSHA1(testDirOfExistingManifestSHA1) shouldBe a[Success[_]]
   }
 
   it should " fail if one of the payload manifests is missing in 'manifest-sha1.txt' " in {
@@ -352,9 +334,9 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
     val readBag = bagReader.read(Paths.get(b.toUri))
     println(readBag.getPayLoadManifests)
     FileUtils.listFilesAndDirs(b.resolve("data").toRealPath().toFile, TrueFileFilter.TRUE, TrueFileFilter.TRUE).forEach(i =>
-      if(i.isFile){
-        if(readBag.getPayLoadManifests.toString.contains(i.toString))
-        println(i)
+      if (i.isFile) {
+        if (readBag.getPayLoadManifests.toString.contains(i.toString))
+          println(i)
       }
     )
     result shouldBe a[Failure[_]]
@@ -433,18 +415,6 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   /*----------------------------------------------------------------*/
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   val bagReader: BagReader = new BagReader
 
   val b1: BagDir = Paths.get(testDirOfMissingBagItProfileVersion.toUri)
@@ -467,7 +437,7 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   /* the following tests are just for double-check on test inputs and getMetadata function */
 
   "a NullPointerException" should "be thrown for BagIt-Profile-Version in testDirOfMissingBagItProfileVersion" in {
-    a[NullPointerException] should be thrownBy {bagReader.read(b1).getMetadata.get("BagIt-Profile-Version").get(0)}
+    a[NullPointerException] should be thrownBy { bagReader.read(b1).getMetadata.get("BagIt-Profile-Version").get(0) }
   }
 
   "BagIt-Profile-Version" should "be '9.9.9' in testDirOfWrongBagItProfileVersion" in {
@@ -479,7 +449,7 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   }
 
   "a NullPointerException" should "be thrown for BagIt-Profile-URI in testDirOfMissingBagItProfileURI" in {
-    a[NullPointerException] should be thrownBy {bagReader.read(b4).getMetadata.get("BagIt-Profile-URI").get(0)}
+    a[NullPointerException] should be thrownBy { bagReader.read(b4).getMetadata.get("BagIt-Profile-URI").get(0) }
   }
 
   "BagIt-Profile-URI" should "be 'doi:wrongDoi' in testDirOfWrongBagItProfileURI" in {
@@ -495,13 +465,13 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
   }
 
   "nbr of the key BagIt-Profile-Version" should "be greater than 1 in testDirOfSeveralBagItProfileVersionsV1" in {
-    counterOfTheSameKeys(b8, "BagIt-Profile-Version") should be >1
+    counterOfTheSameKeys(b8, "BagIt-Profile-Version") should be > 1
   }
 
 
   "print" should "return" in {
-   // val bagInfoProperties = new PropertiesConfiguration(Paths.get(testDirOfWrongBagItProfileURI.resolve("bag-info.txt").toUri).toFile)
-   // bagInfoProperties.getString("BagIt-Profile-URI").equals("doi:wrongDoi") shouldBe true
+    // val bagInfoProperties = new PropertiesConfiguration(Paths.get(testDirOfWrongBagItProfileURI.resolve("bag-info.txt").toUri).toFile)
+    // bagInfoProperties.getString("BagIt-Profile-URI").equals("doi:wrongDoi") shouldBe true
     //val b = Paths.get(testDirOfWrongBagItProfileURI.resolve("bag-info.txt").toUri)
     //val b2 = Paths.get(testDirOfWrongBagItProfileURI.toUri)
     val b1 = Paths.get(testDirOfWrongBagItProfileVersion.toUri)
@@ -517,7 +487,7 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
     //(bagReader.read(b11).getRootDir.getParent.getParent.getFileName.toString + bagReader.read(b11).getRootDir.getParent.getFileName.toString)  shouldBe "x"
     //val uuid = bagReader.read(b11).getMetadata.get("Is-Version-Of").get(0).stripPrefix("urn:uuid:").replaceAll("-", "").trim()
     //Files.notExists(Paths.get("./srv/dans.knaw.nl/bag-store/" + uuid.splitAt(2)._1 + "/" + uuid.splitAt(2)._2)) shouldBe false
-    val baseDir : BagDir = Paths.get("src/test/resources/bags/bag-store")
+    val baseDir: BagDir = Paths.get("src/test/resources/bags/bag-store")
     //Paths.get(baseDir.toUri) shouldBe "x"
 
     val bb = Paths.get(testDirOfUuidPointingToExistingBaseBag.toUri)
@@ -562,7 +532,6 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
     //println(valueOfCreatedNonIso.toDateTimeISO
 
 
-
     /*
     Try (value.getMillisOfSecond) match {
       case Success(_) => println(value)
@@ -589,14 +558,14 @@ class BagItRulesSpec extends TestSupportFixture with PrivateMethodTester {
     //}
 
 
- //  val valueOfCreated = new DateTime(readBag.getMetadata.get("Created").get(0))
- //   println(valueOfCreated)
-  //  println(valueOfCreated.getMillisOfSecond)
-  //  println(valueOfCreated.getZone)
- //   println(valueOfCreated.toDateTimeISO)
-        //if (valueOfCreated.getMillisOfSecond) {
-        //  fail("Violation of rule 1.2.4 in v1 and v0: No milliseconds info in 'Created' ")
-        //}
+    //  val valueOfCreated = new DateTime(readBag.getMetadata.get("Created").get(0))
+    //   println(valueOfCreated)
+    //  println(valueOfCreated.getMillisOfSecond)
+    //  println(valueOfCreated.getZone)
+    //   println(valueOfCreated.toDateTimeISO)
+    //if (valueOfCreated.getMillisOfSecond) {
+    //  fail("Violation of rule 1.2.4 in v1 and v0: No milliseconds info in 'Created' ")
+    //}
 
 
     Files.exists(dirOfBaseBag) should not be a[Failure[_]]
