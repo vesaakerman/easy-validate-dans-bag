@@ -19,7 +19,9 @@ import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
-import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.easy.validatebag.rules.structural._
+//import nl.knaw.dans.easy.validatebag.rules.bagit.baseBag
+import nl.knaw.dans.easy.validatebag.validation.numberedRule
 
 import scala.util.Try
 
@@ -37,6 +39,31 @@ package object rules {
     require(asInfoPackageType != BOTH, "asInfoPackageType must be either SIP (default) or AIP")
     validation.checkRules(b, allRules, asInfoPackageType)
   }
+
+  /*private val allRules: Map[ProfileVersion, RuleBase] = Map(
+    0 -> Seq(
+      numberedRule("1.1.1", bagMustBeValid, SIP),
+      numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
+      numberedRule("1.2.1", bagMustContainBagInfoTxt),
+      numberedRule("1.2.2", bagInfoTxtMayContainBagItProfileVersionV0),
+      numberedRule("1.2.3", bagInfoTxtMayContainBagItProfileURIV0),
+      numberedRule("1.2.4", bagInfoTxtMustContainCreated),
+      numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf),
+      numberedRule("1.3.1", bagMustContainSHA1),
+      numberedRule("1.3.2", bagMayContainOtherManifestsAndTagManifests),
+      numberedRule("2.0.1", bagMustContainMetadataFile),
+      numberedRule("2.0.2", metadataFileMustContainDatasetAndFiles)
+    ),
+    1 -> Seq(
+      numberedRule("1.1.1", bagMustBeValid, SIP),
+      numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP),
+      numberedRule("1.2.1", bagMustContainBagInfoTxt),
+      numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersionV1),
+      numberedRule("1.2.3", bagInfoTxtMustContainBagItProfileURIV1),
+      numberedRule("1.2.4", bagInfoTxtMustContainCreated),
+      numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf)
+    )
+  )*/
 
   private val allRules: Map[ProfileVersion, RuleExpression] = {
     Map(

@@ -38,7 +38,9 @@ object Configuration {
       properties = new PropertiesConfiguration() {
         setDelimiterParsingDisabled(true)
         load(cfgPath.resolve("application.properties").toFile)
+        load(cfgPath.resolve("bagStore.properties").toFile)
       }
     )
   }
+
 }

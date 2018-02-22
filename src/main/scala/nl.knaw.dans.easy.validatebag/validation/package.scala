@@ -61,6 +61,7 @@ package object validation extends DebugEnhancedLogging {
    * @param infoPackageType the Information Package type(s) that this rule applies to
    * @return
    */
+
   def numberedRule(ruleNumber: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH): NumberedRule = {
     (ruleNumber, rule, infoPackageType)
   }
@@ -145,6 +146,7 @@ package object validation extends DebugEnhancedLogging {
       result <- evaluateRules(bag, rules, asInfoPackageType)
     } yield result
   }
+
 
   private def checkIfValidationCanProceed(bag: BagDir)(implicit isReadable: Path => Boolean): Try[Unit] = Try {
     trace(bag)
