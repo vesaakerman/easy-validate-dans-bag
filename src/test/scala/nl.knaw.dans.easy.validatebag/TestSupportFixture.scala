@@ -17,9 +17,13 @@ package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.{ Files, Path, Paths }
 
+import nl.knaw.dans.easy.validatebag.rules.bagit.bagMustContainBagInfoTxt
+import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.io.FileUtils
 import org.scalatest._
+
+import scala.util.Failure
 
 trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInstancePerTest with DebugEnhancedLogging {
   lazy val testDir: Path = {
@@ -28,6 +32,18 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInst
     Files.createDirectories(path)
     path
   }
+  protected val bagsDir: Path = Paths.get("src/test/resources/bags")
 
   implicit val isReadable: Path => Boolean = Files.isReadable
+
+  protected def testRule(rule: Rule, inputBag: String, includedInErrorMsg: String): Unit = {
+    val result = rule(bagsDir resolve inputBag)
+    result shouldBe a[Failure[_]]
+    inside(result) {
+      case Failure(e) =>
+        e shouldBe a[RuleViolationDetailsException]
+        e.getMessage should include(includedInErrorMsg)
+    }
+  }
+
 }

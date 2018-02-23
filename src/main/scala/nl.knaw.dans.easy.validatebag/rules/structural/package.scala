@@ -27,7 +27,7 @@ package object structural {
 
   val bagReader: BagReader = new BagReader
 
-  def bagMustContainMetadataFile(b: BagDir) = Try {
+  def bagMustContainMetadataDirectory(b: BagDir) = Try {
     if (!Files.exists(b.resolve("metadata")))
       fail("Mandatory file 'metadata' not found in bag. ")
     if(Files.exists(b.resolve("metadata"))){
@@ -43,7 +43,7 @@ package object structural {
   }
 
   def metadataFileMustContainDatasetAndFiles(b:BagDir) = Try {
-    if (bagMustContainMetadataFile(b).isSuccess) {
+    if (bagMustContainMetadataDirectory(b).isSuccess) {
       val pathOfMetadata = b.resolve("metadata")
       if(!Files.exists(pathOfMetadata.toRealPath().resolve("dataset.xml")))
         fail(" Mandatory file 'dataset.xml' is not found in metadata file ")
