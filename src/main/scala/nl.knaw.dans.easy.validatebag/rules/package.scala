@@ -53,15 +53,15 @@ package object rules {
             ifThenAlso(
               numberedRule("1.2.1", bagMustContainBagInfoTxt),
               all(
-//                numberedRule("1.2.2", bagInfoTxtMayContainBagItProfileVersionV0),
-//                numberedRule("1.2.3", bagInfoTxtMayContainBagItProfileURIV0),
-                numberedRule("1.2.4", bagInfoTxtMustContainCreated),
-                numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate),
-//                numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf),
-                numberedRule("1.3.1", bagMustContainSHA1),
-                numberedRule("2.1", bagMustContainMetadataDirectory),
-                numberedRule("2.2", metadataFileMustContainDatasetAndFiles)
-              )
+                ifThenAlso(
+                  numberedRule("1.2.1", bagInfoTxtMayContainOne("BagIt-Profile-Version")),
+                  numberedRule("1.2.1", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-Version", "0.0.0"))),
+                all(numberedRule("1.2.4", bagInfoTxtMustContainCreated),
+                  numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate),
+                  numberedRule("1.3.1", bagMustContainSHA1),
+                  numberedRule("2.1", bagMustContainMetadataDirectory),
+                  numberedRule("2.2", metadataFileMustContainDatasetAndFiles)
+                ))
             )
             // TODO add sha1 and payload rules here
           )
@@ -76,10 +76,10 @@ package object rules {
           ifThenAlso(
             numberedRule("1.2.1", bagMustContainBagInfoTxt),
             all(
-//              numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersionV1),
-//              numberedRule("1.2.3", bagInfoTxtMustContainBagItProfileURIV1),
+              //              numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersionV1),
+              //              numberedRule("1.2.3", bagInfoTxtMustContainBagItProfileURIV1),
               numberedRule("1.2.4", bagInfoTxtMustContainCreated),
-//              numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf),
+              //              numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf),
               numberedRule("1.3.1", bagMustContainSHA1)
             )
           )

@@ -17,27 +17,21 @@ package nl.knaw.dans.easy.validatebag.rules.bagit
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 
-class BagItRulesSpec extends TestSupportFixture {
-  "bagMustContainBagInfoTxt" should "fail if bag-info.txt is not found" in {
-    testRule(bagMustContainBagInfoTxt, "missingBagInfo", "bag-info.txt")
+class ValidityRulesSpec extends TestSupportFixture {
+  /*
+   * We largely rely on bagit-java's validation to be correct.
+   */
+  "bagMustBeValid" should "fail if bagit.txt is missing" in {
+    testRuleViolation(bagMustBeValid, "missing-bagit.txt", "bagit.txt")
   }
 
-  "bagInfoTxtMustContainCreated" should "fail if 'Created' is missing in bag-info.txt" in {
-    testRule(bagInfoTxtMustContainCreated, "missingCreated", "Created")
+  it should "fail if there is a payload file that is not listed in any of the manifests" in {
+    testRuleViolation(bagMustBeValid, "unchecksummed-payload-file", "isn't listed in any manifest")
   }
 
-  "bagInfoTxtCreatedMustBeIsoDate" should "fail if 'Created' is lacking time and time zone" in {
-    testRule(bagInfoTxtCreatedMustBeIsoDate, "missingTimeAndTimeZoneInCreated", "not in correct ISO 8601 format")
+  it should "fail if the checksum of a tag file is incorrect" in {
+    testRuleViolationRegex(bagMustBeValid, "incorrect-tagfile-checksum", "SHA-1.*but was computed".r)
   }
-
-  it should "fail if no millisecond precision provided" in {
-    testRule(bagInfoTxtCreatedMustBeIsoDate, "nonISO8106inCreated", "not in correct ISO 8601 format")
-  }
-
-  it should "fail if incorrect date format" in {
-    testRule(bagInfoTxtCreatedMustBeIsoDate, "nonMillisecondPrecisionInCreated", "not in correct ISO 8601 format")
-  }
-
 
 
 

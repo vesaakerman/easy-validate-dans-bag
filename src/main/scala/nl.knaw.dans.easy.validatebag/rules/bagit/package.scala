@@ -15,42 +15,100 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.{ Files, Paths }
+import java.nio.file.{ Files, NoSuchFileException, Paths }
+import java.util.concurrent.{ Executor, ExecutorService, Executors }
 
+import gov.loc.repository.bagit.domain.Bag
+import gov.loc.repository.bagit.exceptions._
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.verify.BagVerifier
 import nl.knaw.dans.easy.validatebag.BagDir
-import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException, fail }
+import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException, _ }
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
 import scala.language.postfixOps
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 /**
  * Rules that refer back to the BagIt specifications.
  */
 package object bagit {
   private val bagReader = new BagReader()
-  private val bagVerifier = new BagVerifier()
+  /*
+   * SingleThreadExecutor, because of concurrency problems, when using the default CachedThreadPool. The problem is that
+   * BagVerified creates an ArrayList of the exceptions to report, which is shared by the threads doing the work.
+   */
+  private val bagVerifier = new BagVerifier(Executors.newSingleThreadExecutor())
 
+  def bagMustBeValid(b: BagDir): Try[Unit] = {
+    def failBecauseInvalid(t: Throwable): Try[Unit] = {
+      val details = s"Bag is not valid: Exception = ${t.getClass.getSimpleName}, cause = ${t.getCause}, message = ${t.getMessage}"
+      debug(details)
+      fail2(details)
+    }
 
-  def bagMustBeValid(b: BagDir) = Try {
-//    val bag = bagReader.read(b)
-//    Try { bagVerifier.isValid(bag) } {
-//
-//
-//
-//    }
+    Try {
+      bagReader.read(b)
+    }.recoverWith {
+      case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
+        /*
+         * This seems to be the only reason when failing to read the bag should be construed as its being non-valid.
+         */
+        fail2("Mandatory file 'bagit.txt' is missing.").asInstanceOf[Try[Bag]]
+    }.map { bag  =>
+      bagVerifier.isValid(bag, false)
+    }.map(_ => ()).flatMap(_ => Success(()))
+      .recoverWith {
+        /*
+         * Any of these (unfortunately unrelated) exception types mean that the bag is non-valid. The reason is captured in the
+         * exception. Any other (non-fatal) exception type means the verification process itself failed;
+         * this should lead to a Failure. (Btw fatal errors will NOT be wrapped in a Failure by above Try block!)
+         *
+         * Note that VerificationException is not included below, as it indicates a error during validation rather
+         * than that the bag is non-valid.
+         */
+        case cause: MissingPayloadManifestException => failBecauseInvalid(cause)
+        case cause: MissingBagitFileException => failBecauseInvalid(cause)
+        case cause: MissingPayloadDirectoryException => failBecauseInvalid(cause)
+        case cause: FileNotInPayloadDirectoryException => failBecauseInvalid(cause)
+        case cause: FileNotInManifestException => failBecauseInvalid(cause)
+        case cause: MaliciousPathException => failBecauseInvalid(cause)
+        case cause: CorruptChecksumException => failBecauseInvalid(cause)
+        case cause: UnsupportedAlgorithmException => failBecauseInvalid(cause)
+        case cause: InvalidBagitFileFormatException => failBecauseInvalid(cause)
+      }
   }
 
-  def bagMustBeVirtuallyValid(b: BagDir) = Try {
-    // TODO: same als bagMustBeValid, but when NON-VALID warn that "virtually-only-valid" bags cannot not be recognized by the service yet.
+  def bagMustBeVirtuallyValid(b: BagDir): Try[Unit] = {
+    bagMustBeValid(b)
+      .recover {
+        case cause: RuleViolationDetailsException =>
+          fail2(s"${ cause.details } (WARNING: bag may still be virtually-valid, but this version of the service cannot check that.")
+      }
+    // TODO: implement proper virtual-validity check.
   }
 
   def bagMustContainBagInfoTxt(b: BagDir) = Try {
     if (!Files.exists(b.resolve("bag-info.txt")))
       fail("Mandatory file 'bag-info.txt' not found in bag. ")
+  }
+
+
+  def bagInfoTxtMayContainOne(element: String)(b: BagDir) = Try {
+    val bag = bagReader.read(Paths.get(b.toUri))
+    val values = bag.getMetadata.get(element)
+    if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
+  }
+
+  def bagInfoTxtOptionalElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
+    getBagInfoTxtValue(b, element).map(_.map { s => if (s != value) fail2(s"$element must be $value") } )
+  }
+
+  // Relies on there being only one element with the specified name
+  private def getBagInfoTxtValue(b: BagDir, element: String): Try[Option[String]] = Try {
+    val bag = bagReader.read(Paths.get(b.toUri))
+    Option (bag.getMetadata.get(element).get(0))
   }
 
   def bagInfoTxtMustContainCreated(b: BagDir) = Try {
@@ -60,10 +118,12 @@ package object bagit {
     }
   }
 
-  def bagInfoTxtCreatedMustBeIsoDate(b: BagDir):  Try[Unit] =  {
+  def bagInfoTxtCreatedMustBeIsoDate(b: BagDir): Try[Unit] = {
     val readBag = bagReader.read(Paths.get(b.toUri))
     val valueOfCreated = readBag.getMetadata.get("Created").get(0)
-    Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
+    Try {
+      DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime)
+    }
       .map(_ => ())
       .recoverWith {
         case _: Throwable =>

@@ -111,6 +111,7 @@
         <dependency>
             <groupId>gov.loc</groupId>
             <artifactId>bagit</artifactId>
+            <version>5.1.0</version>
         </dependency>
     </dependencies>
     <repositories>

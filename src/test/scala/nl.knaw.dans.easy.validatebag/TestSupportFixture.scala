@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.{ Files, Path, Paths }
+import java.util.regex.Pattern
 
 import nl.knaw.dans.easy.validatebag.rules.bagit.bagMustContainBagInfoTxt
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
@@ -23,7 +24,8 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.io.FileUtils
 import org.scalatest._
 
-import scala.util.Failure
+import scala.util.{ Failure, Success }
+import scala.util.matching.Regex
 
 trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInstancePerTest with DebugEnhancedLogging {
   lazy val testDir: Path = {
@@ -36,7 +38,17 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInst
 
   implicit val isReadable: Path => Boolean = Files.isReadable
 
-  protected def testRule(rule: Rule, inputBag: String, includedInErrorMsg: String): Unit = {
+  protected def testRuleViolationRegex(rule: Rule, inputBag: String, includedInErrorMsg: Regex): Unit = {
+    val result = rule(bagsDir resolve inputBag)
+    result shouldBe a[Failure[_]]
+    inside(result) {
+      case Failure(e) =>
+        e shouldBe a[RuleViolationDetailsException]
+        e.getMessage should include regex includedInErrorMsg
+    }
+  }
+
+  protected def testRuleViolation(rule: Rule, inputBag: String, includedInErrorMsg: String): Unit = {
     val result = rule(bagsDir resolve inputBag)
     result shouldBe a[Failure[_]]
     inside(result) {
@@ -44,6 +56,11 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInst
         e shouldBe a[RuleViolationDetailsException]
         e.getMessage should include(includedInErrorMsg)
     }
+  }
+
+  protected def testRuleSuccess(rule: Rule, inputBag: String): Unit = {
+    val result = rule(bagsDir resolve inputBag)
+    result shouldBe a[Success[_]]
   }
 
 }
