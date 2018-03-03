@@ -107,8 +107,9 @@ package object bagit {
 
   // Relies on there being only one element with the specified name
   private def getBagInfoTxtValue(b: BagDir, element: String): Try[Option[String]] = Try {
+    trace(b, element)
     val bag = bagReader.read(Paths.get(b.toUri))
-    Option (bag.getMetadata.get(element).get(0))
+    Option (bag.getMetadata.get(element)).map(_.get(0))
   }
 
   def bagInfoTxtMustContainCreated(b: BagDir) = Try {

@@ -29,7 +29,7 @@ package object structural {
 
   def bagMustContainMetadataDirectory(b: BagDir) = Try {
     if (!Files.exists(b.resolve("metadata")))
-      fail("Mandatory file 'metadata' not found in bag. ")
+      fail("Mandatory directory 'metadata' not found in bag. ")
     if(Files.exists(b.resolve("metadata"))){
       val fileName = b.resolve("metadata").toRealPath().getFileName()
       if(fileName.toString.trim()!= fileName.toString)

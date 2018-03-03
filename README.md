@@ -24,7 +24,7 @@ The HTTP interface supports the following path patterns and methods:
 Path                                                     | Method | Description
 ---------------------------------------------------------|--------|------------------------------------------------------
 `/`                                                      | `GET`  | Returns a message stating that the server is running.
-`/validate?[infoPackageType=AIP\|SIP]&uri=<bag-uri>`     | `GET`  | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
+`/validate?[infoPackageType=AIP\|SIP]&uri=<bag-uri>`     | `POST` | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
 
 `<bag-uri>` may be a file-URI to a directory (e.g., `file:///some/path/to/bagdir`). In fact, this is the only type of URI
 that will be implemented in the first version.
@@ -54,7 +54,7 @@ The plain text serialization has the following layout for simple value fields (i
 And for the "Rule violations" map:
 
     Rule violations:
-        - [<rule-number>] <rule-details>
+        - [<rule-number>] <violation-details>
 
 where the pattern on the second line is instantiated for for each violation.
 
@@ -65,10 +65,10 @@ The JSON serialization is a map from `<field-name>` to `<field-value>`
         "<field-name>": "<field-value>" [, "<field-name>": "<field-value>"...]
     }
 
-The `<field-value>` of "Rule violations" is itself a map from `<rule-number>` to `<rule-details>`:
+The `<field-value>` of "Rule violations" is itself a map from `<rule-number>` to `<violation-details>`:
 
     {
-        "<rule-number>"; "
+        "<rule-number>"; "<violation-details>" [, "<rule-number>"; "<violation-details>"...]
     }
 
 

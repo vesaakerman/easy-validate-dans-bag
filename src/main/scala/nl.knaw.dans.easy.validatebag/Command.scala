@@ -28,16 +28,22 @@ object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
 
   val configuration = Configuration(Paths.get(System.getProperty("app.home")))
+  debug("Parsing command line...")
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
+  debug("Creating application object...")
   val app = new EasyValidateDansBagApp(configuration)
 
+  debug(s"Executing command line: ${args.mkString(" ")}")
+  runSubcommand(app)
 
   private def runSubcommand(app: EasyValidateDansBagApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
-        case commandLine.runService => runAsService(app)
+        case commandLine.runService =>
+          debug("Running as service...")
+          runAsService(app)
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
   }
