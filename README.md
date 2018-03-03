@@ -21,10 +21,10 @@ both a command line and an HTTP interface. The command line interface is documen
 
 The HTTP interface supports the following path patterns and methods:
 
-Path                                                    | Method | Description
---------------------------------------------------------|--------|------------------------------------------------------
-`/`                                                     | `GET`  | Returns a message stating that the server is running.
-`/validate?[infoPackageType=AIP|SIP]&uri=<bag-uri>`     | `GET`  | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
+Path                                                     | Method | Description
+---------------------------------------------------------|--------|------------------------------------------------------
+`/`                                                      | `GET`  | Returns a message stating that the server is running.
+`/validate?[infoPackageType=AIP\|SIP]&uri=<bag-uri>`     | `GET`  | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
 
 `<bag-uri>` may be a file-URI to a directory (e.g., `file:///some/path/to/bagdir`). In fact, this is the only type of URI
 that will be implemented in the first version.
