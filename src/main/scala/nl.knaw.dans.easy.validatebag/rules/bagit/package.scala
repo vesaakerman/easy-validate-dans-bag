@@ -34,6 +34,7 @@ import scala.util.{ Failure, Success, Try }
  * Rules that refer back to the BagIt specifications.
  */
 package object bagit {
+
   private val bagReader = new BagReader()
   /*
    * SingleThreadExecutor, because of concurrency problems, when using the default CachedThreadPool. The problem is that
@@ -48,17 +49,15 @@ package object bagit {
       fail2(details)
     }
 
-    Try {
-      bagReader.read(b)
-    }.recoverWith {
-      case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
-        /*
-         * This seems to be the only reason when failing to read the bag should be construed as its being non-valid.
-         */
-        fail2("Mandatory file 'bagit.txt' is missing.").asInstanceOf[Try[Bag]]
-    }.map { bag  =>
-      bagVerifier.isValid(bag, false)
-    }.map(_ => ()).flatMap(_ => Success(()))
+    Try { bagReader.read(b) }
+      .recoverWith {
+        case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
+          /*
+           * This seems to be the only reason when failing to read the bag should be construed as its being non-valid.
+           */
+          fail2("Mandatory file 'bagit.txt' is missing.").asInstanceOf[Try[Bag]]
+      }
+      .map(bagVerifier.isValid(_, false))
       .recoverWith {
         /*
          * Any of these (unfortunately unrelated) exception types mean that the bag is non-valid. The reason is captured in the
@@ -94,37 +93,34 @@ package object bagit {
       fail("Mandatory file 'bag-info.txt' not found in bag. ")
   }
 
-
-  def bagInfoTxtMayContainOne(element: String)(b: BagDir) = Try {
+  def bagInfoTxtMayContainOne(element: String)(b: BagDir): Try[Unit] = Try {
     val bag = bagReader.read(Paths.get(b.toUri))
-    val values = bag.getMetadata.get(element)
-    if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
+    Option(bag.getMetadata.get(element))
+      .filterNot(_.size > 1)
+      .getOrElse(fail(s"bag-info.txt may contain at most one element: $element"))
   }
 
   def bagInfoTxtOptionalElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
-    getBagInfoTxtValue(b, element).map(_.map { s => if (s != value) fail2(s"$element must be $value") } )
+    getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) fail2(s"$element must be $value")))
   }
 
   // Relies on there being only one element with the specified name
   private def getBagInfoTxtValue(b: BagDir, element: String): Try[Option[String]] = Try {
     trace(b, element)
     val bag = bagReader.read(Paths.get(b.toUri))
-    Option (bag.getMetadata.get(element)).map(_.get(0))
+    Option(bag.getMetadata.get(element)).map(_.get(0))
   }
 
   def bagInfoTxtMustContainCreated(b: BagDir) = Try {
     val readBag = bagReader.read(Paths.get(b.toUri))
-    if (!readBag.getMetadata.contains("Created")) {
+    if (!readBag.getMetadata.contains("Created"))
       fail("The bag-info.txt file MUST contain an element called Created")
-    }
   }
 
   def bagInfoTxtCreatedMustBeIsoDate(b: BagDir): Try[Unit] = {
     val readBag = bagReader.read(Paths.get(b.toUri))
     val valueOfCreated = readBag.getMetadata.get("Created").get(0)
-    Try {
-      DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime)
-    }
+    Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
       .map(_ => ())
       .recoverWith {
         case _: Throwable =>
@@ -133,7 +129,8 @@ package object bagit {
   }
 
   def bagMustContainSHA1(b: BagDir) = Try {
-    if (!Files.exists(b.resolve("manifest-sha1.txt"))) fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
+    if (!Files.exists(b.resolve("manifest-sha1.txt")))
+      fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
   }
 
   def bagMustContainMetadataDir(b: BagDir) = Try {

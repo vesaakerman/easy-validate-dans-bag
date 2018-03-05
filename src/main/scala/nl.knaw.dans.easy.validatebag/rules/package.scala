@@ -56,7 +56,8 @@ package object rules {
                 ifThenAlso(
                   numberedRule("1.2.1", bagInfoTxtMayContainOne("BagIt-Profile-Version")),
                   numberedRule("1.2.1", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-Version", "0.0.0"))),
-                all(numberedRule("1.2.4", bagInfoTxtMustContainCreated),
+                all(
+                  numberedRule("1.2.4", bagInfoTxtMustContainCreated),
                   numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate),
                   numberedRule("1.3.1", bagMustContainSHA1),
                   numberedRule("2.1", bagMustContainMetadataDirectory),

@@ -40,17 +40,14 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
       violations <- validateDansBag(Paths.get(uri.getPath), infoPackageType)
         .map(_ => List.empty)
         .recoverWith(extractViolations)
-      result <- Try {
-        if (violations.isEmpty) Ok()
-        else BadRequest(violations) // TODO: format as plain text or JSON, depending on Accept header
-      }
-    } yield result
+    } yield if (violations.isEmpty) Ok()
+            else BadRequest(violations) // TODO: format as plain text or JSON, depending on Accept header
 
 
     result.getOrRecover {
-      case t: IllegalArgumentException => BadRequest(s"Input error: ${t.getMessage}")
+      case t: IllegalArgumentException => BadRequest(s"Input error: ${ t.getMessage }")
       case t =>
-        logger.error(s"Server error: ${t.getMessage}", t)
+        logger.error(s"Server error: ${ t.getMessage }", t)
         InternalServerError(s"[${ new DateTime() }] The server encountered an error. Consult the logs.")
     }
   }
@@ -66,5 +63,4 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
       if (xs.forall(_.isInstanceOf[RuleViolationException])) Try(xs.map(_.getMessage))
       else Failure(x) // If there are other exceptions, just generate a fatal exception; let the caller sort out the more serious problems first.
   }
-
 }
