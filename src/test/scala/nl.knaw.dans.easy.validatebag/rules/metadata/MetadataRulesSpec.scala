@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag.rules.metadata
 
-import nl.knaw.dans.easy.validatebag.{ BagDir, TestSupportFixture }
+import nl.knaw.dans.easy.validatebag.TestSupportFixture
 
 class MetadataRulesSpec extends TestSupportFixture {
 }

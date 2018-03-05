@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.validatebag.rules
 
 import java.nio.file.{ Files, NoSuchFileException, Paths }
-import java.util.concurrent.{ Executor, ExecutorService, Executors }
 
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.exceptions._
@@ -28,7 +27,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
 import scala.language.postfixOps
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Try }
 
 /**
  * Rules that refer back to the BagIt specifications.
@@ -36,16 +35,11 @@ import scala.util.{ Failure, Success, Try }
 package object bagit {
 
   private val bagReader = new BagReader()
-  /*
-   * SingleThreadExecutor, because of concurrency problems, when using the default CachedThreadPool. The problem is that
-   * BagVerified creates an ArrayList of the exceptions to report, which is shared by the threads doing the work.
-   */
-  // TODO: remove single thread executor after upgrade to bagit-java 5.1.1
-  private val bagVerifier = new BagVerifier(Executors.newSingleThreadExecutor())
+  private val bagVerifier = new BagVerifier()
 
   def bagMustBeValid(b: BagDir): Try[Unit] = {
     def failBecauseInvalid(t: Throwable): Try[Unit] = {
-      val details = s"Bag is not valid: Exception = ${t.getClass.getSimpleName}, cause = ${t.getCause}, message = ${t.getMessage}"
+      val details = s"Bag is not valid: Exception = ${ t.getClass.getSimpleName }, cause = ${ t.getCause }, message = ${ t.getMessage }"
       debug(details)
       Try(fail(details))
     }

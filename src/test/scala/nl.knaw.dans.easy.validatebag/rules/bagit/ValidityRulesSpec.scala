@@ -34,8 +34,6 @@ class ValidityRulesSpec extends TestSupportFixture {
   }
 
 
-
-
   //  "bagInfoTxtMustContainBagItProfileVersionV1" should "fail if 'BagIt-Profile-Version' does not exist in bag-info.txt" in {
   //    val result = bagInfoTxtMustContainBagItProfileVersionV1(testDirOfMissingBagItProfileVersion)
   //    result shouldBe a[Failure[_]]

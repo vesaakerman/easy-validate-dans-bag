@@ -17,9 +17,7 @@ package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.Paths
 
-import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import resource._
 
 import scala.language.reflectiveCalls
 import scala.util.{ Failure, Try }
@@ -35,7 +33,7 @@ object Command extends App with DebugEnhancedLogging {
   debug("Creating application object...")
   val app = new EasyValidateDansBagApp(configuration)
 
-  debug(s"Executing command line: ${args.mkString(" ")}")
+  debug(s"Executing command line: ${ args.mkString(" ") }")
   runSubcommand(app)
 
   private def runSubcommand(app: EasyValidateDansBagApp): Try[FeedBackMessage] = {

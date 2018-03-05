@@ -225,8 +225,8 @@ class ValidationSpec extends TestSupportFixture {
 
     checkRules(testDir, rule) should matchPattern {
       case Failure(CompositeException(Seq(
-        RuleViolationException("1.1.1", "err1"),
-        RuleViolationException("1.1.2", "err2"),
+      RuleViolationException("1.1.1", "err1"),
+      RuleViolationException("1.1.2", "err2"),
       ))) =>
     }
     ran1.get shouldBe true
@@ -321,8 +321,8 @@ class ValidationSpec extends TestSupportFixture {
 
     checkRules(testDir, rule) should matchPattern {
       case Failure(CompositeException(Seq(
-        RuleViolationException("1.1.2", "err2"),
-        RuleViolationException("1.1.3", "err3"),
+      RuleViolationException("1.1.2", "err2"),
+      RuleViolationException("1.1.3", "err3"),
       ))) =>
     }
     ran1.get shouldBe true

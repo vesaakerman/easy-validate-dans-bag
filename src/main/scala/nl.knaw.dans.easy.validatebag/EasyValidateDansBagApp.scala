@@ -37,7 +37,6 @@ class EasyValidateDansBagApp(configuration: Configuration) {
   def validateAip(path: Path): Try[Unit] = {
 
 
-
     ???
   }
 }

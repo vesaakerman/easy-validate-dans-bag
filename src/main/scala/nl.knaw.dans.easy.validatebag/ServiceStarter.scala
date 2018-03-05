@@ -20,6 +20,7 @@ import java.nio.file.Paths
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.daemon.{ Daemon, DaemonContext }
+
 class ServiceStarter extends Daemon with DebugEnhancedLogging {
   var app: EasyValidateDansBagApp = _
   var service: EasyValidateDansBagService = _

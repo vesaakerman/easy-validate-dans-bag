@@ -57,7 +57,7 @@ class CheckBagSpec extends TestSupportFixture {
     inside(checkBag(bagsDir.resolve("missing-bag-info.txt"))) {
       case Failure(CompositeException(List(rve: RuleViolationException))) =>
         // This also checks that there is only one rule violation.
-        debug(s"Error message: ${rve.getMessage}")
+        debug(s"Error message: ${ rve.getMessage }")
         rve.getMessage should include("Mandatory file 'bag-info.txt'")
     }
   }

@@ -19,7 +19,6 @@ import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
-import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.validation.{ RuleExpression, _ }
 //import nl.knaw.dans.easy.validatebag.rules.bagit.baseBag
 import nl.knaw.dans.easy.validatebag.validation.numberedRule

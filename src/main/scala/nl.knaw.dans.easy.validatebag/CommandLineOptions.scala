@@ -46,8 +46,8 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     descr = "Format for the result report", default = Some("text"))
   validate(responseFormat) { f =>
     val allowedFormats = Seq("json", "text")
-    if(allowedFormats contains f) Right(Unit)
-    else Left(s"Format '$f' not one of ${allowedFormats.mkString(", ")}")
+    if (allowedFormats contains f) Right(Unit)
+    else Left(s"Format '$f' not one of ${ allowedFormats.mkString(", ") }")
   }
 
   val runService = new Subcommand("run-service") {
