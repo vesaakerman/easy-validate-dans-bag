@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.validatebag.rules.structural
 
 import java.nio.file.Paths
 
-import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
 import nl.knaw.dans.easy.validatebag.{ BagDir, TestSupportFixture }
 
@@ -33,54 +32,37 @@ class StructuralRulesSpec extends TestSupportFixture {
   val testDirOfExistingMetadataFilesXmlMissing: BagDir = Paths.get("src/test/resources/bags/existingMetadataFilesXmlMissing")
   val testDirOfExistingMetadataDatasetXmlMissing: BagDir = Paths.get("src/test/resources/bags/existingMetadataDatasetXmlMissing")
 
-
   "bagMustContainMetadataFileV0" should "fail if the directory 'metadata' is not found" in {
-    val result = bagMustContainMetadataDirectory(bagMissingMetadataDir)
-    result shouldBe a[Failure[_]]
-    inside(result) {
-      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    bagMustContainMetadataDirectory(bagMissingMetadataDir) should matchPattern {
+      case Failure(_: RuleViolationDetailsException) =>
     }
   }
 
   it should "fail if the file name 'metadata' contains spaces" in {
-    val result = bagMustContainMetadataDirectory(testDirOfExistingMetadataWithSpaces)
-    val b: BagDir = Paths.get(testDirOfExistingMetadataWithSpaces.toUri)
-    result shouldBe a[Failure[_]]
-    inside(result) {
-      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    bagMustContainMetadataDirectory(testDirOfExistingMetadataWithSpaces) should matchPattern {
+      case Failure(_: RuleViolationDetailsException) =>
     }
   }
 
   it should "fail if the file name 'metadata' is found but contains uppercase letters" in {
-    val result = bagMustContainMetadataDirectory(testDirOfExistingMetadataContainingUppercaseLetters)
-    val b2: BagDir = Paths.get(testDirOfExistingMetadataContainingUppercaseLetters.toUri)
-    result shouldBe a[Failure[_]]
-    inside(result) {
-      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    bagMustContainMetadataDirectory(testDirOfExistingMetadataContainingUppercaseLetters) should matchPattern {
+      case Failure(_: RuleViolationDetailsException) =>
     }
   }
 
   it should "not fail if the file 'metadata' is found and does not contain any spaces or uppercase chars" in {
-    val result = bagMustContainMetadataDirectory(testDirOfExistingMetadataNoSpaceNoCapital)
-    val b1: BagDir = Paths.get(testDirOfExistingMetadataNoSpaceNoCapital.toUri)
-    val readBag = bagReader.read(Paths.get(b1.toUri))
-    result should not be a[Failure[_]]
+    bagMustContainMetadataDirectory(testDirOfExistingMetadataNoSpaceNoCapital) should not be a[Failure[_]]
   }
 
   it should "fail if metadata file does not contain 'datase.xml' " in {
-    val result = metadataFileMustContainDatasetAndFiles(testDirOfExistingMetadataDatasetXmlMissing)
-    result shouldBe a[Failure[_]]
-    inside(result) {
-      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    metadataFileMustContainDatasetAndFiles(testDirOfExistingMetadataDatasetXmlMissing) should matchPattern {
+      case Failure(_: RuleViolationDetailsException) =>
     }
-
   }
 
   it should "fail if metadata file contains extra files in addition to 'files.xml' and 'dataset.xml" in {
-    val result = metadataFileMustContainDatasetAndFiles(testDirOfExistingMetadataWithExcessiveFileContent)
-    result shouldBe a[Failure[_]]
-    inside(result) {
-      case Failure(e) => e shouldBe a[RuleViolationDetailsException]
+    metadataFileMustContainDatasetAndFiles(testDirOfExistingMetadataWithExcessiveFileContent) should matchPattern {
+      case Failure(_: RuleViolationDetailsException) =>
     }
   }
 }
