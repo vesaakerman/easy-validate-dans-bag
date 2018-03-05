@@ -36,6 +36,11 @@ package object validatebag {
 
   import InfoPackageType._
 
+  object ValidationResult extends Enumeration {
+    type ValidationResult = Value
+    val COMPLIANT, NOT_COMPLIANT = Value
+  }
+
   def validateDansBag(b: BagDir, infoPackageType: InfoPackageType = SIP): Try[Unit] = {
     implicit val isReadable: Path => Boolean = Files.isReadable
     rules.checkBag(b, infoPackageType)

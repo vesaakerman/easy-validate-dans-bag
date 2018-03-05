@@ -206,10 +206,7 @@ package object validation extends DebugEnhancedLogging {
       }
     }
 
-    evaluate(rules(getProfileVersion(bag)))
-      .recoverWith {
-        case _: RuleNotApplicableException => Success(())
-      }
+    evaluate(rules(getProfileVersion(bag))).recoverWith(ruleNotApplicableToSuccess)
   }
 
   private def getProfileVersion(bag: BagDir): ProfileVersion = {
