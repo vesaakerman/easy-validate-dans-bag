@@ -23,15 +23,6 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import org.json4s.{ CustomSerializer, DefaultFormats, Formats, JNull, JString }
 
-/*
- * Using a custom URI-serializer because the one from json4s extensions does not percent-encode.
- */
-case object EncodingURISerializer extends CustomSerializer[URI](format => ( {
-  case JString(s) => URI.create(s)
-  case JNull => null
-}, {
-  case x: URI => JString(x.toASCIIString)
-}))
 
 case class ResultMessage(
                           bagUri: URI,
@@ -47,8 +38,8 @@ case class ResultMessage(
       new EnumNameSerializer(ValidationResult) +
       EncodingURISerializer
 
-  def toJson(implicit pretty: Boolean = false): String = {
-    if(pretty)
+  def toJson(implicit pretty: Boolean = true): String = {
+    if (pretty)
       writePretty(this)
     else
       write(this)
@@ -66,3 +57,13 @@ case class ResultMessage(
     }.getOrElse("")
   }
 }
+
+/*
+ * Using a custom URI-serializer because the one from json4s extensions does not percent-encode.
+ */
+case object EncodingURISerializer extends CustomSerializer[URI](format => ( {
+  case JString(s) => URI.create(s)
+  case JNull => null
+}, {
+  case x: URI => JString(x.toASCIIString)
+}))

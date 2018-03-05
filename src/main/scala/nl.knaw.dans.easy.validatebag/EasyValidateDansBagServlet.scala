@@ -23,6 +23,7 @@ import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime
 import org.scalatra._
+import nl.knaw.dans.easy.validatebag.ValidationResult._
 
 import scala.util.{ Failure, Try }
 
@@ -35,13 +36,17 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
 
   post("/validate") {
     val result = for {
+      accept <- Try { request.getHeader("Accept") }
       infoPackageType <- Try { InfoPackageType.withName(params.get("infoPackageType").getOrElse("SIP")) }
       uri <- params.get("uri").map(getFileUrl).getOrElse(Failure(new IllegalArgumentException("Required query parameter 'uri' not found")))
+      bag <- getBagName(uri)
       violations <- validateDansBag(Paths.get(uri.getPath), infoPackageType)
         .map(_ => Seq.empty)
         .recoverWith(extractViolations)
-    } yield if (violations.isEmpty) Ok()
-            else BadRequest(violations) // TODO: format as plain text or JSON, depending on Accept header
+      message <- Try { ResultMessage(uri, bag, infoPackageType, if (violations.isEmpty) COMPLIANT else NOT_COMPLIANT, if (violations.isEmpty) None else Some(violations)) }
+      body <- Try { if (accept == "application/json") message.toJson else message.toPlainText }
+    } yield if (violations.isEmpty) Ok(body)
+            else BadRequest(body) // TODO: format as plain text or JSON, depending on Accept header
 
     result.getOrRecover {
       case t: IllegalArgumentException => BadRequest(s"Input error: ${ t.getMessage }")
@@ -57,9 +62,15 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
     fileUri
   }
 
-  val extractViolations: PartialFunction[Throwable, Try[Seq[String]]] = {
+  private def getBagName(uri: URI): Try[String] = Try {
+    Paths.get(uri.getPath).getFileName.toString
+  }
+
+  val extractViolations: PartialFunction[Throwable, Try[Seq[(RuleNumber, String)]]] = {
     case x @ CompositeException(xs) =>
-      if (xs.forall(_.isInstanceOf[RuleViolationException])) Try(xs.map(_.getMessage))
+      if (xs.forall(_.isInstanceOf[RuleViolationException])) Try(xs.map { case RuleViolationException(nr, details) => (nr, details) })
       else Failure(x) // If there are other exceptions, just generate a fatal exception; let the caller sort out the more serious problems first.
   }
+
+
 }
