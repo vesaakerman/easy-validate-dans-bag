@@ -48,17 +48,15 @@ package object bagit {
       fail2(details)
     }
 
-    Try {
-      bagReader.read(b)
-    }.recoverWith {
-      case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
-        /*
-         * This seems to be the only reason when failing to read the bag should be construed as its being non-valid.
-         */
-        fail2("Mandatory file 'bagit.txt' is missing.").asInstanceOf[Try[Bag]]
-    }.map { bag  =>
-      bagVerifier.isValid(bag, false)
-    }.map(_ => ()).flatMap(_ => Success(()))
+    Try { bagReader.read(b) }
+      .recoverWith {
+        case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
+          /*
+           * This seems to be the only reason when failing to read the bag should be construed as its being non-valid.
+           */
+          fail2("Mandatory file 'bagit.txt' is missing.").asInstanceOf[Try[Bag]]
+      }
+      .map(bagVerifier.isValid(_, false))
       .recoverWith {
         /*
          * Any of these (unfortunately unrelated) exception types mean that the bag is non-valid. The reason is captured in the
