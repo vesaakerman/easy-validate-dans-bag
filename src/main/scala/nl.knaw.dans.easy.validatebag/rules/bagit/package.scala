@@ -40,13 +40,14 @@ package object bagit {
    * SingleThreadExecutor, because of concurrency problems, when using the default CachedThreadPool. The problem is that
    * BagVerified creates an ArrayList of the exceptions to report, which is shared by the threads doing the work.
    */
+  // TODO: remove single thread executor after upgrade to bagit-java 5.1.1
   private val bagVerifier = new BagVerifier(Executors.newSingleThreadExecutor())
 
   def bagMustBeValid(b: BagDir): Try[Unit] = {
     def failBecauseInvalid(t: Throwable): Try[Unit] = {
       val details = s"Bag is not valid: Exception = ${t.getClass.getSimpleName}, cause = ${t.getCause}, message = ${t.getMessage}"
       debug(details)
-      fail2(details)
+      Try(fail(details))
     }
 
     Try { bagReader.read(b) }
@@ -55,7 +56,7 @@ package object bagit {
           /*
            * This seems to be the only reason when failing to read the bag should be construed as its being non-valid.
            */
-          fail2("Mandatory file 'bagit.txt' is missing.").asInstanceOf[Try[Bag]]
+          Try(fail("Mandatory file 'bagit.txt' is missing.")).asInstanceOf[Try[Bag]]
       }
       .map(bagVerifier.isValid(_, false))
       .recoverWith {
@@ -83,7 +84,7 @@ package object bagit {
     bagMustBeValid(b)
       .recover {
         case cause: RuleViolationDetailsException =>
-          fail2(s"${ cause.details } (WARNING: bag may still be virtually-valid, but this version of the service cannot check that.")
+          Try(fail(s"${ cause.details } (WARNING: bag may still be virtually-valid, but this version of the service cannot check that."))
       }
     // TODO: implement proper virtual-validity check.
   }
@@ -101,7 +102,7 @@ package object bagit {
   }
 
   def bagInfoTxtOptionalElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
-    getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) fail2(s"$element must be $value")))
+    getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
   }
 
   // Relies on there being only one element with the specified name

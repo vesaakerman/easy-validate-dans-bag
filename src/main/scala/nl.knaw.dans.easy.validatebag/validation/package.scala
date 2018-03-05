@@ -53,11 +53,6 @@ package object validation extends DebugEnhancedLogging {
    */
   def fail(details: String): Unit = throw RuleViolationDetailsException(details)
 
-
-
-  def fail2(details: String): Try[Unit] = Failure(RuleViolationDetailsException(details))
-
-
   /**
    * Creates a NumberedRule.
    *

@@ -38,11 +38,10 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
       infoPackageType <- Try { InfoPackageType.withName(params.get("infoPackageType").getOrElse("SIP")) }
       uri <- params.get("uri").map(getFileUrl).getOrElse(Failure(new IllegalArgumentException("Required query parameter 'uri' not found")))
       violations <- validateDansBag(Paths.get(uri.getPath), infoPackageType)
-        .map(_ => List.empty)
+        .map(_ => Seq.empty)
         .recoverWith(extractViolations)
     } yield if (violations.isEmpty) Ok()
             else BadRequest(violations) // TODO: format as plain text or JSON, depending on Accept header
-
 
     result.getOrRecover {
       case t: IllegalArgumentException => BadRequest(s"Input error: ${ t.getMessage }")
