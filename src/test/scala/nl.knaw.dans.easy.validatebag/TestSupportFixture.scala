@@ -16,16 +16,14 @@
 package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.{ Files, Path, Paths }
-import java.util.regex.Pattern
 
-import nl.knaw.dans.easy.validatebag.rules.bagit.bagMustContainBagInfoTxt
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.io.FileUtils
 import org.scalatest._
 
-import scala.util.{ Failure, Success }
 import scala.util.matching.Regex
+import scala.util.{ Failure, Success }
 
 trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInstancePerTest with DebugEnhancedLogging {
   lazy val testDir: Path = {
