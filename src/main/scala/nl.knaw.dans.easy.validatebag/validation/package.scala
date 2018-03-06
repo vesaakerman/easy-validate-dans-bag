@@ -217,7 +217,7 @@ package object validation extends DebugEnhancedLogging {
       val b = bagReader.read(bag)
       val versions = b.getMetadata.get("BagIt-Profile-Version").asScala
       if (versions == null || versions.isEmpty) 0
-      else versions.head.toInt
+      else versions.head.split('.').head.toInt // The major version determines the overall profile version.
     }
     /*
      * This will fail later, as bag-info.txt is mandatory in all versions, but we don't report that here,
