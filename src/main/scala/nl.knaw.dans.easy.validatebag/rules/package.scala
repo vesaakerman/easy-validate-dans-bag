@@ -35,9 +35,9 @@ package object rules {
    * @param isReadable        the function that checks if a file is readable
    * @return Success or Failure
    */
-  def checkBag(b: BagDir, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkBag(b: BagDir, profileVersion: ProfileVersion, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
     require(asInfoPackageType != BOTH, "asInfoPackageType must be either SIP (default) or AIP")
-    validation.checkRules(b, allRules, asInfoPackageType)
+    validation.checkRules(b, allRules(profileVersion), asInfoPackageType)
   }
 
   private val allRules: Map[ProfileVersion, RuleExpression] = {

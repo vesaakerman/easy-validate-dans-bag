@@ -31,14 +31,14 @@ class CheckBagSpec extends TestSupportFixture {
   }
 
   "checkBag" should "fail if bag directory is not found" in {
-    checkBag(bagsDir.resolve("non-existent")) should matchPattern {
+    checkBag(bagsDir.resolve("non-existent"), 0) should matchPattern {
       case Failure(_: IllegalArgumentException) =>
     }
   }
 
   it should "fail if the bag directory is unreadable" in {
     val minimal = bagsDir.resolve("minimal")
-    inside(checkBag(minimal)(expectUnreadable(minimal))) {
+    inside(checkBag(minimal, 0)(expectUnreadable(minimal))) {
       case Failure(iae: IllegalArgumentException) =>
         iae.getMessage should include("non-readable")
     }
@@ -47,14 +47,14 @@ class CheckBagSpec extends TestSupportFixture {
   it should "fail if there is a non-readable file in the bag directory" in {
     val minimal = bagsDir.resolve("minimal")
     val leegTxt = minimal.resolve("data/leeg.txt")
-    inside(checkBag(minimal)(expectUnreadable(leegTxt))) {
+    inside(checkBag(minimal, 0)(expectUnreadable(leegTxt))) {
       case Failure(iae: IllegalArgumentException) =>
         iae.getMessage should include("non-readable")
     }
   }
 
   it should "fail if bag does not contain bag-info.txt" in {
-    inside(checkBag(bagsDir.resolve("missing-bag-info.txt"))) {
+    inside(checkBag(bagsDir.resolve("missing-bag-info.txt"), 0)) {
       case Failure(CompositeException(List(rve: RuleViolationException))) =>
         // This also checks that there is only one rule violation.
         debug(s"Error message: ${ rve.getMessage }")

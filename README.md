@@ -96,7 +96,7 @@ response message
     OK: bag1 complies with DANS BagIt Profile v1.
     Bag URI: file:///some/path/to/bag1
     Bag: bag1
-    Profile version: 0.0.0
+    Profile version: 0
     Information package type: SIP
     Result: COMPLIANT
 
@@ -104,7 +104,7 @@ response message
     ERROR: bag2 does NOT comply with DANS BagIt Profile v0.
     Bag URI: file:///some/path/to/bag2
     Bag: bag2
-    Profile version: 0.0.0
+    Profile version: 0
     Information package type: AIP
     Result: NOT COMPLIANT
     Rule violations:
@@ -116,7 +116,7 @@ response message
     {
         bag_uri: "file:///some/path/to/bag2",
         bag: "bag2",
-        profile_version: "0.0.0",
+        profile_version: 0,
         info_package_type: "AIP",
         result: "NOT COMPLIANT",
         rule_violations: {
@@ -131,7 +131,7 @@ response message
        bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
           54e8dc73a672/bag",
        bag: "bag",
-       profile_version: "1.0.0",
+       profile_version: 1,
        result: "COMPLIANT"
     }
 
@@ -141,7 +141,7 @@ response message
        bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
           54e8dc73a672/bag",
        bag: "bag",
-       profile_version: "1.0.0",
+       profile_version: 1,
        result: "COMPLIANT"
     }
 

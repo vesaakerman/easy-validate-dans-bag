@@ -27,7 +27,7 @@ import org.json4s.{ CustomSerializer, DefaultFormats, Formats, JNull, JString }
 case class ResultMessage(
                           bagUri: URI,
                           bag: String,
-                          //profileVersion TODO: first refactor so that this is detected before calling the validate function
+                          profileVersion: ProfileVersion,
                           infoPackageType: InfoPackageType,
                           result: ValidationResult,
                           ruleViolations: Option[Seq[(String, String)]] = None) {
@@ -47,12 +47,13 @@ case class ResultMessage(
 
   def toPlainText: String = {
     s"""
-       |bag_uri: ${ bagUri.toASCIIString }
-       |bag: $bag
-       |info_package_type: $infoPackageType
-       |result: $result
+       |Bag URI: ${ bagUri.toASCIIString }
+       |Bag: $bag
+       |Information package type: $infoPackageType
+       |Profile version: $profileVersion
+       |Result: $result
        |""".stripMargin ++ ruleViolations.map { violations =>
-      "rule_violations:\n" +
+      "Rule violations:\n" +
         violations.map { case (nr, violation) => s" - [$nr] $violation" }.mkString("\n")
     }.getOrElse("")
   }

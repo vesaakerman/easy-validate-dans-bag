@@ -40,13 +40,14 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
       infoPackageType <- Try { InfoPackageType.withName(params.get("infoPackageType").getOrElse("SIP")) }
       uri <- params.get("uri").map(getFileUrl).getOrElse(Failure(new IllegalArgumentException("Required query parameter 'uri' not found")))
       bag <- getBagName(uri)
-      violations <- validateDansBag(Paths.get(uri.getPath), infoPackageType)
+      version <- app.getProfileVersion(Paths.get(uri.getPath))
+      violations <- app.validate(Paths.get(uri.getPath), version, infoPackageType)
         .map(_ => Seq.empty)
         .recoverWith(extractViolations)
-      message <- Try { ResultMessage(uri, bag, infoPackageType, if (violations.isEmpty) COMPLIANT else NOT_COMPLIANT, if (violations.isEmpty) None else Some(violations)) }
+      message <- Try { ResultMessage(uri, bag, version, infoPackageType, if (violations.isEmpty) COMPLIANT else NOT_COMPLIANT, if (violations.isEmpty) None else Some(violations)) }
       body <- Try { if (accept == "application/json") message.toJson else message.toPlainText }
     } yield if (violations.isEmpty) Ok(body)
-            else BadRequest(body) // TODO: format as plain text or JSON, depending on Accept header
+            else BadRequest(body)
 
     result.getOrRecover {
       case t: IllegalArgumentException => BadRequest(s"Input error: ${ t.getMessage }")

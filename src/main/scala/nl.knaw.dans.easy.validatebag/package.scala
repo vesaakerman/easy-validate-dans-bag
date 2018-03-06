@@ -41,8 +41,8 @@ package object validatebag {
     val COMPLIANT, NOT_COMPLIANT = Value
   }
 
-  def validateDansBag(b: BagDir, infoPackageType: InfoPackageType = SIP): Try[Unit] = {
+  def validateDansBag(b: BagDir, profileVersion: ProfileVersion, infoPackageType: InfoPackageType = SIP): Try[Unit] = {
     implicit val isReadable: Path => Boolean = Files.isReadable
-    rules.checkBag(b, infoPackageType)
+    rules.checkBag(b,  profileVersion, infoPackageType)
   }
 }

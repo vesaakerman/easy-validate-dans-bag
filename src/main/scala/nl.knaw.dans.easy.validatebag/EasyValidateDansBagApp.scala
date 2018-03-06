@@ -15,28 +15,17 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.net.URI
+import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
 
-import scala.tools.nsc.io.Path
 import scala.util.Try
 
 class EasyValidateDansBagApp(configuration: Configuration) {
 
-  /**
-   * Determines whether the bag located at `uri` is an acceptable SIP according to the DANS BagIt Profile.
-   *
-   * @param uri the location of the bag
-   * @return
-   */
-  def validateSip(uri: URI): Try[Unit] = {
-
-
-    ???
+  def getProfileVersion(path: BagDir): Try[Int] = {
+    validation.getProfileVersion(path)
   }
 
-  def validateAip(path: Path): Try[Unit] = {
-
-
-    ???
+  def validate(path: BagDir, profileVersion: ProfileVersion, infoPackageType: InfoPackageType): Try[Unit] = {
+    validateDansBag(path, profileVersion, infoPackageType)
   }
 }
