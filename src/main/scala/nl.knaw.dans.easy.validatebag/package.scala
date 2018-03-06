@@ -43,6 +43,6 @@ package object validatebag {
 
   def validateDansBag(b: BagDir, profileVersion: ProfileVersion, infoPackageType: InfoPackageType = SIP): Try[Unit] = {
     implicit val isReadable: Path => Boolean = Files.isReadable
-    rules.checkBag(b,  profileVersion, infoPackageType)
+    rules.checkBag(b, profileVersion, infoPackageType)
   }
 }

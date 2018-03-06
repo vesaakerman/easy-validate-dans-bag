@@ -42,7 +42,6 @@ package object bagit {
     bagVerifier.close()
   }
 
-
   def bagMustBeValid(b: BagDir): Try[Unit] = {
     def failBecauseInvalid(t: Throwable): Try[Unit] = {
       val details = s"Bag is not valid: Exception = ${ t.getClass.getSimpleName }, cause = ${ t.getCause }, message = ${ t.getMessage }"

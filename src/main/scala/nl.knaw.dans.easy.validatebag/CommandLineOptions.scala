@@ -15,9 +15,9 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import org.rogach.scallop.{ ScallopConf, Subcommand }
-
 import java.nio.file.Path
+
+import org.rogach.scallop.{ ScallopConf, Subcommand }
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true

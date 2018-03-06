@@ -23,6 +23,7 @@ import org.scalatra._
 import org.scalatra.servlet.ScalatraListener
 
 import scala.util.Try
+import rules.bagit.closeVerifier
 
 class EasyValidateDansBagService(serverPort: Int, app: EasyValidateDansBagApp) extends DebugEnhancedLogging {
 
@@ -49,6 +50,7 @@ class EasyValidateDansBagService(serverPort: Int, app: EasyValidateDansBagApp) e
 
   def stop(): Try[Unit] = Try {
     info("Stopping service...")
+    closeVerifier()
     server.stop()
   }
 
