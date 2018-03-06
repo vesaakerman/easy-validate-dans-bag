@@ -48,16 +48,16 @@ case class ResultMessage(
   }
 
   def toPlainText: String = {
-    s"""
-       |Bag URI: ${ bagUri.toASCIIString }
-       |Bag: $bag
-       |Information package type: $infoPackageType
-       |Profile version: $profileVersion
-       |Result: $result
-       |""".stripMargin ++ ruleViolations.map { violations =>
-      "Rule violations:\n" +
-        violations.map { case (nr, violation) => s" - [$nr] $violation" }.mkString("\n")
-    }.getOrElse("")
+    val mandatoryPart =
+      s"""
+         |Bag URI: ${ bagUri.toASCIIString }
+         |Bag: $bag
+         |Information package type: $infoPackageType
+         |Profile version: $profileVersion
+         |Result: $result
+         |""".stripMargin
+    val violationsPart = ruleViolations.map(_.map { case (nr, violation) => s" - [$nr] $violation" }.mkString("Rule violations:\n", "\n", ""))
+    mandatoryPart + violationsPart.getOrElse("")
   }
 }
 

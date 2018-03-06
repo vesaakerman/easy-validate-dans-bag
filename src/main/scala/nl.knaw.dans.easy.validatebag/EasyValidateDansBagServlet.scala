@@ -16,14 +16,11 @@
 package nl.knaw.dans.easy.validatebag
 
 import java.net.URI
-import java.nio.file.Paths
 
-import nl.knaw.dans.easy.validatebag.validation.RuleViolationException
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime
 import org.scalatra._
-import nl.knaw.dans.easy.validatebag.ValidationResult._
 
 import scala.util.{ Failure, Try }
 
@@ -40,7 +37,10 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
       infoPackageType <- Try { InfoPackageType.withName(params.get("infoPackageType").getOrElse("SIP")) }
       uri <- params.get("uri").map(getFileUrl).getOrElse(Failure(new IllegalArgumentException("Required query parameter 'uri' not found")))
       message <- app.validate(uri, infoPackageType)
-      body <- Try { if (accept == "application/json") message.toJson else message.toPlainText }
+      body <- Try {
+        if (accept == "application/json") message.toJson
+        else message.toPlainText
+      }
     } yield if (message.isOk) Ok(body)
             else BadRequest(body)
 
