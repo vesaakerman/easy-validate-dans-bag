@@ -82,6 +82,9 @@ ARGUMENTS
           --help                     Show help message
           --version                  Show version of this program
 
+    trailing arguments:
+        bag (not required)   The bag to validate
+
     Subcommand: run-service - Starts EASY Validate Dans Bag as a daemon that services HTTP requests
           --help   Show help message
     ---

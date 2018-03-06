@@ -17,6 +17,8 @@ package nl.knaw.dans.easy.validatebag
 
 import org.rogach.scallop.{ ScallopConf, Subcommand }
 
+import java.nio.file.Path
+
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
   editBuilder(_.setHelpWidth(110))
@@ -49,6 +51,10 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     if (allowedFormats contains f) Right(Unit)
     else Left(s"Format '$f' not one of ${ allowedFormats.mkString(", ") }")
   }
+
+  val bag = trailArg[Path]("bag",
+    descr = "The bag to validate",
+    required = false)
 
   val runService = new Subcommand("run-service") {
     descr(

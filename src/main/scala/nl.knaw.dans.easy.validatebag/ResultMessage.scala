@@ -38,6 +38,8 @@ case class ResultMessage(
       new EnumNameSerializer(ValidationResult) +
       EncodingURISerializer
 
+  def isOk: Boolean = result == ValidationResult.COMPLIANT
+
   def toJson(implicit pretty: Boolean = true): String = {
     if (pretty)
       writePretty(this)

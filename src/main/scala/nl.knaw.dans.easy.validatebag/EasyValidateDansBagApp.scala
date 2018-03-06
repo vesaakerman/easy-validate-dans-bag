@@ -15,17 +15,43 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
+import java.net.URI
+import java.nio.file.{ Path, Paths }
 
-import scala.util.Try
+import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
+import nl.knaw.dans.easy.validatebag.ValidationResult.{ COMPLIANT, NOT_COMPLIANT }
+import nl.knaw.dans.easy.validatebag.validation.RuleViolationException
+import nl.knaw.dans.lib.error.CompositeException
+
+import scala.util.{ Failure, Try }
 
 class EasyValidateDansBagApp(configuration: Configuration) {
 
-  def getProfileVersion(path: BagDir): Try[Int] = {
+  def validate(uri: URI, infoPackageType: InfoPackageType): Try[ResultMessage] = {
+    for {
+      bag <- getBagPath(uri)
+      version <- getProfileVersion(bag)
+      violations <- validateDansBag(bag, version, infoPackageType)
+        .map(_ => Seq.empty)
+        .recoverWith(extractViolations)
+    } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType,
+      if (violations.isEmpty) COMPLIANT
+      else NOT_COMPLIANT,
+      if (violations.isEmpty) None
+      else Some(violations))
+  }
+
+  private def getProfileVersion(path: BagDir): Try[Int] = {
     validation.getProfileVersion(path)
   }
 
-  def validate(path: BagDir, profileVersion: ProfileVersion, infoPackageType: InfoPackageType): Try[Unit] = {
-    validateDansBag(path, profileVersion, infoPackageType)
+  private def getBagPath(uri: URI): Try[Path] = Try {
+    Paths.get(uri.getPath)
+  }
+
+  val extractViolations: PartialFunction[Throwable, Try[Seq[(RuleNumber, String)]]] = {
+    case x @ CompositeException(xs) =>
+      if (xs.forall(_.isInstanceOf[RuleViolationException])) Try(xs.map { case RuleViolationException(nr, details) => (nr, details) })
+      else Failure(x) // If there are other exceptions, just generate a fatal exception; let the caller sort out the more serious problems first.
   }
 }

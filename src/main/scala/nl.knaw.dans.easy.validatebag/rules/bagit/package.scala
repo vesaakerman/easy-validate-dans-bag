@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.validatebag.rules
 
 import java.nio.file.{ Files, NoSuchFileException, Paths }
 
+import com.sun.org.apache.xml.internal.utils.ThreadControllerWrapper
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.exceptions._
 import gov.loc.repository.bagit.reader.BagReader
@@ -36,6 +37,11 @@ package object bagit {
 
   private val bagReader = new BagReader()
   private val bagVerifier = new BagVerifier()
+
+  def closeVerifier(): Unit = {
+    bagVerifier.close()
+  }
+
 
   def bagMustBeValid(b: BagDir): Try[Unit] = {
     def failBecauseInvalid(t: Throwable): Try[Unit] = {
