@@ -17,32 +17,58 @@ package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.Paths
 
+import nl.knaw.dans.easy.validatebag.InfoPackageType._
+import nl.knaw.dans.easy.validatebag.rules.bagit.closeVerifier
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import resource._
 
 import scala.language.reflectiveCalls
+import scala.util.control.NonFatal
 import scala.util.{ Failure, Try }
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
+  type IsOk = Boolean
 
   val configuration = Configuration(Paths.get(System.getProperty("app.home")))
+  debug("Parsing command line...")
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
+  debug("Creating application object...")
   val app = new EasyValidateDansBagApp(configuration)
 
+  debug(s"Executing command line: ${ args.mkString(" ") }")
+  runSubcommand(app).doIfSuccess { case (ok, msg) =>
+    if (ok) Console.err.println(s"OK: $msg")
+    else Console.err.println(s"FAILED: $msg")
+  }
+    .doIfFailure { case e => logger.error(e.getMessage, e) }
+    .doIfFailure { case NonFatal(e) => Console.err.println(s"FAILED: ${ e.getMessage }") }
 
-  private def runSubcommand(app: EasyValidateDansBagApp): Try[FeedBackMessage] = {
+  closeVerifier()
+
+  private def runSubcommand(app: EasyValidateDansBagApp): Try[(IsOk, FeedBackMessage)] = {
     commandLine.subcommand
       .collect {
-        case commandLine.runService => runAsService(app)
+        case commandLine.runService =>
+          debug("Running as service...")
+          runAsService(app)
       }
-      .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
+      .getOrElse {
+        // Validate required parameter here, because it is only required when not running as service.
+        if (commandLine.bag.isEmpty) Failure(new IllegalArgumentException("Parameter 'bag' required if not running as a service"))
+        else
+          app.validate(commandLine.bag().toUri, if (commandLine.aip()) AIP
+                                                else SIP).map {
+            msg =>
+              if (commandLine.responseFormat() == "json") (msg.isOk, msg.toJson)
+              else (msg.isOk, msg.toPlainText)
+          }
+      }
   }
 
-  private def runAsService(app: EasyValidateDansBagApp): Try[FeedBackMessage] = Try {
+  private def runAsService(app: EasyValidateDansBagApp): Try[(IsOk, FeedBackMessage)] = Try {
     val service = new EasyValidateDansBagService(configuration.properties.getInt("daemon.http.port"), app)
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {
@@ -53,6 +79,6 @@ object Command extends App with DebugEnhancedLogging {
 
     service.start()
     Thread.currentThread.join()
-    "Service terminated normally."
+    (true, "Service terminated normally.")
   }
 }

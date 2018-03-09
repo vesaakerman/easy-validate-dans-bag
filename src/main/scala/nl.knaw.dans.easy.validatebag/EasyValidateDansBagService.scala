@@ -16,17 +16,17 @@
 package nl.knaw.dans.easy.validatebag
 
 import javax.servlet.ServletContext
-
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.eclipse.jetty.ajp.Ajp13SocketConnector
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.scalatra._
 import org.scalatra.servlet.ScalatraListener
 
 import scala.util.Try
+import rules.bagit.closeVerifier
 
 class EasyValidateDansBagService(serverPort: Int, app: EasyValidateDansBagApp) extends DebugEnhancedLogging {
+
   import logger._
 
   private val server = new Server(serverPort)
@@ -50,6 +50,7 @@ class EasyValidateDansBagService(serverPort: Int, app: EasyValidateDansBagApp) e
 
   def stop(): Try[Unit] = Try {
     info("Stopping service...")
+    closeVerifier()
     server.stop()
   }
 

@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag
 
+import java.nio.file.Path
+
 import org.rogach.scallop.{ ScallopConf, Subcommand }
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
@@ -46,9 +48,13 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     descr = "Format for the result report", default = Some("text"))
   validate(responseFormat) { f =>
     val allowedFormats = Seq("json", "text")
-    if(allowedFormats contains f) Right(Unit)
-    else Left(s"Format '$f' not one of ${allowedFormats.mkString(", ")}")
+    if (allowedFormats contains f) Right(Unit)
+    else Left(s"Format '$f' not one of ${ allowedFormats.mkString(", ") }")
   }
+
+  val bag = trailArg[Path]("bag",
+    descr = "The bag to validate",
+    required = false)
 
   val runService = new Subcommand("run-service") {
     descr(

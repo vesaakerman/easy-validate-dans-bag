@@ -19,7 +19,6 @@ import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
-import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.validation.{ RuleExpression, _ }
 //import nl.knaw.dans.easy.validatebag.rules.bagit.baseBag
 import nl.knaw.dans.easy.validatebag.validation.numberedRule
@@ -36,9 +35,9 @@ package object rules {
    * @param isReadable        the function that checks if a file is readable
    * @return Success or Failure
    */
-  def checkBag(b: BagDir, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkBag(b: BagDir, profileVersion: ProfileVersion, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
     require(asInfoPackageType != BOTH, "asInfoPackageType must be either SIP (default) or AIP")
-    validation.checkRules(b, allRules, asInfoPackageType)
+    validation.checkRules(b, allRules(profileVersion), asInfoPackageType)
   }
 
   private val allRules: Map[ProfileVersion, RuleExpression] = {
@@ -53,15 +52,13 @@ package object rules {
             ifThenAlso(
               numberedRule("1.2.1", bagMustContainBagInfoTxt),
               all(
-                numberedRule("1.2.2", bagInfoTxtMayContainBagItProfileVersionV0),
-                numberedRule("1.2.3", bagInfoTxtMayContainBagItProfileURIV0),
-                numberedRule("1.2.4", bagInfoTxtMustContainCreated),
-                numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf),
-                numberedRule("1.3.1", bagMustContainSHA1),
-                numberedRule("1.3.2", bagMayContainOtherManifestsAndTagManifests),
-                numberedRule("2.1", bagMustContainMetadataFile),
-                numberedRule("2.2", metadataFileMustContainDatasetAndFiles)
-              )
+                ifThenAlso(
+                  numberedRule("1.2.1", bagInfoTxtMayContainOne("BagIt-Profile-Version")),
+                  numberedRule("1.2.1", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-Version", "0.0.0"))),
+                all(
+                  numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate),
+                  numberedRule("1.3.1", bagMustContainSHA1)
+                ))
             )
             // TODO add sha1 and payload rules here
           )
@@ -76,12 +73,7 @@ package object rules {
           ifThenAlso(
             numberedRule("1.2.1", bagMustContainBagInfoTxt),
             all(
-              numberedRule("1.2.2", bagInfoTxtMustContainBagItProfileVersionV1),
-              numberedRule("1.2.3", bagInfoTxtMustContainBagItProfileURIV1),
-              numberedRule("1.2.4", bagInfoTxtMustContainCreated),
-              numberedRule("1.2.5", bagInfoTxtMayContainIsVersionOf),
-              numberedRule("1.3.1", bagMustContainSHA1),
-              numberedRule("1.3.2", bagMayContainOtherManifestsAndTagManifests)
+              numberedRule("1.3.1", bagMustContainSHA1)
             )
           )
         )

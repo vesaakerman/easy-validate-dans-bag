@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.validatebag
 
 import java.nio.file.{ Files, Path }
 
+import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -25,6 +26,8 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
 package object validation extends DebugEnhancedLogging {
+
+  private val bagReader = new BagReader()
 
   /**
    * Exception specifying the rule violated and what the violation consisted of. The number refers back
@@ -134,7 +137,7 @@ package object validation extends DebugEnhancedLogging {
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
-  def checkRules(bag: BagDir, rules: Map[ProfileVersion, RuleExpression], asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkRules(bag: BagDir, rules: RuleExpression, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
     /**
      * `isReadable` was added because unit testing this by actually setting files on the file system to non-readable and back
      * can get messy. After a failed build one might be left with a target folder that refuses to be cleaned. Unless you are
@@ -165,7 +168,7 @@ package object validation extends DebugEnhancedLogging {
     }
   }
 
-  private def evaluateRules(bag: BagDir, rules: Map[ProfileVersion, RuleExpression], asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
+  private def evaluateRules(bag: BagDir, rules: RuleExpression, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
 
     def ruleApplies(ipType: InfoPackageType) = {
       ipType == asInfoPackageType || ipType == BOTH
@@ -206,13 +209,23 @@ package object validation extends DebugEnhancedLogging {
       }
     }
 
-    evaluate(rules(getProfileVersion(bag)))
-      .recoverWith {
-        case _: RuleNotApplicableException => Success(())
-      }
+    evaluate(rules).recoverWith(ruleNotApplicableToSuccess)
   }
 
-  private def getProfileVersion(bag: BagDir): ProfileVersion = {
-    0 // TODO: retrieve actual version
+  def getProfileVersion(bag: BagDir): Try[ProfileVersion] = Try {
+    if (Files.exists(bag.resolve("bag-info.txt"))) {
+      val b = bagReader.read(bag)
+      b.getMetadata.get("BagIt-Profile-Version").asScala.toList match {
+        case (v :: _) => Try { v.split('.').head.toInt }.recover { // There will always be a 'head', even if there are no dots in the version value
+          case _: NumberFormatException => 0
+        }.getOrElse(0)
+        case _ => 0
+      }
+    }
+    /*
+     * This will fail later, as bag-info.txt is mandatory in all versions, but we don't report that here,
+     * to keep this function simple.
+     */
+    else 0
   }
 }

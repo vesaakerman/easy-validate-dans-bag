@@ -15,15 +15,46 @@
  */
 package nl.knaw.dans.easy.validatebag
 
+import java.net.URI
+
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.joda.time.DateTime
 import org.scalatra._
 
+import scala.util.{ Failure, Try }
+
 class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraServlet with DebugEnhancedLogging {
-  import app._
-  import logger._
 
   get("/") {
     contentType = "text/plain"
     Ok("EASY Validate DANS Bag Service running...")
+  }
+
+  post("/validate") {
+    val result = for {
+      accept <- Try { request.getHeader("Accept") }
+      infoPackageType <- Try { InfoPackageType.withName(params.get("infoPackageType").getOrElse("SIP")) }
+      uri <- params.get("uri").map(getFileUrl).getOrElse(Failure(new IllegalArgumentException("Required query parameter 'uri' not found")))
+      message <- app.validate(uri, infoPackageType)
+      body <- Try {
+        if (accept == "application/json") message.toJson
+        else message.toPlainText
+      }
+    } yield if (message.isOk) Ok(body)
+            else BadRequest(body)
+
+    result.getOrRecover {
+      case t: IllegalArgumentException => BadRequest(s"Input error: ${ t.getMessage }")
+      case t =>
+        logger.error(s"Server error: ${ t.getMessage }", t)
+        InternalServerError(s"[${ new DateTime() }] The server encountered an error. Consult the logs.")
+    }
+  }
+
+  private def getFileUrl(uriStr: String): Try[URI] = Try {
+    val fileUri = new URI(uriStr)
+    if (fileUri.getScheme != "file") throw new IllegalArgumentException("Currently only file:/// URLs are supported")
+    fileUri
   }
 }

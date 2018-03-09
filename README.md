@@ -21,10 +21,10 @@ both a command line and an HTTP interface. The command line interface is documen
 
 The HTTP interface supports the following path patterns and methods:
 
-Path                                                    | Method | Description
---------------------------------------------------------|--------|------------------------------------------------------
-`/`                                                     | `GET`  | Returns a message stating that the server is running.
-`/validate?[infoPackageType=AIP|SIP]&uri=<bag-uri>`     | `GET`  | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
+Path                                                     | Method | Description
+---------------------------------------------------------|--------|------------------------------------------------------
+`/`                                                      | `GET`  | Returns a message stating that the server is running.
+`/validate?[infoPackageType=AIP\|SIP]&uri=<bag-uri>`     | `POST` | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
 
 `<bag-uri>` may be a file-URI to a directory (e.g., `file:///some/path/to/bagdir`). In fact, this is the only type of URI
 that will be implemented in the first version.
@@ -54,7 +54,7 @@ The plain text serialization has the following layout for simple value fields (i
 And for the "Rule violations" map:
 
     Rule violations:
-        - [<rule-number>] <rule-details>
+        - [<rule-number>] <violation-details>
 
 where the pattern on the second line is instantiated for for each violation.
 
@@ -65,10 +65,10 @@ The JSON serialization is a map from `<field-name>` to `<field-value>`
         "<field-name>": "<field-value>" [, "<field-name>": "<field-value>"...]
     }
 
-The `<field-value>` of "Rule violations" is itself a map from `<rule-number>` to `<rule-details>`:
+The `<field-value>` of "Rule violations" is itself a map from `<rule-number>` to `<violation-details>`:
 
     {
-        "<rule-number>"; "
+        "<rule-number>"; "<violation-details>" [, "<rule-number>"; "<violation-details>"...]
     }
 
 
@@ -81,6 +81,9 @@ ARGUMENTS
       -f, --response-format  <arg>   Format for the result report (default = text)
           --help                     Show help message
           --version                  Show version of this program
+
+    trailing arguments:
+        bag (not required)   The bag to validate
 
     Subcommand: run-service - Starts EASY Validate Dans Bag as a daemon that services HTTP requests
           --help   Show help message
@@ -96,7 +99,7 @@ response message
     OK: bag1 complies with DANS BagIt Profile v1.
     Bag URI: file:///some/path/to/bag1
     Bag: bag1
-    Profile version: 0.0.0
+    Profile version: 0
     Information package type: SIP
     Result: COMPLIANT
 
@@ -104,7 +107,7 @@ response message
     ERROR: bag2 does NOT comply with DANS BagIt Profile v0.
     Bag URI: file:///some/path/to/bag2
     Bag: bag2
-    Profile version: 0.0.0
+    Profile version: 0
     Information package type: AIP
     Result: NOT COMPLIANT
     Rule violations:
@@ -116,7 +119,7 @@ response message
     {
         bag_uri: "file:///some/path/to/bag2",
         bag: "bag2",
-        profile_version: "0.0.0",
+        profile_version: 0,
         info_package_type: "AIP",
         result: "NOT COMPLIANT",
         rule_violations: {
@@ -131,7 +134,7 @@ response message
        bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
           54e8dc73a672/bag",
        bag: "bag",
-       profile_version: "1.0.0",
+       profile_version: 1,
        result: "COMPLIANT"
     }
 
@@ -141,7 +144,7 @@ response message
        bag_uri: "file:///var/opt/dans.knaw.nl/tmp/easy-ingest-flow-inbox/4a341441-55c3-4a41-8abf-\
           54e8dc73a672/bag",
        bag: "bag",
-       profile_version: "1.0.0",
+       profile_version: 1,
        result: "COMPLIANT"
     }
 
