@@ -18,12 +18,11 @@ package nl.knaw.dans.easy.validatebag
 import java.net.URI
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
-import nl.knaw.dans.easy.validatebag.ValidationResult._
 
 class ResultMessageSpec extends TestSupportFixture {
 
   "toPlainText" should "contain violations if present in message object" in {
-    val text = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, NOT_COMPLIANT, Some(Seq("1" -> "Wrong", "2" -> "Even worse")))
+    val text = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, false, Some(Seq("1" -> "Wrong", "2" -> "Even worse")))
       .toPlainText
     debug(s"Message:\n$text")
     text should include("Rule violations:\n")
@@ -32,14 +31,14 @@ class ResultMessageSpec extends TestSupportFixture {
   }
 
   it should "not contain violations if no present" in {
-    val text = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, NOT_COMPLIANT)
+    val text = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, false)
       .toPlainText
     debug(s"Message:\n$text")
     text shouldNot include("Rule violations:\n")
   }
 
   "toJson" should "contain violations if present in message object" in {
-    val json = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, NOT_COMPLIANT, Some(Seq("1" -> "Wrong", "2" -> "Even worse")))
+    val json = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, false, Some(Seq("1" -> "Wrong", "2" -> "Even worse")))
       .toJson
     debug(s"Message:\n$json")
     json should include("\"ruleViolations\"")
@@ -48,7 +47,7 @@ class ResultMessageSpec extends TestSupportFixture {
   }
 
   it should "not contain violations if no present" in {
-    val json = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, NOT_COMPLIANT)
+    val json = ResultMessage(new URI("file://path/to/file.txt"), "file.txt", 0, SIP, false)
       .toJson
     debug(s"Message:\n$json")
     json shouldNot include("\"ruleViolations\"")
