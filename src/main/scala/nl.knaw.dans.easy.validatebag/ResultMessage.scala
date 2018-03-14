@@ -50,7 +50,7 @@ case class ResultMessage(
          |Bag: $bag
          |Information package type: $infoPackageType
          |Profile version: $profileVersion
-         |isCompliant: $isCompliant
+         |Is compliant: $isCompliant
          |""".stripMargin
     val violationsPart = ruleViolations.map(_.map { case (nr, violation) => s" - [$nr] $violation" }.mkString("Rule violations:\n", "\n", ""))
     mandatoryPart + violationsPart.getOrElse("")
