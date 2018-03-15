@@ -7,7 +7,7 @@ Determines whether a DANS bag is valid according to the DANS BagIt Profile.
 SYNOPSIS
 --------
 
-    easy-validate-dans-bag [--aip] [--response-format,-f json|text] <bag>
+    easy-validate-dans-bag [--aip] [--bag-store <uri>] [--response-format,-f json|text] <bag>
     easy-validate-dans-bag run-service
 
 
@@ -19,17 +19,31 @@ does not specify what version of the profile it claims to comply with, v0 is ass
 both a command line and an HTTP interface. The command line interface is documented in the
 [ARGUMENTS](#arguments) section below.
 
+### HTTP
+
+#### Requests
 The HTTP interface supports the following path patterns and methods:
 
-Path                                                     | Method | Description
----------------------------------------------------------|--------|------------------------------------------------------
-`/`                                                      | `GET`  | Returns a message stating that the server is running.
-`/validate?[infoPackageType=AIP\|SIP]&uri=<bag-uri>`     | `POST` | Validates the bag at `<bag-uri>` an returns the result as a JSON-document.
 
-`<bag-uri>` may be a file-URI to a directory (e.g., `file:///some/path/to/bagdir`). In fact, this is the only type of URI
-that will be implemented in the first version.
+Path                                                                               | Method | Description
+-----------------------------------------------------------------------------------|--------|------------------------------------------------------
+`/`                                                                                | `GET`  | Returns a message stating that the server is running.
+`/validate?[infoPackageType=AIP\|SIP]&uri=<bag-uri>[&bag-store=<bag-store-uri>]`   | `POST` | Validates the bag at `<bag-uri>` and returns the result as a JSON-document.
 
-TODO: status messages
+* `<bag-uri>` may be a file-URI to a directory (e.g., `file:///some/path/to/bagdir`). In fact, this is the only type of URI
+  that will be implemented in the first version.
+
+* By default the validation will only check rules that can be verified independently of any bag store. If the query parameter `bag-store` is provided
+  and contains the URL of a specific bag store, the rules will be verified in the context of that bag store. In particular, the virtual validity
+  of the bag will be checked by resolving the [local-file-uri]'s in that bag store.
+
+* If the `Accept` header is specified and set to `application/json` the [response message](#response-message) will be formatted as a JSON object, otherwise
+  it will be formatted as plain text.
+
+#### Responses
+* The `/validate` route will return `200 OK` if the bag was compliant and `400 Bad Request` if the bag was not compliant. In both cases the body of the
+  response will contain the [response message](#response-message).
+* A `500 Internal Server Error` if some other error occurs.
 
 ### Response message
 The response message has the following structure:
@@ -38,9 +52,9 @@ Field                    | Type   | Description
 -------------------------|--------|-----------------------------------
 Bag                      | String | The name of the bag.
 Bag URI                  | URI    | The URI of the bag to validate.
-Profile version          | String | The version of the profile used in the validation.
+Profile version          | Number | The version of the profile used in the validation.
 Information package type | Enum   | `SIP` or `AIP`: the type of information package the bag was validated as.
-Result                   | Enum   | `COMPLIANT` or `NOT COMPLIANT`.
+Result                   | Enum   | `COMPLIANT` or `NOT_COMPLIANT`.
 Rule violations          | Map    | The rules that were violated. The violations are (rule number, violation details) pairs. This field is absent if Result is `COMPLIANT`.
 
 This message can be serialized in one of two formats: plain text or JSON. A general description follows. See the [EXAMPLES](#examples) section for
@@ -54,7 +68,7 @@ The plain text serialization has the following layout for simple value fields (i
 And for the "Rule violations" map:
 
     Rule violations:
-        - [<rule-number>] <violation-details>
+        - '['<rule-number>']' <violation-details>
 
 where the pattern on the second line is instantiated for for each violation.
 
@@ -68,7 +82,7 @@ The JSON serialization is a map from `<field-name>` to `<field-value>`
 The `<field-value>` of "Rule violations" is itself a map from `<rule-number>` to `<violation-details>`:
 
     {
-        "<rule-number>"; "<violation-details>" [, "<rule-number>"; "<violation-details>"...]
+        "<rule-number>"; "<violation-details>" [, "<rule-number>": "<violation-details>"...]
     }
 
 
@@ -177,3 +191,6 @@ Steps:
 If the `rpm` executable is found at `/usr/local/bin/rpm`, the build profile that includes the RPM
 packaging will be activated. If `rpm` is available, but at a different path, then activate it by using
 Maven's `-P` switch: `mvn -Pprm install`.
+
+
+[local-file-uri]: https://dans-knaw.github.io/easy-bag-store/03_definitions.html#local-file-uri

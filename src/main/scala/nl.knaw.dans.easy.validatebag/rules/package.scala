@@ -42,7 +42,7 @@ package object rules {
 
   private val allRules: Map[ProfileVersion, RuleExpression] = {
     Map(
-      0 -> all(
+      profileVersion0 -> all(
         ifThenAlso(
           or(
             numberedRule("1.1.1", bagMustBeValid, SIP),
@@ -53,8 +53,11 @@ package object rules {
               numberedRule("1.2.1", bagMustContainBagInfoTxt),
               all(
                 ifThenAlso(
-                  numberedRule("1.2.1", bagInfoTxtMayContainOne("BagIt-Profile-Version")),
-                  numberedRule("1.2.1", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-Version", "0.0.0"))),
+                  numberedRule("1.2.2", bagInfoTxtMayContainOne("BagIt-Profile-Version")),
+                  numberedRule("1.2.2", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-Version", profileVersion0.toString))),
+                ifThenAlso(
+                  numberedRule("1.2.3", bagInfoTxtMayContainOne("BagIt-Profile-URI")),
+                  numberedRule("1.2.3", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-URI", profileVersion0Uri))),
                 all(
                   numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate),
                   numberedRule("1.3.1", bagMustContainSHA1)
@@ -65,7 +68,9 @@ package object rules {
         )
         // TODO add the others
       ),
-      1 -> all(
+
+
+      profileVersion1 -> all(
         or(
           numberedRule("1.1.1", bagMustBeValid, SIP),
           numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP)

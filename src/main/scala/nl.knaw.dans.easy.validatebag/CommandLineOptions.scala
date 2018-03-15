@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag
 
+import java.net.URI
 import java.nio.file.Path
 
 import org.rogach.scallop.{ ScallopConf, Subcommand }
@@ -27,7 +28,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Determines whether a DANS bag is valid according to the DANS BagIt Profile."""
   val synopsis: String =
     s"""
-       |  $printedName [--aip] [--response-format,-f json|text] <bag>
+       |  $printedName [--aip] [--bag-store <uri>] [--response-format,-f json|text] <bag>
        |  $printedName run-service""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
@@ -43,6 +44,9 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |""".stripMargin)
   val aip = opt[Boolean]("aip", noshort = true,
     descr = "Validate as AIP (instead of as SIP)")
+
+  val bagStore = opt[URI]("bag-store", noshort = true,
+    descr = "The bag store to use for deep validation")
 
   val responseFormat = opt[String]("response-format", short = 'f',
     descr = "Format for the result report", default = Some("text"))

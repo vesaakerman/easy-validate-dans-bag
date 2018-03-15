@@ -29,6 +29,11 @@ package object validatebag {
   type Rule = BagDir => Try[Unit]
   type NumberedRule = (RuleNumber, Rule, InfoPackageType)
 
+  val profileVersion0 = 0
+  val profileVersion0Uri = "doi:10.17026/dans-z52-ybfe"
+  val profileVersion1 = 1
+  val profileVersion1Uri = "doi:10.17026/dans-zf3-q54n"
+
   object InfoPackageType extends Enumeration {
     type InfoPackageType = Value
     val SIP, AIP, BOTH = Value
