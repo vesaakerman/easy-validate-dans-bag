@@ -18,27 +18,25 @@ package nl.knaw.dans.easy.validatebag
 import java.net.URI
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
-import nl.knaw.dans.easy.validatebag.ValidationResult.ValidationResult
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import org.json4s.{ CustomSerializer, DefaultFormats, Formats, JNull, JString }
 
+case class ResultMessage(bagUri: URI,
+                         bag: String,
+                         profileVersion: ProfileVersion,
+                         infoPackageType: InfoPackageType,
+                         isCompliant: Boolean,
+                         ruleViolations: Option[Seq[(String, String)]]) {
 
-case class ResultMessage(
-                          bagUri: URI,
-                          bag: String,
-                          profileVersion: ProfileVersion,
-                          infoPackageType: InfoPackageType,
-                          result: ValidationResult,
-                          ruleViolations: Option[Seq[(String, String)]] = None) {
+  require((isCompliant && ruleViolations.isEmpty) || (!isCompliant && ruleViolations.exists(_.nonEmpty)),
+    "when a bag is compliant, no rule violations should be given, " +
+      "or when a bag is not compliant, at least on rule violation should be given")
 
   private implicit val formats: Formats =
     new DefaultFormats {} +
       new EnumNameSerializer(InfoPackageType) +
-      new EnumNameSerializer(ValidationResult) +
       EncodingURISerializer
-
-  def isOk: Boolean = result == ValidationResult.COMPLIANT
 
   def toJson(implicit pretty: Boolean = true): String = {
     if (pretty)
@@ -54,10 +52,21 @@ case class ResultMessage(
          |Bag: $bag
          |Information package type: $infoPackageType
          |Profile version: $profileVersion
-         |Result: $result
-         |""".stripMargin
-    val violationsPart = ruleViolations.map(_.map { case (nr, violation) => s" - [$nr] $violation" }.mkString("Rule violations:\n", "\n", ""))
+         |Is compliant: $isCompliant""".stripMargin
+    val violationsPart = ruleViolations.map(_.map { case (nr, violation) => s" - [$nr] $violation" }.mkString("\nRule violations:\n", "\n", ""))
     mandatoryPart + violationsPart.getOrElse("")
+  }
+}
+
+object ResultMessage {
+  def apply(bagUri: URI,
+            bag: String,
+            profileVersion: ProfileVersion,
+            infoPackageType: InfoPackageType,
+            ruleViolations: Seq[(String, String)] = Seq.empty): ResultMessage = {
+    new ResultMessage(bagUri, bag, profileVersion, infoPackageType, ruleViolations.isEmpty,
+      if (ruleViolations.isEmpty) None
+      else Some(ruleViolations))
   }
 }
 

@@ -62,8 +62,8 @@ object Command extends App with DebugEnhancedLogging {
           app.validate(commandLine.bag().toUri, if (commandLine.aip()) AIP
                                                 else SIP).map {
             msg =>
-              if (commandLine.responseFormat() == "json") (msg.isOk, msg.toJson)
-              else (msg.isOk, msg.toPlainText)
+              if (commandLine.responseFormat() == "json") (msg.isCompliant, msg.toJson)
+              else (msg.isCompliant, msg.toPlainText)
           }
       }
   }

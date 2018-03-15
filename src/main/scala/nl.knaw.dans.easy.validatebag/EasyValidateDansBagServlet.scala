@@ -41,8 +41,7 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
         if (accept == "application/json") message.toJson
         else message.toPlainText
       }
-    } yield if (message.isOk) Ok(body)
-            else BadRequest(body)
+    } yield Ok(body)
 
     result.getOrRecover {
       case t: IllegalArgumentException => BadRequest(s"Input error: ${ t.getMessage }")

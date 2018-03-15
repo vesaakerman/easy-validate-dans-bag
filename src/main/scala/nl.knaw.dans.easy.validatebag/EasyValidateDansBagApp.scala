@@ -19,7 +19,6 @@ import java.net.URI
 import java.nio.file.{ Path, Paths }
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
-import nl.knaw.dans.easy.validatebag.ValidationResult.{ COMPLIANT, NOT_COMPLIANT }
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationException
 import nl.knaw.dans.lib.error.CompositeException
 
@@ -34,11 +33,7 @@ class EasyValidateDansBagApp(configuration: Configuration) {
       violations <- validateDansBag(bag, version, infoPackageType)
         .map(_ => Seq.empty)
         .recoverWith(extractViolations)
-    } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType,
-      if (violations.isEmpty) COMPLIANT
-      else NOT_COMPLIANT,
-      if (violations.isEmpty) None
-      else Some(violations))
+    } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType, violations)
   }
 
   private def getProfileVersion(path: BagDir): Try[Int] = {
