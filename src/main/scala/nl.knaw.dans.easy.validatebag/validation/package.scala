@@ -215,12 +215,12 @@ package object validation extends DebugEnhancedLogging {
   def getProfileVersion(bag: BagDir): Try[ProfileVersion] = Try {
     if (Files.exists(bag.resolve("bag-info.txt"))) {
       val b = bagReader.read(bag)
-      b.getMetadata.get("BagIt-Profile-Version").asScala.toList match {
+      Option(b.getMetadata.get("BagIt-Profile-Version")).map(_.asScala.toList match {
         case (v :: _) => Try { v.split('.').head.toInt }.recover { // There will always be a 'head', even if there are no dots in the version value
           case _: NumberFormatException => 0
         }.getOrElse(0)
         case _ => 0
-      }
+      }).getOrElse(0)
     }
     /*
      * This will fail later, as bag-info.txt is mandatory in all versions, but we don't report that here,
