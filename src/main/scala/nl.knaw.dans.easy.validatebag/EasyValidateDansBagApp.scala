@@ -33,9 +33,7 @@ class EasyValidateDansBagApp(configuration: Configuration) {
       violations <- validateDansBag(bag, version, infoPackageType)
         .map(_ => Seq.empty)
         .recoverWith(extractViolations)
-    } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType, violations.isEmpty,
-      if (violations.isEmpty) None
-      else Some(violations))
+    } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType, violations)
   }
 
   private def getProfileVersion(path: BagDir): Try[Int] = {
