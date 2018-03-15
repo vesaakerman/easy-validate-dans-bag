@@ -95,9 +95,8 @@ package object bagit {
 
   def bagInfoTxtMayContainOne(element: String)(b: BagDir): Try[Unit] = Try {
     val bag = bagReader.read(Paths.get(b.toUri))
-    Option(bag.getMetadata.get(element))
-      .filterNot(_.size > 1)
-      .getOrElse(fail(s"bag-info.txt may contain at most one element: $element"))
+    val values = bag.getMetadata.get(element)
+    if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
   }
 
   def bagInfoTxtOptionalElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
