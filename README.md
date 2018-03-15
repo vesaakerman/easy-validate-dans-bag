@@ -91,16 +91,17 @@ ARGUMENTS
 
     Options:
 
-          --aip                      Validate as AIP (instead of as SIP)
-      -f, --response-format  <arg>   Format for the result report (default = text)
-          --help                     Show help message
-          --version                  Show version of this program
+    --aip                      Validate as AIP (instead of as SIP)
+        --bag-store  <arg>         The bag store to use for deep validation
+    -f, --response-format  <arg>   Format for the result report (default = text)
+        --help                     Show help message
+        --version                  Show version of this program
 
     trailing arguments:
-        bag (not required)   The bag to validate
+     bag (not required)   The bag to validate
 
     Subcommand: run-service - Starts EASY Validate Dans Bag as a daemon that services HTTP requests
-          --help   Show help message
+        --help   Show help message
     ---
 
 EXAMPLES
