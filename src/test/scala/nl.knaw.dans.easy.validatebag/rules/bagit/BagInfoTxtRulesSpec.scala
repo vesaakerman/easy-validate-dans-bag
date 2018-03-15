@@ -17,6 +17,8 @@ package nl.knaw.dans.easy.validatebag.rules.bagit
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 
+import scala.util.Success
+
 class BagInfoTxtRulesSpec extends TestSupportFixture {
   "bagMustContainBagInfoTxt" should "fail if bag-info.txt is not found" in {
     testRuleViolation(bagMustContainBagInfoTxt, "missing-bag-info.txt", "bag-info.txt")
@@ -26,7 +28,11 @@ class BagInfoTxtRulesSpec extends TestSupportFixture {
     testRuleViolation(bagInfoTxtMayContainOne("ELEMENT"), "two-many-ELEMENT-in-bag-info.txt", "may contain at most one")
   }
 
-  "bagInfoTxtOptionalElementMustHaveValue(\"ELEMENT\", \"VALUE\")" should "succeed if ELEMENT exists has value VALUE" in {
+  it should "succeed if bag-info.txt contains NO ELEMENT element" in {
+    testRuleSuccess(bagInfoTxtMayContainOne("ELEMENT"), "zero-ELEMENT-in-bag-info")
+  }
+
+  "bagInfoTxtOptionalElementMustHaveValue(\"ELEMENT\", \"VALUE\")" should "succeed if ELEMENT exists and has value VALUE" in {
     testRuleSuccess(bagInfoTxtOptionalElementMustHaveValue("ELEMENT", "VALUE"), "one-ELEMENT-VALUE-in-bag-info")
   }
 
