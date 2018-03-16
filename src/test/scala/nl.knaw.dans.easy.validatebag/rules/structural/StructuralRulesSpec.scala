@@ -15,7 +15,18 @@
  */
 package nl.knaw.dans.easy.validatebag.rules.structural
 
+import java.nio.file.Paths
+
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
+import nl.knaw.dans.easy.validatebag.rules.structural._
 
 class StructuralRulesSpec extends TestSupportFixture {
+
+  "bagMustContainDir" should "fail metadata directory not found" in {
+    testRuleViolation(bagMustContainDir(Paths.get("metadata")), "missingMetadata", "not found in bag")
+  }
+
 }
+
+
+

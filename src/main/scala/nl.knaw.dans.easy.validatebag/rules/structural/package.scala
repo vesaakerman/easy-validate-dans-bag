@@ -15,5 +15,17 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
+import java.nio.file.{ Files, Path }
+
+import nl.knaw.dans.easy.validatebag.BagDir
+import nl.knaw.dans.easy.validatebag.validation.fail
+
+import scala.util.Try
+
 package object structural {
+  def bagMustContainDir(d: Path)(b: BagDir) = Try {
+    require(!d.isAbsolute, "Directory $d must be a relative path")
+    if (!Files.isDirectory(b.resolve(d)))
+      fail(s"Mandatory directory '$d' not found in bag.")
+  }
 }

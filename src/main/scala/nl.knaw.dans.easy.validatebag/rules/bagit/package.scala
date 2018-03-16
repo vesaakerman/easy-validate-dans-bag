@@ -131,9 +131,4 @@ package object bagit {
     if (!Files.exists(b.resolve("manifest-sha1.txt")))
       fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
   }
-
-  def bagMustContainMetadataDir(b: BagDir) = Try {
-    if (Files.isDirectory(b.resolve("metadata"))) ()
-    else fail("Mandatory directory 'metadata' not found in bag.")
-  }
 }
