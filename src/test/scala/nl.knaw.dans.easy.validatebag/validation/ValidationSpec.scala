@@ -15,12 +15,11 @@
  */
 package nl.knaw.dans.easy.validatebag.validation
 
-import java.nio.file.{ Files, Path }
-import better.files._
 import java.util.concurrent.atomic.AtomicBoolean
 
+import better.files._
+import nl.knaw.dans.easy.validatebag.{ validation, Rule, RuleNumber, TestSupportFixture }
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
-import nl.knaw.dans.easy.validatebag.{ Rule, RuleNumber, TestSupportFixture, validation }
 import nl.knaw.dans.lib.error.CompositeException
 
 import scala.language.implicitConversions

@@ -15,12 +15,10 @@
  */
 package nl.knaw.dans.easy
 
-import java.nio.file.{ Files, Path }
-
+import better.files._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
 
 import scala.util.Try
-import better.files._
 
 package object validatebag {
   type ProfileVersion = Int

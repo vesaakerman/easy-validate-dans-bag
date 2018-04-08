@@ -15,16 +15,14 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.Path
-
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
 import nl.knaw.dans.easy.validatebag.validation.{ RuleExpression, _ }
 //import nl.knaw.dans.easy.validatebag.rules.bagit.baseBag
+import better.files._
 import nl.knaw.dans.easy.validatebag.validation.numberedRule
 
 import scala.util.Try
-import better.files._
 
 package object rules {
 

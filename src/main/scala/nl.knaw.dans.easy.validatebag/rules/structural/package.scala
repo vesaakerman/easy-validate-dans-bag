@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.{ Files, Path }
+import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag.BagDir
 import nl.knaw.dans.easy.validatebag.validation.fail

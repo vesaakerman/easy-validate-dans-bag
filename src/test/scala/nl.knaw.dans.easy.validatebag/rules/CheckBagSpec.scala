@@ -15,9 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.Path
 import better.files._
-
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationException
 import nl.knaw.dans.lib.error.CompositeException
@@ -32,7 +30,7 @@ class CheckBagSpec extends TestSupportFixture {
   }
 
   "checkBag" should "fail if bag directory is not found" in {
-    checkBag(bagsDir/ "non-existent", 0) should matchPattern {
+    checkBag(bagsDir / "non-existent", 0) should matchPattern {
       case Failure(_: IllegalArgumentException) =>
     }
   }

@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.validatebag
 
 import javax.servlet.ServletContext
+import nl.knaw.dans.easy.validatebag.rules.bagit.closeVerifier
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletContextHandler
@@ -23,7 +24,6 @@ import org.scalatra._
 import org.scalatra.servlet.ScalatraListener
 
 import scala.util.Try
-import rules.bagit.closeVerifier
 
 class EasyValidateDansBagService(serverPort: Int, app: EasyValidateDansBagApp) extends DebugEnhancedLogging {
 

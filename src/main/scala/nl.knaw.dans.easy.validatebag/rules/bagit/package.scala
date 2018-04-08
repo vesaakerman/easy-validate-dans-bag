@@ -15,9 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.{ Files, NoSuchFileException, Paths }
+import java.nio.file.{ NoSuchFileException, Paths }
 
-import better.files._
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.exceptions._
 import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms._
@@ -152,9 +151,9 @@ package object bagit {
       .foreach {
         manifest =>
           val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => b.relativize(p)).toSet
-          debug(s"Manifest files: ${filesInManifest.mkString(", ")}")
+          debug(s"Manifest files: ${ filesInManifest.mkString(", ") }")
           val filesInPayload = (b / "data").walk().filter(_.isRegularFile).map(f => b.path.relativize(f.path)).toSet
-          debug(s"Payload files: ${filesInManifest.mkString(", ")}")
+          debug(s"Payload files: ${ filesInManifest.mkString(", ") }")
           if (filesInManifest != filesInPayload) {
             val filesOnlyInPayload = filesInPayload -- filesInManifest // The other way around should have been caught by the validity check
             fail(s"All payload files must have a SHA-1 checksum. Missing files: ${ filesOnlyInPayload.mkString(", ") }")

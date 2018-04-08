@@ -15,8 +15,6 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.{  Path }
-
 import better.files._
 import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }
