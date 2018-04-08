@@ -51,4 +51,12 @@ class BagInfoTxtRulesSpec extends TestSupportFixture {
   it should "fail if no millisecond precision provided" in {
     testRuleViolation(bagInfoTxtCreatedMustBeIsoDate, "no-millisecond-precision-in-Created", "not in correct ISO 8601 format")
   }
+
+  "bagInfoTxtMustNotContain" should "fail if the element is present" in {
+    testRuleViolation(bagInfoTxtMustNotContain("ELEMENT"), "one-ELEMENT-VALUE-in-bag-info", "must not contain")
+  }
+
+  it should "succeed if the element is not present" in {
+    testRuleSuccess(bagInfoTxtMustNotContain("ELEMENT"), "minimal")
+  }
 }

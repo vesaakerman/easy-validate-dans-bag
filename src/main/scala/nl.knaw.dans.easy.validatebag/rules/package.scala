@@ -66,7 +66,7 @@ package object rules {
                 ),
                 or(
                   numberedRule("1.2.6", bagInfoTxtMustContainExactlyOne("EASY-User-Account"), AIP),
-                  numberedRule("1.2.6", bagInfoTxtMustContainExactlyOne("EASY-User-Account"), SIP)
+                  numberedRule("1.2.6", bagInfoTxtMustNotContain("EASY-User-Account"), SIP)
                 ),
                 all(
                   numberedRule("1.3.1", bagMustContainSha1PayloadManifest)
