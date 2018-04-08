@@ -25,7 +25,7 @@ import scala.util.Try
 package object structural {
   def bagMustContainDir(d: Path)(b: BagDir) = Try {
     require(!d.isAbsolute, "Directory $d must be a relative path")
-    if (!Files.isDirectory(b.resolve(d)))
+    if (!(b / d.toString).isDirectory)
       fail(s"Mandatory directory '$d' not found in bag.")
   }
 }

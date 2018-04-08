@@ -15,7 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.{ Files, Path }
+import java.nio.file.Path
+import better.files._
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationException
@@ -24,29 +25,31 @@ import nl.knaw.dans.lib.error.CompositeException
 import scala.util.Failure
 
 class CheckBagSpec extends TestSupportFixture {
-  private def expectUnreadable(unreadables: Path*)(path: Path): Boolean = {
-    val readable = !unreadables.contains(path) && Files.isReadable(path)
-    debug(s"Returning readable = $readable for $path")
+  private def expectUnreadable(unreadables: File*)(file: File): Boolean = {
+    val readable = !unreadables.contains(file) && file.isReadable
+    debug(s"Returning readable = $readable for $file")
     readable
   }
 
   "checkBag" should "fail if bag directory is not found" in {
-    checkBag(bagsDir.resolve("non-existent"), 0) should matchPattern {
+    checkBag(bagsDir/ "non-existent", 0) should matchPattern {
       case Failure(_: IllegalArgumentException) =>
     }
   }
 
   it should "fail if the bag directory is unreadable" in {
-    val minimal = bagsDir.resolve("minimal")
-    inside(checkBag(minimal, 0)(expectUnreadable(minimal))) {
+    val minimal = bagsDir / "minimal"
+    val result = checkBag(minimal, 0)(expectUnreadable(minimal))
+    result shouldBe a[Failure[_]]
+    inside(result) {
       case Failure(iae: IllegalArgumentException) =>
         iae.getMessage should include("non-readable")
     }
   }
 
   it should "fail if there is a non-readable file in the bag directory" in {
-    val minimal = bagsDir.resolve("minimal")
-    val leegTxt = minimal.resolve("data/leeg.txt")
+    val minimal = bagsDir / "minimal"
+    val leegTxt = minimal / "data/leeg.txt"
     inside(checkBag(minimal, 0)(expectUnreadable(leegTxt))) {
       case Failure(iae: IllegalArgumentException) =>
         iae.getMessage should include("non-readable")
@@ -54,7 +57,7 @@ class CheckBagSpec extends TestSupportFixture {
   }
 
   it should "fail if bag does not contain bag-info.txt" in {
-    inside(checkBag(bagsDir.resolve("missing-bag-info.txt"), 0)) {
+    inside(checkBag(bagsDir / "missing-bag-info.txt", 0)) {
       case Failure(CompositeException(List(rve: RuleViolationException))) =>
         // This also checks that there is only one rule violation.
         debug(s"Error message: ${ rve.getMessage }")

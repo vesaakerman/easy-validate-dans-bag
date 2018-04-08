@@ -17,9 +17,10 @@ package nl.knaw.dans.easy.validatebag.rules
 
 import java.nio.file.{ Files, NoSuchFileException, Paths }
 
-import com.sun.org.apache.xml.internal.utils.ThreadControllerWrapper
+import better.files._
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.exceptions._
+import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms._
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.verify.BagVerifier
 import nl.knaw.dans.easy.validatebag.BagDir
@@ -27,6 +28,7 @@ import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException,
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
+import scala.collection.JavaConverters._
 import scala.language.postfixOps
 import scala.util.{ Failure, Try }
 
@@ -49,7 +51,7 @@ package object bagit {
       Try(fail(details))
     }
 
-    Try { bagReader.read(b) }
+    Try { bagReader.read(b.path) }
       .recoverWith {
         case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
           /*
@@ -89,26 +91,26 @@ package object bagit {
   }
 
   def bagMustContainBagInfoTxt(b: BagDir) = Try {
-    if (!Files.exists(b.resolve("bag-info.txt")))
+    if (!(b / "bag-info.txt").exists)
       fail("Mandatory file 'bag-info.txt' not found in bag. ")
   }
 
   def bagInfoTxtMayContainOne(element: String)(b: BagDir): Try[Unit] = Try {
-    val bag = bagReader.read(Paths.get(b.toUri))
+    val bag = bagReader.read(Paths.get(b.uri))
     val values = bag.getMetadata.get(element)
     if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
   }
 
   def bagInfoTxtMustContainExactlyOne(element: String)(b: BagDir): Try[Unit] = Try {
-    val bag = bagReader.read(Paths.get(b.toUri))
+    val bag = bagReader.read(Paths.get(b.uri))
     val values = bag.getMetadata.get(element)
     val numberFound = Option(values).getOrElse(0)
     if (numberFound != 1) fail(s"bag-info.txt must contain exactly most one element: $element, number of elements found: $numberFound")
   }
 
   def bagInfoTxtMustNotContain(element: String)(b: BagDir): Try[Unit] = Try {
-    val bag = bagReader.read(Paths.get(b.toUri))
-    if(bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
+    val bag = bagReader.read(Paths.get(b.uri))
+    if (bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
   }
 
   def bagInfoTxtOptionalElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
@@ -118,18 +120,18 @@ package object bagit {
   // Relies on there being only one element with the specified name
   private def getBagInfoTxtValue(b: BagDir, element: String): Try[Option[String]] = Try {
     trace(b, element)
-    val bag = bagReader.read(Paths.get(b.toUri))
+    val bag = bagReader.read(Paths.get(b.uri))
     Option(bag.getMetadata.get(element)).map(_.get(0))
   }
 
   def bagInfoTxtMustContainCreated(b: BagDir) = Try {
-    val readBag = bagReader.read(Paths.get(b.toUri))
+    val readBag = bagReader.read(Paths.get(b.uri))
     if (!readBag.getMetadata.contains("Created"))
       fail("The bag-info.txt file MUST contain an element called Created")
   }
 
   def bagInfoTxtCreatedMustBeIsoDate(b: BagDir): Try[Unit] = {
-    val readBag = bagReader.read(Paths.get(b.toUri))
+    val readBag = bagReader.read(Paths.get(b.uri))
     val valueOfCreated = readBag.getMetadata.get("Created").get(0)
     Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
       .map(_ => ())
@@ -140,14 +142,23 @@ package object bagit {
   }
 
   def bagMustContainSha1PayloadManifest(b: BagDir) = Try {
-    if (!Files.exists(b.resolve("manifest-sha1.txt")))
+    if (!(b / "manifest-sha1.txt").exists)
       fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
   }
 
   def bagSha1PayloadManifestMustContainAllPayloadFiles(b: BagDir) = Try {
-
-
-
-
+    val bag = bagReader.read(b.path)
+    bag.getPayLoadManifests.asScala.find(_.getAlgorithm == SHA1)
+      .foreach {
+        manifest =>
+          val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => b.relativize(p)).toSet
+          debug(s"Manifest files: ${filesInManifest.mkString(", ")}")
+          val filesInPayload = (b / "data").walk().filter(_.isRegularFile).map(f => b.path.relativize(f.path)).toSet
+          debug(s"Payload files: ${filesInManifest.mkString(", ")}")
+          if (filesInManifest != filesInPayload) {
+            val filesOnlyInPayload = filesInPayload -- filesInManifest // The other way around should have been caught by the validity check
+            fail(s"All payload files must have a SHA-1 checksum. Missing files: ${ filesOnlyInPayload.mkString(", ") }")
+          }
+      }
   }
 }

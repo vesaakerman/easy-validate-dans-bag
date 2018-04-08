@@ -15,8 +15,9 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.{ Files, Path }
+import java.nio.file.{  Path }
 
+import better.files._
 import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }
 import nl.knaw.dans.lib.error._
@@ -137,7 +138,7 @@ package object validation extends DebugEnhancedLogging {
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
-  def checkRules(bag: BagDir, rules: RuleExpression, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkRules(bag: BagDir, rules: RuleExpression, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
     /**
      * `isReadable` was added because unit testing this by actually setting files on the file system to non-readable and back
      * can get messy. After a failed build one might be left with a target folder that refuses to be cleaned. Unless you are
@@ -151,20 +152,18 @@ package object validation extends DebugEnhancedLogging {
   }
 
 
-  private def checkIfValidationCanProceed(bag: BagDir)(implicit isReadable: Path => Boolean): Try[Unit] = Try {
+  private def checkIfValidationCanProceed(bag: BagDir)(implicit isReadable: File => Boolean): Try[Unit] = Try {
     trace(bag)
     debug(s"Checking existence of $bag")
-    require(Files.exists(bag), "Bag does not exist")
+    require(bag.exists, "Bag does not exist")
     debug(s"Checking readability of $bag")
-    require(isReadable(bag), s"Bag is non-readable")
+    require(isReadable(bag), s"Bag is non-readable") // Using the passed-in isReadable function here!!
     debug(s"Checking if $bag is directory")
-    require(Files.isDirectory(bag), "Bag must be a directory")
-    resource.managed(Files.walk(bag)).acquireAndGet {
-      _.iterator().asScala.foreach {
-        f =>
-          debug(s"Checking readability of $f")
-          require(isReadable(f), s"Found non-readable file $f")
-      }
+    require(bag.isDirectory, "Bag must be a directory")
+    bag.walk().foreach {
+      f =>
+        debug(s"Checking readability of $f")
+        require(isReadable(f), s"Found non-readable file $f") // Using the passed-in isReadable function here!!
     }
   }
 
@@ -213,8 +212,8 @@ package object validation extends DebugEnhancedLogging {
   }
 
   def getProfileVersion(bag: BagDir): Try[ProfileVersion] = Try {
-    if (Files.exists(bag.resolve("bag-info.txt"))) {
-      val b = bagReader.read(bag)
+    if ((bag / "bag-info.txt").exists) {
+      val b = bagReader.read(bag.path)
       Option(b.getMetadata.get("BagIt-Profile-Version")).map(_.asScala.toList match {
         case (v :: _) => Try { v.split('.').head.toInt }.recover { // There will always be a 'head', even if there are no dots in the version value
           case _: NumberFormatException => 0

@@ -1,0 +1,4 @@
+d41d8cd98f00b204e9800998ecf8427e  data/leeg.txt
+d41d8cd98f00b204e9800998ecf8427e  data/sub/sub/vacio.txt
+aec63127d7f9c97c317457194249db0a  data/sine-sha1.txt
+aec63127d7f9c97c317457194249db0a  data/sub/sub/sine-sha1.txt

@@ -1,0 +1,3 @@
+9e5ad981e0d29adc278f6a294b8c2aca  bagit.txt
+697adfc12fd1fb83904d064841686a56  manifest-md5.txt
+a8cf71e902025c0159f092973cf019a2  manifest-sha1.txt

@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.validatebag.validation
 
 import java.nio.file.{ Files, Path }
+import better.files._
 import java.util.concurrent.atomic.AtomicBoolean
 
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
@@ -72,7 +73,7 @@ class ValidationSpec extends TestSupportFixture {
   }
 
   it should "fail when the bag does not exist" in {
-    val bagDir = testDir.resolve("not-exists")
+    val bagDir = testDir / "not-exists"
     val (rule1, ran1) = successRule
     val rule = atom(numberedRule("1.1.1", rule1))
 
@@ -84,8 +85,8 @@ class ValidationSpec extends TestSupportFixture {
   }
 
   it should "fail when the bag is not a directory" in {
-    val file = testDir.resolve("not-a-directory.txt")
-    Files.write(file, "this is not a directory".getBytes)
+    val file = testDir / "not-a-directory.txt"
+    file.write("this is not a directory")
 
     val (rule1, ran1) = successRule
     val rule = atom(numberedRule("1.1.1", rule1))
@@ -98,18 +99,18 @@ class ValidationSpec extends TestSupportFixture {
   }
 
   it should "fail when any of the files in the bag is not readable" in {
-    val bag = Files.createDirectories(testDir.resolve("bag"))
-    val file = bag.resolve("not-a-directory.txt")
-    Files.write(file, "this is not a directory".getBytes)
+    val bag = (testDir / "bag").createDirectories()
+    val unreadableFile = bag / "unreadable-file.txt"
+    unreadableFile.write("this is not readable")
 
-    def fileNotReadable(path: Path): Boolean = path != file
+    def isReadable(f: File): Boolean = f != unreadableFile
 
     val (rule1, ran1) = successRule
     val rule = atom(numberedRule("1.1.1", rule1))
 
-    inside(checkRules(bag, rule)(fileNotReadable)) {
+    inside(checkRules(bag, rule)(isReadable)) {
       case Failure(e: IllegalArgumentException) =>
-        e.getMessage should include(s"Found non-readable file $file")
+        e.getMessage should include(s"Found non-readable file $unreadableFile")
     }
     ran1.get shouldBe false
   }

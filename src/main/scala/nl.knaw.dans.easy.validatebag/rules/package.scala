@@ -24,6 +24,7 @@ import nl.knaw.dans.easy.validatebag.validation.{ RuleExpression, _ }
 import nl.knaw.dans.easy.validatebag.validation.numberedRule
 
 import scala.util.Try
+import better.files._
 
 package object rules {
 
@@ -35,7 +36,7 @@ package object rules {
    * @param isReadable        the function that checks if a file is readable
    * @return Success or Failure
    */
-  def checkBag(b: BagDir, profileVersion: ProfileVersion, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkBag(b: BagDir, profileVersion: ProfileVersion, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
     require(asInfoPackageType != BOTH, "asInfoPackageType must be either SIP (default) or AIP")
     validation.checkRules(b, allRules(profileVersion), asInfoPackageType)
   }
