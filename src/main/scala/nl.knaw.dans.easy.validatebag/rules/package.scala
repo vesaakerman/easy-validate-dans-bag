@@ -15,10 +15,12 @@
  */
 package nl.knaw.dans.easy.validatebag
 
+import java.nio.file.{ Path, Paths }
+
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.easy.validatebag.rules.bagit._
+import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.validation.{ RuleExpression, _ }
-//import nl.knaw.dans.easy.validatebag.rules.bagit.baseBag
 import better.files._
 import nl.knaw.dans.easy.validatebag.validation.numberedRule
 
@@ -66,13 +68,20 @@ package object rules {
                 or(
                   numberedRule("1.2.6", bagInfoTxtMustContainExactlyOne("EASY-User-Account"), AIP),
                   numberedRule("1.2.6", bagInfoTxtMustNotContain("EASY-User-Account"), SIP)
-                ),
-                all(
-                  numberedRule("1.3.1", bagMustContainSha1PayloadManifest)
-                  // 1.3.2 does not evaluation, as it states no restrictions
                 )
               )
+            ),
+            all(
+              numberedRule("1.3.1", bagMustContainSha1PayloadManifest)
+              // 1.3.2 does not evaluation, as it states no restrictions
             )
+          )
+        ),
+        IfThenAlso(
+          numberedRule("2.1", bagMustContainDir(Paths.get("metadata"))),
+          all(
+            numberedRule("2.2", bagMustContainFile(Paths.get("metadata/dataset.xml"))),
+            numberedRule("2.2", bagMustContainFile(Paths.get("metadata/files.xml")))
           )
         )
       ),
