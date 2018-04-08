@@ -58,17 +58,25 @@ package object rules {
                 ifThenAlso(
                   numberedRule("1.2.3", bagInfoTxtMayContainOne("BagIt-Profile-URI")),
                   numberedRule("1.2.3", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-URI", profileVersion0Uri))),
+                ifThenAlso(
+                  numberedRule("1.2.4", bagInfoTxtMustContainCreated),
+                  numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate)),
                 all(
-                  numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate),
-                  numberedRule("1.3.1", bagMustContainSHA1)
-                ))
+                  numberedRule("1.2.5", bagInfoTxtMayContainOne("Is-Version-Of"))
+                ),
+                or(
+                  numberedRule("1.2.6", bagInfoTxtMustContainExactlyOne("EASY-User-Account"), AIP),
+                  numberedRule("1.2.6", bagInfoTxtMustContainExactlyOne("EASY-User-Account"), SIP)
+                ),
+                all(
+                  numberedRule("1.3.1", bagMustContainSha1PayloadManifest)
+                  // 1.3.2 does not evaluation, as it states no restrictions
+                )
+              )
             )
-            // TODO add sha1 and payload rules here
           )
         )
-        // TODO add the others
       ),
-
 
       profileVersion1 -> all(
         or(
@@ -78,7 +86,7 @@ package object rules {
           ifThenAlso(
             numberedRule("1.2.1", bagMustContainBagInfoTxt),
             all(
-              numberedRule("1.3.1", bagMustContainSHA1)
+              numberedRule("1.3.1", bagMustContainSha1PayloadManifest)
             )
           )
         )

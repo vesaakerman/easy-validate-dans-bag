@@ -99,6 +99,18 @@ package object bagit {
     if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
   }
 
+  def bagInfoTxtMustContainExactlyOne(element: String)(b: BagDir): Try[Unit] = Try {
+    val bag = bagReader.read(Paths.get(b.toUri))
+    val values = bag.getMetadata.get(element)
+    val numberFound = Option(values).getOrElse(0)
+    if (numberFound != 1) fail(s"bag-info.txt must contain exactly most one element: $element, number of elements found: $numberFound")
+  }
+
+  def bagInfoTxtMustNotContain(element: String)(b: BagDir): Try[Unit] = Try {
+    val bag = bagReader.read(Paths.get(b.toUri))
+    if(bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
+  }
+
   def bagInfoTxtOptionalElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
     getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
   }
@@ -127,8 +139,15 @@ package object bagit {
       }
   }
 
-  def bagMustContainSHA1(b: BagDir) = Try {
+  def bagMustContainSha1PayloadManifest(b: BagDir) = Try {
     if (!Files.exists(b.resolve("manifest-sha1.txt")))
       fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
+  }
+
+  def bagSha1PayloadManifestMustContainAllPayloadFiles(b: BagDir) = Try {
+
+
+
+
   }
 }
