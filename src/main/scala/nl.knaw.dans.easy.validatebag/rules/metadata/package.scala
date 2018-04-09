@@ -16,4 +16,7 @@
 package nl.knaw.dans.easy.validatebag.rules
 
 package object metadata {
+
+
+
 }
