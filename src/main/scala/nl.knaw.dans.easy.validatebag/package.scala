@@ -27,11 +27,14 @@ package object validatebag {
   type BagDir = File
   type Rule = BagDir => Try[Unit]
   type NumberedRule = (RuleNumber, Rule, InfoPackageType)
+  type RuleBase = Seq[NumberedRule2]
 
   val profileVersion0 = 0
   val profileVersion0Uri = "doi:10.17026/dans-z52-ybfe"
   val profileVersion1 = 1
   val profileVersion1Uri = "doi:10.17026/dans-zf3-q54n"
+
+
 
   object InfoPackageType extends Enumeration {
     type InfoPackageType = Value
@@ -39,6 +42,9 @@ package object validatebag {
   }
 
   import InfoPackageType._
+
+  case class NumberedRule2(nr: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None)
+
 
   def validateDansBag(b: BagDir, profileVersion: ProfileVersion, infoPackageType: InfoPackageType = SIP): Try[Unit] = {
     implicit val isReadable: File => Boolean = _.isReadable
