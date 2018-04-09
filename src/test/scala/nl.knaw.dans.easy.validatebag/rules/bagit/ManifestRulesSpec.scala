@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.validatebag.rules.structural
-
-import java.nio.file.Paths
+package nl.knaw.dans.easy.validatebag.rules.bagit
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 
-class StructuralRulesSpec extends TestSupportFixture {
+class ManifestRulesSpec extends TestSupportFixture {
 
-  "bagMustContainDir" should "fail metadata directory not found" in {
-    testRuleViolation(bagMustContainDir(Paths.get("metadata")), "missingMetadata", "not found in bag")
+  "bagSha1PayloadManifestMustContainAllPayloadFiles" should "fail if not all payload files have a SHA-1 checksum" in {
+    testRuleViolationRegex(
+      bagSha1PayloadManifestMustContainAllPayloadFiles,
+      inputBag = "two-payload-files-without-sha1",
+      includedInErrorMsg = """Missing files.*sine-sha1.txt""".r,
+      doubleCheckBagItValidity = true)
+  }
+
+  it should "succeed if not all payload files have an MD5 checksum" in {
+    testRuleSuccess(
+      bagSha1PayloadManifestMustContainAllPayloadFiles,
+      inputBag = "two-payload-files-without-md5",
+      doubleCheckBagItValidity = true)
   }
 
 }
-
-
-

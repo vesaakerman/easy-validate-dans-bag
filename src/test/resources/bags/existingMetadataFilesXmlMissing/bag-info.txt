@@ -1,5 +1,0 @@
-BagIt-Profile-URI:
-Payload-Oxum: 0.1
-Bagging-Date: 2018-01-31
-Bag-Size: 0.2 KB
-Created: 2018-01-29T14:22:29.191Z

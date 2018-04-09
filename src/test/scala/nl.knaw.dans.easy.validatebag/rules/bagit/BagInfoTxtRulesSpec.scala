@@ -17,38 +17,73 @@ package nl.knaw.dans.easy.validatebag.rules.bagit
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 
-import scala.util.Success
-
 class BagInfoTxtRulesSpec extends TestSupportFixture {
   "bagMustContainBagInfoTxt" should "fail if bag-info.txt is not found" in {
-    testRuleViolation(bagMustContainBagInfoTxt, "missing-bag-info.txt", "bag-info.txt")
+    testRuleViolation(
+      bagMustContainBagInfoTxt,
+      inputBag = "missing-bag-info.txt",
+      includedInErrorMsg = "bag-info.txt")
   }
 
   "bagInfoTxtMayContainOne(\"ELEMENT\")" should "fail if bag-info.txt contains two ELEMENT elements" in {
-    testRuleViolation(bagInfoTxtMayContainOne("ELEMENT"), "two-many-ELEMENT-in-bag-info.txt", "may contain at most one")
+    testRuleViolation(bagInfoTxtMayContainOne("ELEMENT"),
+      inputBag = "two-many-ELEMENT-in-bag-info.txt",
+      includedInErrorMsg = "may contain at most one",
+      doubleCheckBagItValidity = true)
   }
 
   it should "succeed if bag-info.txt contains NO ELEMENT element" in {
-    testRuleSuccess(bagInfoTxtMayContainOne("ELEMENT"), "zero-ELEMENT-in-bag-info")
+    testRuleSuccess(bagInfoTxtMayContainOne("ELEMENT"),
+      inputBag = "zero-ELEMENT-in-bag-info",
+      doubleCheckBagItValidity = true)
   }
 
   "bagInfoTxtOptionalElementMustHaveValue(\"ELEMENT\", \"VALUE\")" should "succeed if ELEMENT exists and has value VALUE" in {
-    testRuleSuccess(bagInfoTxtOptionalElementMustHaveValue("ELEMENT", "VALUE"), "one-ELEMENT-VALUE-in-bag-info")
+    testRuleSuccess(bagInfoTxtElementMustHaveValue(
+      element = "ELEMENT",
+      value = "VALUE"),
+      inputBag = "one-ELEMENT-VALUE-in-bag-info",
+      doubleCheckBagItValidity = true)
   }
 
   "bagInfoTxtMustContainCreated" should "fail if 'Created' is missing in bag-info.txt" in {
-    testRuleViolation(bagInfoTxtMustContainCreated, "missing-Created", "Created")
+    testRuleViolation(bagInfoTxtMustContainCreated,
+      inputBag = "missing-Created",
+      includedInErrorMsg = "Created",
+      doubleCheckBagItValidity = true)
   }
 
   "bagInfoTxtCreatedMustBeIsoDate" should "fail if 'Created' is lacking time and time zone" in {
-    testRuleViolation(bagInfoTxtCreatedMustBeIsoDate, "missing-time-and-timezone-in-Created", "not in correct ISO 8601 format")
+    testRuleViolation(bagInfoTxtCreatedMustBeIsoDate,
+      inputBag = "missing-time-and-timezone-in-Created",
+      includedInErrorMsg = "not in correct ISO 8601 format",
+      doubleCheckBagItValidity = true)
   }
 
   it should "fail if incorrect date format" in {
-    testRuleViolation(bagInfoTxtCreatedMustBeIsoDate, "non-ISO8601-in-Created", "not in correct ISO 8601 format")
+    testRuleViolation(bagInfoTxtCreatedMustBeIsoDate,
+      inputBag = "non-ISO8601-in-Created",
+      includedInErrorMsg = "not in correct ISO 8601 format",
+      doubleCheckBagItValidity = true)
   }
 
   it should "fail if no millisecond precision provided" in {
-    testRuleViolation(bagInfoTxtCreatedMustBeIsoDate, "no-millisecond-precision-in-Created", "not in correct ISO 8601 format")
+    testRuleViolation(bagInfoTxtCreatedMustBeIsoDate,
+      inputBag = "no-millisecond-precision-in-Created",
+      includedInErrorMsg = "not in correct ISO 8601 format",
+      doubleCheckBagItValidity = true)
+  }
+
+  "bagInfoTxtMustNotContain" should "fail if the element is present" in {
+    testRuleViolation(bagInfoTxtMustNotContain("ELEMENT"),
+      inputBag = "one-ELEMENT-VALUE-in-bag-info",
+      includedInErrorMsg = "must not contain",
+      doubleCheckBagItValidity = true)
+  }
+
+  it should "succeed if the element is not present" in {
+    testRuleSuccess(bagInfoTxtMustNotContain("ELEMENT"),
+      inputBag = "minimal",
+      doubleCheckBagItValidity = true)
   }
 }

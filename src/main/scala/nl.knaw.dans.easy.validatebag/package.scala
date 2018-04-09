@@ -15,8 +15,7 @@
  */
 package nl.knaw.dans.easy
 
-import java.nio.file.{ Files, Path }
-
+import better.files._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
 
 import scala.util.Try
@@ -25,9 +24,9 @@ package object validatebag {
   type ProfileVersion = Int
   type RuleNumber = String
   type ErrorMessage = String
-  type BagDir = Path
+  type BagDir = File
   type Rule = BagDir => Try[Unit]
-  type NumberedRule = (RuleNumber, Rule, InfoPackageType)
+  type RuleBase = Seq[NumberedRule]
 
   val profileVersion0 = 0
   val profileVersion0Uri = "doi:10.17026/dans-z52-ybfe"
@@ -41,8 +40,10 @@ package object validatebag {
 
   import InfoPackageType._
 
+  case class NumberedRule(nr: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None)
+
   def validateDansBag(b: BagDir, profileVersion: ProfileVersion, infoPackageType: InfoPackageType = SIP): Try[Unit] = {
-    implicit val isReadable: Path => Boolean = Files.isReadable
+    implicit val isReadable: File => Boolean = _.isReadable
     rules.checkBag(b, profileVersion, infoPackageType)
   }
 }

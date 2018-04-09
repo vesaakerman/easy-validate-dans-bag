@@ -15,13 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.Path
-
+import better.files._
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
-import nl.knaw.dans.easy.validatebag.rules.bagit._
-import nl.knaw.dans.easy.validatebag.validation.{ RuleExpression, _ }
-//import nl.knaw.dans.easy.validatebag.rules.bagit.baseBag
-import nl.knaw.dans.easy.validatebag.validation.numberedRule
 
 import scala.util.Try
 
@@ -35,54 +30,14 @@ package object rules {
    * @param isReadable        the function that checks if a file is readable
    * @return Success or Failure
    */
-  def checkBag(b: BagDir, profileVersion: ProfileVersion, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: Path => Boolean): Try[Unit] = {
+  def checkBag(b: BagDir, profileVersion: ProfileVersion, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
     require(asInfoPackageType != BOTH, "asInfoPackageType must be either SIP (default) or AIP")
     validation.checkRules(b, allRules(profileVersion), asInfoPackageType)
   }
 
-  private val allRules: Map[ProfileVersion, RuleExpression] = {
+  private val allRules: Map[ProfileVersion, RuleBase] = {
     Map(
-      profileVersion0 -> all(
-        ifThenAlso(
-          or(
-            numberedRule("1.1.1", bagMustBeValid, SIP),
-            numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP)
-          ),
-          all(
-            ifThenAlso(
-              numberedRule("1.2.1", bagMustContainBagInfoTxt),
-              all(
-                ifThenAlso(
-                  numberedRule("1.2.2", bagInfoTxtMayContainOne("BagIt-Profile-Version")),
-                  numberedRule("1.2.2", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-Version", profileVersion0.toString))),
-                ifThenAlso(
-                  numberedRule("1.2.3", bagInfoTxtMayContainOne("BagIt-Profile-URI")),
-                  numberedRule("1.2.3", bagInfoTxtOptionalElementMustHaveValue("BagIt-Profile-URI", profileVersion0Uri))),
-                all(
-                  numberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate),
-                  numberedRule("1.3.1", bagMustContainSHA1)
-                ))
-            )
-            // TODO add sha1 and payload rules here
-          )
-        )
-        // TODO add the others
-      ),
-
-
-      profileVersion1 -> all(
-        or(
-          numberedRule("1.1.1", bagMustBeValid, SIP),
-          numberedRule("1.1.2", bagMustBeVirtuallyValid, AIP)
-        ), all(
-          ifThenAlso(
-            numberedRule("1.2.1", bagMustContainBagInfoTxt),
-            all(
-              numberedRule("1.3.1", bagMustContainSHA1)
-            )
-          )
-        )
-      )
-    )
+      profileVersion0 -> ProfileVersion0(),
+      profileVersion1 -> ProfileVersion1())
   }
 }
