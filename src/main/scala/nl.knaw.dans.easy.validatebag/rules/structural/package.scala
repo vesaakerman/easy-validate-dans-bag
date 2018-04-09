@@ -31,7 +31,19 @@ package object structural {
 
   def bagMustContainFile(f: Path)(b: BagDir) = Try {
     require(!f.isAbsolute, s"File $f must be a relative path")
-    if (!(b / f.toString).isDirectory)
+    if (!(b / f.toString).exists)
       fail(s"Mandatory file '$f' not found in bag.")
+  }
+
+  def bagMustNotContainFile(f: Path)(b: BagDir) = Try {
+    require(!f.isAbsolute, s"File $f must be a relative path")
+    if ((b / f.toString).exists)
+      fail(s"File '$f' MUST NOT exist in bag (of this information package type).")
+  }
+
+  def bagDirectoryMustNotContainAnythingElseThan(d: Path, ps: Seq[String])(b: BagDir) = Try {
+    require(!d.isAbsolute, s"Directory $d must be a relative path")
+    val extraFiles = (b / d.toString).list.filter(ps contains _.name)
+    if (extraFiles.nonEmpty) fail(s"Directory $d contains files that are not allowed: ${extraFiles.mkString(", ")}")
   }
 }

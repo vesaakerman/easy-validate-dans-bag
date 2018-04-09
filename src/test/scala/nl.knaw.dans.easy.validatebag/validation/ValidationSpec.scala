@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.validatebag.validation
 import java.util.concurrent.atomic.AtomicBoolean
 
 import better.files._
-import nl.knaw.dans.easy.validatebag.{ validation, BagDir, NumberedRule2, Rule, RuleNumber, TestSupportFixture }
+import nl.knaw.dans.easy.validatebag.{ validation, BagDir, NumberedRule, Rule, RuleNumber, TestSupportFixture }
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.lib.error.CompositeException
 
@@ -39,8 +39,8 @@ class ValidationSpec extends TestSupportFixture {
     Failure(RuleViolationDetailsException(s"Rule $s failed"))
   }
 
-  private def addNumberedRule(s: String, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None, failing: Boolean = false): NumberedRule2 = {
-    NumberedRule2(s, if (failing) failingRule(s) else registerCall(s), infoPackageType, dependsOn)
+  private def addNumberedRule(s: String, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None, failing: Boolean = false): NumberedRule = {
+    NumberedRule(s, if (failing) failingRule(s)else registerCall(s), infoPackageType, dependsOn)
   }
 
   "checkRules" should "run all rules in sequence if not filtered" in {
@@ -85,6 +85,4 @@ class ValidationSpec extends TestSupportFixture {
     result shouldBe a[Failure[_]]
     calls.toList shouldBe List("1", "3")
   }
-
-
 }

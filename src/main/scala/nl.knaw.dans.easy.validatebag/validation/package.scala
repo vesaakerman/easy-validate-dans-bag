@@ -57,19 +57,6 @@ package object validation extends DebugEnhancedLogging {
   def fail(details: String): Unit = throw RuleViolationDetailsException(details)
 
   /**
-   * Creates a NumberedRule.
-   *
-   * @param ruleNumber      the number of the rule in the profile version
-   * @param rule            the rule function
-   * @param infoPackageType the Information Package type(s) that this rule applies to
-   * @return
-   */
-
-  def numberedRule(ruleNumber: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH): NumberedRule = {
-    (ruleNumber, rule, infoPackageType)
-  }
-
-  /**
    * Validates if the bag pointed to compliant with the DANS BagIt Profile version it claims to
    * adhere to. If no claim is made, by default it is assumed that the bag is supposed to comply
    * with v0.
@@ -99,10 +86,10 @@ package object validation extends DebugEnhancedLogging {
     ruleBase.filter(numberedRule => numberedRule.infoPackageType == BOTH || numberedRule.infoPackageType == asInfoPackageType)
       .foldLeft(List[Try[String]]()) {
         (results, numberedRule) => numberedRule match {
-          case NumberedRule2(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.filter(_.isSuccess).map(_.get).contains) =>
-            rule(bag).map(_ => nr).recoverWith {
+          case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.filter(_.isSuccess).map(_.get).contains) =>
+            results :+ rule(bag).map(_ => nr).recoverWith {
             case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
-          } :: results
+          }
           case _ => results
         }
       }.collectResults.map(_ => ())

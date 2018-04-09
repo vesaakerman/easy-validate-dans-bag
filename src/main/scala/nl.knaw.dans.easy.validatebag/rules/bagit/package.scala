@@ -112,7 +112,7 @@ package object bagit {
     if (bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
   }
 
-  def bagInfoTxtOptionalElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
+  def bagInfoTxtElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
     getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
   }
 

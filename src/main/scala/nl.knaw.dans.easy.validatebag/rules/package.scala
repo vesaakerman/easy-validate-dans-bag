@@ -15,13 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.{ Path, Paths }
-
-import nl.knaw.dans.easy.validatebag.InfoPackageType._
-import nl.knaw.dans.easy.validatebag.rules.bagit._
-import nl.knaw.dans.easy.validatebag.rules.structural._
 import better.files._
-import nl.knaw.dans.easy.validatebag.validation.numberedRule
+import nl.knaw.dans.easy.validatebag.InfoPackageType._
 
 import scala.util.Try
 
@@ -42,11 +37,7 @@ package object rules {
 
   private val allRules: Map[ProfileVersion, RuleBase] = {
     Map(
-      profileVersion0 -> Seq(
-        NumberedRule2("1.1", bagMustContainBagInfoTxt)
-      )
-//
-//      profileVersion1 ->
-    )
+      profileVersion0 -> ProfileVersion0(),
+      profileVersion1 -> ProfileVersion1())
   }
 }

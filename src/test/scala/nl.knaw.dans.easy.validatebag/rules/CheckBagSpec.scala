@@ -56,10 +56,10 @@ class CheckBagSpec extends TestSupportFixture {
 
   it should "fail if bag does not contain bag-info.txt" in {
     inside(checkBag(bagsDir / "missing-bag-info.txt", 0)) {
-      case Failure(CompositeException(List(rve: RuleViolationException))) =>
-        // This also checks that there is only one rule violation.
-        debug(s"Error message: ${ rve.getMessage }")
-        rve.getMessage should include("Mandatory file 'bag-info.txt'")
+      case Failure(CompositeException(exceptions)) =>
+        val t = exceptions.find(_.getMessage.startsWith("[1.2.1]"))
+        t.map(_.getMessage should include("Mandatory file 'bag-info.txt'"))
+          .getOrElse(fail("Rule violation not found"))
     }
   }
 }

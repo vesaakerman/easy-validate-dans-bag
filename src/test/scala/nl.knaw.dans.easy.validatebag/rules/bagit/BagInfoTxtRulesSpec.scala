@@ -39,7 +39,7 @@ class BagInfoTxtRulesSpec extends TestSupportFixture {
   }
 
   "bagInfoTxtOptionalElementMustHaveValue(\"ELEMENT\", \"VALUE\")" should "succeed if ELEMENT exists and has value VALUE" in {
-    testRuleSuccess(bagInfoTxtOptionalElementMustHaveValue(
+    testRuleSuccess(bagInfoTxtElementMustHaveValue(
       element = "ELEMENT",
       value = "VALUE"),
       inputBag = "one-ELEMENT-VALUE-in-bag-info",
