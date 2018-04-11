@@ -23,7 +23,7 @@ import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, SIP }
 
 object ProfileVersion1 {
-  def apply()(implicit xmlValidators: Map[String, XmlValidator]): Seq[NumberedRule] = Seq(
+  def apply(implicit xmlValidators: Map[String, XmlValidator]): Seq[NumberedRule] = Seq(
     // BAGIT-RELATED
 
     // Validity

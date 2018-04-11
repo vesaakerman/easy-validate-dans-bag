@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
+import java.net.URL
 import java.nio.file.Paths
 
 import nl.knaw.dans.easy.validatebag.{ profileVersion0, profileVersion0Uri, NumberedRule, XmlValidator }
@@ -24,7 +25,7 @@ import nl.knaw.dans.easy.validatebag.rules.metadata._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, SIP }
 
 object ProfileVersion0 {
-  def apply()(implicit xmlValidators: Map[String, XmlValidator]): Seq[NumberedRule] = Seq(
+  def apply(implicit xmlValidators: Map[String, XmlValidator], allowedLicences: Seq[URL]): Seq[NumberedRule] = Seq(
     // BAGIT-RELATED
 
     // Validity
@@ -55,6 +56,7 @@ object ProfileVersion0 {
     NumberedRule("2.3", bagDirectoryMustNotContainAnythingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml")), dependsOn = Some("2.1")),
 
     // METADATA
-    NumberedRule("3.1.1", xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), xmlValidators("dataset.xml")))
+    NumberedRule("3.1.1", xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), xmlValidators("dataset.xml")), dependsOn = Some("2.2")),
+    NumberedRule("3.1.2", ddmMayContainDctermsLicenseFromList(Paths.get("metadata/dataset.xml"), allowedLicences), dependsOn = Some("3.1.1"))
   )
 }

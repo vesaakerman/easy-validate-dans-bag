@@ -23,7 +23,8 @@ import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms._
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.verify.BagVerifier
 import nl.knaw.dans.easy.validatebag.BagDir
-import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException, _ }
+import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
@@ -34,7 +35,7 @@ import scala.util.{ Failure, Try }
 /**
  * Rules that refer back to the BagIt specifications.
  */
-package object bagit {
+package object bagit extends DebugEnhancedLogging {
 
   private val bagReader = new BagReader()
   private val bagVerifier = new BagVerifier()
@@ -44,6 +45,8 @@ package object bagit {
   }
 
   def bagMustBeValid(b: BagDir): Try[Unit] = {
+    trace(())
+
     def failBecauseInvalid(t: Throwable): Try[Unit] = {
       val details = s"Bag is not valid: Exception = ${ t.getClass.getSimpleName }, cause = ${ t.getCause }, message = ${ t.getMessage }"
       debug(details)
@@ -81,6 +84,7 @@ package object bagit {
   }
 
   def bagMustBeVirtuallyValid(b: BagDir): Try[Unit] = {
+    trace(())
     bagMustBeValid(b)
       .recover {
         case cause: RuleViolationDetailsException =>
@@ -90,6 +94,7 @@ package object bagit {
   }
 
   def bagMustContainBagInfoTxt(b: BagDir) = Try {
+    trace(())
     if (!(b / "bag-info.txt").exists)
       fail("Mandatory file 'bag-info.txt' not found in bag. ")
   }
@@ -108,11 +113,13 @@ package object bagit {
   }
 
   def bagInfoTxtMustNotContain(element: String)(b: BagDir): Try[Unit] = Try {
+    trace(element)
     val bag = bagReader.read(Paths.get(b.uri))
     if (bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
   }
 
   def bagInfoTxtElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
+    trace(element, value)
     getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
   }
 
@@ -124,12 +131,14 @@ package object bagit {
   }
 
   def bagInfoTxtMustContainCreated(b: BagDir) = Try {
+    trace(())
     val readBag = bagReader.read(Paths.get(b.uri))
     if (!readBag.getMetadata.contains("Created"))
       fail("The bag-info.txt file MUST contain an element called Created")
   }
 
   def bagInfoTxtCreatedMustBeIsoDate(b: BagDir): Try[Unit] = {
+    trace(())
     val readBag = bagReader.read(Paths.get(b.uri))
     val valueOfCreated = readBag.getMetadata.get("Created").get(0)
     Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
@@ -141,11 +150,13 @@ package object bagit {
   }
 
   def bagMustContainSha1PayloadManifest(b: BagDir) = Try {
+    trace(())
     if (!(b / "manifest-sha1.txt").exists)
       fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
   }
 
   def bagSha1PayloadManifestMustContainAllPayloadFiles(b: BagDir) = Try {
+    trace(())
     val bag = bagReader.read(b.path)
     bag.getPayLoadManifests.asScala.find(_.getAlgorithm == SHA1)
       .foreach {

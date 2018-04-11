@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.validatebag
 import java.net.{ URI, URL }
 import java.nio.file.{ Path, Paths }
 
+import better.files.File
 import javax.xml.validation.SchemaFactory
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
 import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }
@@ -48,15 +49,15 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
     v
   }.unsafeGetOrThrow
 
-  private implicit val xmlValidators: Map[String, XmlValidator] = Map(
-    "ddm.xml" -> ddmValidator,
+  private val xmlValidators: Map[String, XmlValidator] = Map(
+    "dataset.xml" -> ddmValidator,
     "files.xml" -> filesValidator
   )
 
   private val allRules: Map[ProfileVersion, RuleBase] = {
     Map(
-      profileVersion0 -> ProfileVersion0(),
-      profileVersion1 -> ProfileVersion1())
+      profileVersion0 -> ProfileVersion0(xmlValidators, configuration.allowedLicenses),
+      profileVersion1 -> ProfileVersion1(xmlValidators))
   }
 
   def validate(uri: URI, infoPackageType: InfoPackageType): Try[ResultMessage] = {

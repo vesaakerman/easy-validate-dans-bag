@@ -15,14 +15,17 @@
  */
 package nl.knaw.dans.easy.validatebag
 
+import java.net.URL
+import java.nio.charset.StandardCharsets
 import java.nio.file.{ Files, Path, Paths }
 
+import better.files.File
 import org.apache.commons.configuration.PropertiesConfiguration
 import resource.managed
 
 import scala.io.Source
 
-case class Configuration(version: String, properties: PropertiesConfiguration)
+case class Configuration(version: String, properties: PropertiesConfiguration, allowedLicenses: Seq[URL])
 
 object Configuration {
 
@@ -38,7 +41,8 @@ object Configuration {
       properties = new PropertiesConfiguration() {
         setDelimiterParsingDisabled(true)
         load(cfgPath.resolve("application.properties").toFile)
-      }
+      },
+      allowedLicenses = (File(home) / "cfg/licenses.txt").contentAsString(StandardCharsets.UTF_8).split("""\s*\n\s*""").filterNot(_.isEmpty).map(new URL(_))
     )
   }
 
