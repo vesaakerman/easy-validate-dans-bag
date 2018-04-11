@@ -69,4 +69,23 @@ package object metadata {
         case _ => false
       }
   }
+
+  def filesXmlHasDocumentElementFiles(b: BagDir): Try[Unit] = Try {
+    if (loadFilesXml(b).label != "files") fail("Document element of files.xml must be 'files'")
+  }
+
+  def filesXmlHasOnlyFiles(b: BagDir): Try[Unit] = Try {
+    val files = loadFilesXml(b)
+    val nonFiles = (files \ "*").filterNot(_.label == "file")
+    if(nonFiles.nonEmpty) fail(s"Children of document element must only be 'file'. Found non-file elements: ${nonFiles.mkString(", ")}")
+  }
+
+
+
+
+
+  private def loadFilesXml(b: BagDir): Elem = {
+    XML.loadFile((b / "metadata/files.xml").toJava)
+  }
+
 }

@@ -56,7 +56,15 @@ object ProfileVersion0 {
     NumberedRule("2.3", bagDirectoryMustNotContainAnythingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml")), dependsOn = Some("2.1")),
 
     // METADATA
+
+    // dataset.xml
     NumberedRule("3.1.1", xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), xmlValidators("dataset.xml")), dependsOn = Some("2.2")),
-    NumberedRule("3.1.2", ddmMayContainDctermsLicenseFromList(Paths.get("metadata/dataset.xml"), allowedLicences), dependsOn = Some("3.1.1"))
+    NumberedRule("3.1.2", ddmMayContainDctermsLicenseFromList(Paths.get("metadata/dataset.xml"), allowedLicences), dependsOn = Some("3.1.1")),
+    // TODO: 3.1.3
+
+    // files.xml
+    NumberedRule("3.2.1", xmlFileMustConformToSchema(Paths.get("metadata/files.xml"), xmlValidators("files.xml")), dependsOn = Some("2.2")),
+    NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.2")),
+    NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2"))
   )
 }
