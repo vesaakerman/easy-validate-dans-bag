@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag
 
+import java.io.InputStream
+
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.Schema
@@ -22,10 +24,9 @@ import nl.knaw.dans.lib.error._
 import org.xml.sax.{ EntityResolver, ErrorHandler, InputSource, SAXParseException }
 
 import scala.collection.mutable.ListBuffer
-import scala.tools.nsc.interpreter.InputStream
 import scala.util.Try
 
-class XmlValidator(schema: Schema, entityResolver: EntityResolver) {
+class XmlValidator(schema: Schema) {
 
   def validate(is: InputStream): Try[Unit] = {
     val errorHandler = new AccumulatingErrorHandler
@@ -41,7 +42,6 @@ class XmlValidator(schema: Schema, entityResolver: EntityResolver) {
         parser.setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", "http://www.w3.org/2001/XMLSchema")
         val validator = schema.newValidator()
         validator.setErrorHandler(errorHandler)
-        xr.setEntityResolver(entityResolver)
         validator.validate(new StreamSource(is))
     }
 

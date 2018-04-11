@@ -15,24 +15,23 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.{ Files, Paths }
+import java.nio.file.Paths
 
 import better.files._
 import nl.knaw.dans.easy.validatebag.rules.bagit.bagMustBeValid
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.io.FileUtils
 import org.scalatest._
 
 import scala.util.{ Failure, Success }
 import scala.util.matching.Regex
 
-trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInstancePerTest with DebugEnhancedLogging {
-  lazy val testDir: File = {
-    val path = Paths.get(s"target/test/${ getClass.getSimpleName }").toAbsolutePath
-    FileUtils.deleteQuietly(path.toFile)
-    Files.createDirectories(path)
-    path
+trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfter with DebugEnhancedLogging {
+  lazy val testDir: File = File(s"target/test/${ getClass.getSimpleName }")
+
+  def clearTestDir(): Unit = {
+    if (testDir.exists)
+      testDir.delete().createDirectories()
   }
 
   protected val bagsDir: File = Paths.get("src/test/resources/bags")

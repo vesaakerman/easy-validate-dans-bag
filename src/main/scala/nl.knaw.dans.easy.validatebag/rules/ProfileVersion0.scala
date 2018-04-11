@@ -17,13 +17,14 @@ package nl.knaw.dans.easy.validatebag.rules
 
 import java.nio.file.Paths
 
-import nl.knaw.dans.easy.validatebag.{ profileVersion0, profileVersion0Uri, NumberedRule }
+import nl.knaw.dans.easy.validatebag.{ profileVersion0, profileVersion0Uri, NumberedRule, XmlValidator }
 import nl.knaw.dans.easy.validatebag.rules.bagit._
 import nl.knaw.dans.easy.validatebag.rules.structural._
+import nl.knaw.dans.easy.validatebag.rules.metadata._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, SIP }
 
 object ProfileVersion0 {
-  def apply(): Seq[NumberedRule] = Seq(
+  def apply()(implicit xmlValidators: Map[String, XmlValidator]): Seq[NumberedRule] = Seq(
     // BAGIT-RELATED
 
     // Validity
@@ -53,7 +54,7 @@ object ProfileVersion0 {
     NumberedRule("2.2", bagMustContainFile(Paths.get("metadata/files.xml")), dependsOn = Some("2.1")),
     NumberedRule("2.3", bagDirectoryMustNotContainAnythingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml")), dependsOn = Some("2.1")),
 
-
     // METADATA
+    NumberedRule("3.1.1", xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), xmlValidators("dataset.xml")))
   )
 }

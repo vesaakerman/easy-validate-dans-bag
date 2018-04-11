@@ -41,9 +41,4 @@ package object validatebag {
   import InfoPackageType._
 
   case class NumberedRule(nr: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None)
-
-  def validateDansBag(b: BagDir, profileVersion: ProfileVersion, infoPackageType: InfoPackageType = SIP): Try[Unit] = {
-    implicit val isReadable: File => Boolean = _.isReadable
-    rules.checkBag(b, profileVersion, infoPackageType)
-  }
 }

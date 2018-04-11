@@ -30,6 +30,10 @@ class ValidationSpec extends TestSupportFixture {
   private val dummy = bagsDir / "minimal" // Not actually used, but must exist
   private val calls = ListBuffer[String]()
 
+  before {
+    calls.clear()
+  }
+
   private def registerCall(s: String)(b: BagDir): Try[Unit] = Try {
     calls.append(s)
   }

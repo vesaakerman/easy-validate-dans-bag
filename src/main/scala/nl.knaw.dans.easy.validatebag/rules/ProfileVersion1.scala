@@ -17,13 +17,13 @@ package nl.knaw.dans.easy.validatebag.rules
 
 import java.nio.file.Paths
 
-import nl.knaw.dans.easy.validatebag.{ profileVersion1, profileVersion1Uri, NumberedRule }
+import nl.knaw.dans.easy.validatebag.{ profileVersion1, profileVersion1Uri, NumberedRule, XmlValidator }
 import nl.knaw.dans.easy.validatebag.rules.bagit._
 import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, SIP }
 
 object ProfileVersion1 {
-  def apply(): Seq[NumberedRule] = Seq(
+  def apply()(implicit xmlValidators: Map[String, XmlValidator]): Seq[NumberedRule] = Seq(
     // BAGIT-RELATED
 
     // Validity

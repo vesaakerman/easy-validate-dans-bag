@@ -15,12 +15,20 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import better.files.File
+import java.nio.file.Path
+
 import nl.knaw.dans.easy.validatebag.{ BagDir, XmlValidator }
+import nl.knaw.dans.easy.validatebag.validation._
 
 import scala.util.Try
 
 package object metadata {
 
+  def xmlFileMustConformToSchema(xmlFile: Path, validator: XmlValidator)(b: BagDir): Try[Unit] = {
+    require(!xmlFile.isAbsolute, "Path to xmlFile must be relative.")
+    (b / xmlFile.toString).inputStream.map(validator.validate).map {
+      _.recoverWith { case t: Throwable => Try(fail(t.getMessage)) }
+    }
+  }.get()
 
 }

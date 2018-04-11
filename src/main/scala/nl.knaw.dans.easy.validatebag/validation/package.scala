@@ -21,9 +21,8 @@ import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Try }
 
 package object validation extends DebugEnhancedLogging {
 
@@ -62,7 +61,7 @@ package object validation extends DebugEnhancedLogging {
    * with v0.
    *
    * @param bag               the bag to validate
-   * @param ruleBase             a map containing a RuleBase for each profile version
+   * @param ruleBase          a map containing a RuleBase for each profile version
    * @param asInfoPackageType validate as SIP (default) or AIP
    * @param isReadable        function to check the readability of a file (added for unit testing purposes)
    * @return Success if compliant, Failure if not compliant or an error occurred. The Failure will contain
@@ -85,13 +84,14 @@ package object validation extends DebugEnhancedLogging {
   private def evaluateRules(bag: BagDir, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
     ruleBase.filter(numberedRule => numberedRule.infoPackageType == BOTH || numberedRule.infoPackageType == asInfoPackageType)
       .foldLeft(List[Try[String]]()) {
-        (results, numberedRule) => numberedRule match {
-          case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.filter(_.isSuccess).map(_.get).contains) =>
-            results :+ rule(bag).map(_ => nr).recoverWith {
-            case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
+        (results, numberedRule) =>
+          numberedRule match {
+            case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.filter(_.isSuccess).map(_.get).contains) =>
+              results :+ rule(bag).map(_ => nr).recoverWith {
+                case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
+              }
+            case _ => results
           }
-          case _ => results
-        }
       }.collectResults.map(_ => ())
   }
 
