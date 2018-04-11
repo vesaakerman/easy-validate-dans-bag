@@ -15,8 +15,12 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-package object metadata {
+import better.files.File
+import nl.knaw.dans.easy.validatebag.{ BagDir, XmlValidator }
 
+import scala.util.Try
+
+package object metadata {
 
 
 }

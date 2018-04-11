@@ -18,7 +18,6 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
          <!--xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">-->
-    <blah>test</blah>
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-scala-service-project</artifactId>
@@ -163,7 +162,7 @@
                             <goal>unpack</goal>
                         </goals>
                         <configuration>
-                            <artifactItems>
+                            <artifactItems combine.children="append">
                                 <artifactItem>
                                     <groupId>nl.knaw.dans.easy</groupId>
                                     <artifactId>easy-schema</artifactId>
@@ -192,6 +191,24 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>rpm-maven-plugin</artifactId>
+                        <configuration>
+                            <group>Applications/Archiving</group>
+                            <mappings combine.children="append">
+                                <mapping>
+                                <directory>/opt/${dans-provider-name}/${project.artifactId}/xsd</directory>
+                                    <sources>
+                                        <source>
+                                            <location>${project.build.directory}/easy-schema</location>
+                                            <excludes>
+                                                <exclude>docs/**</exclude>
+                                                <exclude>property-list/**</exclude>
+                                                <exclude>version</exclude>
+                                            </excludes>
+                                        </source>
+                                    </sources>
+                                </mapping>
+                            </mappings>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
