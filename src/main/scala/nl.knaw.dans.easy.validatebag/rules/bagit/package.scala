@@ -36,8 +36,6 @@ import scala.util.{ Failure, Try }
  * Rules that refer back to the BagIt specifications.
  */
 package object bagit extends DebugEnhancedLogging {
-
-  private val bagReader = new BagReader()
   private val bagVerifier = new BagVerifier()
 
   def closeVerifier(): Unit = {

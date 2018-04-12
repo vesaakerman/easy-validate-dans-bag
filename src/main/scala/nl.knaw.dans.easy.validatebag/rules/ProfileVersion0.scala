@@ -52,8 +52,8 @@ object ProfileVersion0 {
     // STRUCTURAL
     NumberedRule("2.1", bagMustContainDir(Paths.get("metadata"))),
     NumberedRule("2.2", bagMustContainFile(Paths.get("metadata/dataset.xml")), dependsOn = Some("2.1")),
-    NumberedRule("2.2", bagMustContainFile(Paths.get("metadata/files.xml")), dependsOn = Some("2.1")),
-    NumberedRule("2.3", bagDirectoryMustNotContainAnythingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml")), dependsOn = Some("2.1")),
+    NumberedRule("2.3", bagMustContainFile(Paths.get("metadata/files.xml")), dependsOn = Some("2.1")),
+    NumberedRule("2.4", bagDirectoryMustNotContainAnythingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml")), dependsOn = Some("2.1")),
 
     // METADATA
 
@@ -63,8 +63,8 @@ object ProfileVersion0 {
     // TODO: 3.1.3
 
     // files.xml
-    NumberedRule("3.2.1", xmlFileMustConformToSchema(Paths.get("metadata/files.xml"), xmlValidators("files.xml")), dependsOn = Some("2.2")),
-    NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.2")),
+    NumberedRule("3.2.1", xmlFileMustConformToSchema(Paths.get("metadata/files.xml"), xmlValidators("files.xml")), dependsOn = Some("2.3")),
+    NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.3")),
     NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2")),
 
     NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = Some("3.2.3")),
