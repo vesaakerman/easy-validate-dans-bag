@@ -44,7 +44,7 @@ package object bagit extends DebugEnhancedLogging {
     bagVerifier.close()
   }
 
-  def bagMustBeValid(b: TargetBag): Try[Unit] = {
+  def bagMustBeValid(t: TargetBag): Try[Unit] = {
     trace(())
 
     def failBecauseInvalid(t: Throwable): Try[Unit] = {
@@ -53,7 +53,7 @@ package object bagit extends DebugEnhancedLogging {
       Try(fail(details))
     }
 
-    b.tryBag
+    t.tryBag
       .recoverWith {
         case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
           /*
@@ -83,9 +83,9 @@ package object bagit extends DebugEnhancedLogging {
       }
   }
 
-  def bagMustBeVirtuallyValid(b: TargetBag): Try[Unit] = {
+  def bagMustBeVirtuallyValid(t: TargetBag): Try[Unit] = {
     trace(())
-    bagMustBeValid(b)
+    bagMustBeValid(t)
       .recover {
         case cause: RuleViolationDetailsException =>
           Try(fail(s"${ cause.details } (WARNING: bag may still be virtually-valid, but this version of the service cannot check that."))
@@ -93,53 +93,53 @@ package object bagit extends DebugEnhancedLogging {
     // TODO: implement proper virtual-validity check.
   }
 
-  def bagMustContainBagInfoTxt(b: TargetBag) = Try {
+  def bagMustContainBagInfoTxt(t: TargetBag) = Try {
     trace(())
-    if (!(b.bagDir / "bag-info.txt").exists)
+    if (!(t.bagDir / "bag-info.txt").exists)
       fail("Mandatory file 'bag-info.txt' not found in bag. ")
   }
 
-  def bagInfoTxtMayContainOne(element: String)(b: TargetBag): Try[Unit] = Try {
-    val bag = b.tryBag.get // TODO: put inside Try
+  def bagInfoTxtMayContainOne(element: String)(t: TargetBag): Try[Unit] = Try {
+    val bag = t.tryBag.get // TODO: put inside Try
     val values = bag.getMetadata.get(element)
     if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
   }
 
-  def bagInfoTxtMustContainExactlyOne(element: String)(b: TargetBag): Try[Unit] = Try {
-    val bag = b.tryBag.get // TODO: put inside Try
+  def bagInfoTxtMustContainExactlyOne(element: String)(t: TargetBag): Try[Unit] = Try {
+    val bag = t.tryBag.get // TODO: put inside Try
     val values = bag.getMetadata.get(element)
     val numberFound = Option(values).getOrElse(0)
     if (numberFound != 1) fail(s"bag-info.txt must contain exactly most one element: $element, number of elements found: $numberFound")
   }
 
-  def bagInfoTxtMustNotContain(element: String)(b: TargetBag): Try[Unit] = Try {
+  def bagInfoTxtMustNotContain(element: String)(t: TargetBag): Try[Unit] = Try {
     trace(element)
-    val bag = b.tryBag.get // TODO: put inside Try
+    val bag = t.tryBag.get // TODO: put inside Try
     if (bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
   }
 
-  def bagInfoTxtElementMustHaveValue(element: String, value: String)(b: TargetBag): Try[Unit] = {
+  def bagInfoTxtElementMustHaveValue(element: String, value: String)(t: TargetBag): Try[Unit] = {
     trace(element, value)
-    getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
+    getBagInfoTxtValue(t, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
   }
 
   // Relies on there being only one element with the specified name
-  private def getBagInfoTxtValue(b: TargetBag, element: String): Try[Option[String]] = Try {
-    trace(b, element)
-    val bag = b.tryBag.get // TODO: put inside Try
+  private def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = Try {
+    trace(t, element)
+    val bag = t.tryBag.get // TODO: put inside Try
     Option(bag.getMetadata.get(element)).map(_.get(0))
   }
 
-  def bagInfoTxtMustContainCreated(b: TargetBag) = Try {
+  def bagInfoTxtMustContainCreated(t: TargetBag) = Try {
     trace(())
-    val readBag = b.tryBag.get  // TODO: put inside Try
+    val readBag = t.tryBag.get  // TODO: put inside Try
     if (!readBag.getMetadata.contains("Created"))
       fail("The bag-info.txt file MUST contain an element called Created")
   }
 
-  def bagInfoTxtCreatedMustBeIsoDate(b: TargetBag): Try[Unit] = {
+  def bagInfoTxtCreatedMustBeIsoDate(t: TargetBag): Try[Unit] = {
     trace(())
-    val readBag = b.tryBag.get // TODO: put inside Try
+    val readBag = t.tryBag.get // TODO: put inside Try
     val valueOfCreated = readBag.getMetadata.get("Created").get(0)
     Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
       .map(_ => ())
@@ -149,21 +149,21 @@ package object bagit extends DebugEnhancedLogging {
       }
   }
 
-  def bagMustContainSha1PayloadManifest(b: TargetBag) = Try {
+  def bagMustContainSha1PayloadManifest(t: TargetBag) = Try {
     trace(())
-    if (!(b.bagDir / "manifest-sha1.txt").exists)
+    if (!(t.bagDir / "manifest-sha1.txt").exists)
       fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
   }
 
-  def bagSha1PayloadManifestMustContainAllPayloadFiles(b: TargetBag) = Try {
+  def bagSha1PayloadManifestMustContainAllPayloadFiles(t: TargetBag) = Try {
     trace(())
-    val bag = b.tryBag.get // TODO: put inside Try
+    val bag = t.tryBag.get // TODO: put inside Try
     bag.getPayLoadManifests.asScala.find(_.getAlgorithm == SHA1)
       .foreach {
         manifest =>
-          val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => b.bagDir.relativize(p)).toSet
+          val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => t.bagDir.relativize(p)).toSet
           debug(s"Manifest files: ${ filesInManifest.mkString(", ") }")
-          val filesInPayload = (b.bagDir / "data").walk().filter(_.isRegularFile).map(f => b.bagDir.path.relativize(f.path)).toSet
+          val filesInPayload = (t.bagDir / "data").walk().filter(_.isRegularFile).map(f => t.bagDir.path.relativize(f.path)).toSet
           debug(s"Payload files: ${ filesInManifest.mkString(", ") }")
           if (filesInManifest != filesInPayload) {
             val filesOnlyInPayload = filesInPayload -- filesInManifest // The other way around should have been caught by the validity check
