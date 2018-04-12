@@ -42,7 +42,7 @@ object Configuration {
         setDelimiterParsingDisabled(true)
         load(cfgPath.resolve("application.properties").toFile)
       },
-      allowedLicenses = (File(home) / "cfg/licenses.txt").contentAsString(StandardCharsets.UTF_8).split("""\s*\n\s*""").filterNot(_.isEmpty).map(new URL(_))
+      allowedLicenses = (File(cfgPath) / "licenses.txt").contentAsString(StandardCharsets.UTF_8).split("""\s*\n\s*""").filterNot(_.isEmpty).map(new URL(_))
     )
   }
 
