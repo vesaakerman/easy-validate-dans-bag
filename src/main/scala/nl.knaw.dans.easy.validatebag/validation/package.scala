@@ -21,9 +21,8 @@ import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Try }
 
 package object validation extends DebugEnhancedLogging {
 
@@ -62,14 +61,14 @@ package object validation extends DebugEnhancedLogging {
    * with v0.
    *
    * @param bag               the bag to validate
-   * @param ruleBase             a map containing a RuleBase for each profile version
+   * @param ruleBase          a map containing a RuleBase for each profile version
    * @param asInfoPackageType validate as SIP (default) or AIP
    * @param isReadable        function to check the readability of a file (added for unit testing purposes)
    * @return Success if compliant, Failure if not compliant or an error occurred. The Failure will contain
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
-  def checkRules(bag: BagDir, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
+  def checkRules(bag: TargetBag, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
     /**
      * `isReadable` was added because unit testing this by actually setting files on the file system to non-readable and back
      * can get messy. After a failed build one might be left with a target folder that refuses to be cleaned. Unless you are
@@ -77,21 +76,22 @@ package object validation extends DebugEnhancedLogging {
      */
     trace(bag, asInfoPackageType)
     for {
-      _ <- checkIfValidationCanProceed(bag)
+      _ <- checkIfValidationCanProceed(bag.bagDir)
       result <- evaluateRules(bag, ruleBase, asInfoPackageType)
     } yield result
   }
 
-  private def evaluateRules(bag: BagDir, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
+  private def evaluateRules(bag: TargetBag, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
     ruleBase.filter(numberedRule => numberedRule.infoPackageType == BOTH || numberedRule.infoPackageType == asInfoPackageType)
       .foldLeft(List[Try[String]]()) {
-        (results, numberedRule) => numberedRule match {
-          case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.filter(_.isSuccess).map(_.get).contains) =>
-            results :+ rule(bag).map(_ => nr).recoverWith {
-            case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
+        (results, numberedRule) =>
+          numberedRule match {
+            case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.filter(_.isSuccess).map(_.get).contains) =>
+              results :+ rule(bag).map(_ => nr).recoverWith {
+                case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
+              }
+            case _ => results
           }
-          case _ => results
-        }
       }.collectResults.map(_ => ())
   }
 

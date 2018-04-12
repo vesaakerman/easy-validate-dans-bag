@@ -15,15 +15,15 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.{ NoSuchFileException, Paths }
+import java.nio.file.NoSuchFileException
 
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.exceptions._
 import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms._
-import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.verify.BagVerifier
-import nl.knaw.dans.easy.validatebag.BagDir
-import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException, _ }
+import nl.knaw.dans.easy.validatebag.TargetBag
+import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
@@ -34,23 +34,23 @@ import scala.util.{ Failure, Try }
 /**
  * Rules that refer back to the BagIt specifications.
  */
-package object bagit {
-
-  private val bagReader = new BagReader()
+package object bagit extends DebugEnhancedLogging {
   private val bagVerifier = new BagVerifier()
 
   def closeVerifier(): Unit = {
     bagVerifier.close()
   }
 
-  def bagMustBeValid(b: BagDir): Try[Unit] = {
+  def bagMustBeValid(t: TargetBag): Try[Unit] = {
+    trace(())
+
     def failBecauseInvalid(t: Throwable): Try[Unit] = {
       val details = s"Bag is not valid: Exception = ${ t.getClass.getSimpleName }, cause = ${ t.getCause }, message = ${ t.getMessage }"
       debug(details)
       Try(fail(details))
     }
 
-    Try { bagReader.read(b.path) }
+    t.tryBag
       .recoverWith {
         case cause: NoSuchFileException if cause.getMessage.endsWith("bagit.txt") =>
           /*
@@ -80,8 +80,9 @@ package object bagit {
       }
   }
 
-  def bagMustBeVirtuallyValid(b: BagDir): Try[Unit] = {
-    bagMustBeValid(b)
+  def bagMustBeVirtuallyValid(t: TargetBag): Try[Unit] = {
+    trace(())
+    bagMustBeValid(t)
       .recover {
         case cause: RuleViolationDetailsException =>
           Try(fail(s"${ cause.details } (WARNING: bag may still be virtually-valid, but this version of the service cannot check that."))
@@ -89,48 +90,53 @@ package object bagit {
     // TODO: implement proper virtual-validity check.
   }
 
-  def bagMustContainBagInfoTxt(b: BagDir) = Try {
-    if (!(b / "bag-info.txt").exists)
+  def bagMustContainBagInfoTxt(t: TargetBag) = Try {
+    trace(())
+    if (!(t.bagDir / "bag-info.txt").exists)
       fail("Mandatory file 'bag-info.txt' not found in bag. ")
   }
 
-  def bagInfoTxtMayContainOne(element: String)(b: BagDir): Try[Unit] = Try {
-    val bag = bagReader.read(Paths.get(b.uri))
+  def bagInfoTxtMayContainOne(element: String)(t: TargetBag): Try[Unit] = Try {
+    val bag = t.tryBag.get // TODO: put inside Try
     val values = bag.getMetadata.get(element)
     if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
   }
 
-  def bagInfoTxtMustContainExactlyOne(element: String)(b: BagDir): Try[Unit] = Try {
-    val bag = bagReader.read(Paths.get(b.uri))
+  def bagInfoTxtMustContainExactlyOne(element: String)(t: TargetBag): Try[Unit] = Try {
+    val bag = t.tryBag.get // TODO: put inside Try
     val values = bag.getMetadata.get(element)
     val numberFound = Option(values).getOrElse(0)
     if (numberFound != 1) fail(s"bag-info.txt must contain exactly most one element: $element, number of elements found: $numberFound")
   }
 
-  def bagInfoTxtMustNotContain(element: String)(b: BagDir): Try[Unit] = Try {
-    val bag = bagReader.read(Paths.get(b.uri))
+  def bagInfoTxtMustNotContain(element: String)(t: TargetBag): Try[Unit] = Try {
+    trace(element)
+    val bag = t.tryBag.get // TODO: put inside Try
     if (bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
   }
 
-  def bagInfoTxtElementMustHaveValue(element: String, value: String)(b: BagDir): Try[Unit] = {
-    getBagInfoTxtValue(b, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
+  def bagInfoTxtElementMustHaveValue(element: String, value: String)(t: TargetBag): Try[Unit] = {
+    trace(element, value)
+    getBagInfoTxtValue(t, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
   }
 
   // Relies on there being only one element with the specified name
-  private def getBagInfoTxtValue(b: BagDir, element: String): Try[Option[String]] = Try {
-    trace(b, element)
-    val bag = bagReader.read(Paths.get(b.uri))
+  private def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = Try {
+    trace(t, element)
+    val bag = t.tryBag.get // TODO: put inside Try
     Option(bag.getMetadata.get(element)).map(_.get(0))
   }
 
-  def bagInfoTxtMustContainCreated(b: BagDir) = Try {
-    val readBag = bagReader.read(Paths.get(b.uri))
+  def bagInfoTxtMustContainCreated(t: TargetBag) = Try {
+    trace(())
+    val readBag = t.tryBag.get // TODO: put inside Try
     if (!readBag.getMetadata.contains("Created"))
       fail("The bag-info.txt file MUST contain an element called Created")
   }
 
-  def bagInfoTxtCreatedMustBeIsoDate(b: BagDir): Try[Unit] = {
-    val readBag = bagReader.read(Paths.get(b.uri))
+  def bagInfoTxtCreatedMustBeIsoDate(t: TargetBag): Try[Unit] = {
+    trace(())
+    val readBag = t.tryBag.get // TODO: put inside Try
     val valueOfCreated = readBag.getMetadata.get("Created").get(0)
     Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
       .map(_ => ())
@@ -140,19 +146,21 @@ package object bagit {
       }
   }
 
-  def bagMustContainSha1PayloadManifest(b: BagDir) = Try {
-    if (!(b / "manifest-sha1.txt").exists)
+  def bagMustContainSha1PayloadManifest(t: TargetBag) = Try {
+    trace(())
+    if (!(t.bagDir / "manifest-sha1.txt").exists)
       fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
   }
 
-  def bagSha1PayloadManifestMustContainAllPayloadFiles(b: BagDir) = Try {
-    val bag = bagReader.read(b.path)
+  def bagSha1PayloadManifestMustContainAllPayloadFiles(t: TargetBag) = Try {
+    trace(())
+    val bag = t.tryBag.get // TODO: put inside Try
     bag.getPayLoadManifests.asScala.find(_.getAlgorithm == SHA1)
       .foreach {
         manifest =>
-          val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => b.relativize(p)).toSet
+          val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => t.bagDir.relativize(p)).toSet
           debug(s"Manifest files: ${ filesInManifest.mkString(", ") }")
-          val filesInPayload = (b / "data").walk().filter(_.isRegularFile).map(f => b.path.relativize(f.path)).toSet
+          val filesInPayload = (t.bagDir / "data").walk().filter(_.isRegularFile).map(f => t.bagDir.path.relativize(f.path)).toSet
           debug(s"Payload files: ${ filesInManifest.mkString(", ") }")
           if (filesInManifest != filesInPayload) {
             val filesOnlyInPayload = filesInPayload -- filesInManifest // The other way around should have been caught by the validity check

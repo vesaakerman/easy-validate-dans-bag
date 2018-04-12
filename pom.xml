@@ -16,7 +16,8 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         <!--xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">-->
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-scala-service-project</artifactId>
@@ -32,6 +33,7 @@
     <inceptionYear>2018</inceptionYear>
     <properties>
         <main-class>nl.knaw.dans.easy.validatebag.Command</main-class>
+        <easy-schema.version>1.16.1</easy-schema.version>
     </properties>
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-validate-dans-bag</developerConnection>
@@ -124,6 +126,12 @@
             <artifactId>better-files_2.12</artifactId>
             <version>3.4.0</version>
         </dependency>
+        <dependency>
+            <groupId>nl.knaw.dans.easy</groupId>
+            <artifactId>easy-schema</artifactId>
+            <version>${easy-schema.version}</version>
+            <type>tar.gz</type>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
@@ -143,6 +151,32 @@
             <url>http://maven.dans.knaw.nl/</url>
         </pluginRepository>
     </pluginRepositories>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems combine.children="append">
+                                <artifactItem>
+                                    <groupId>nl.knaw.dans.easy</groupId>
+                                    <artifactId>easy-schema</artifactId>
+                                    <version>${easy-schema.version}</version>
+                                    <type>tar.gz</type>
+                                    <outputDirectory>${project.build.directory}/easy-schema</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
     <profiles>
         <profile>
             <id>rpm</id>

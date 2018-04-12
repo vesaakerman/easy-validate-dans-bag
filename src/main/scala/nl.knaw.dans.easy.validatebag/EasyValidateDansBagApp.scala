@@ -15,22 +15,55 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.net.URI
+import java.net.{ URI, URL }
 import java.nio.file.{ Path, Paths }
 
+import javax.xml.validation.SchemaFactory
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
+import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationException
-import nl.knaw.dans.lib.error.CompositeException
+import nl.knaw.dans.lib.error._
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Try }
 
-class EasyValidateDansBagApp(configuration: Configuration) {
+class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhancedLogging {
+  logger.info("Creating XML Schema factory...")
+  private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
+  logger.info("XML Schema factory created.")
+
+  private val ddmValidator = Try {
+    logger.info("Creating ddm.xml validator...")
+    val ddmSchema = schemaFactory.newSchema(new URL("https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"))
+    val v = new XmlValidator(ddmSchema)
+    logger.info("ddm.xml validator created.")
+    v
+  }.unsafeGetOrThrow
+
+  private val filesValidator = Try {
+    logger.info("Creating files.xml validator...")
+    val filesSchema = schemaFactory.newSchema(new URL("https://easy.dans.knaw.nl/schemas/bag/metadata/files/files.xsd"))
+    val v = new XmlValidator(filesSchema)
+    logger.info("files.xml validator created.")
+    v
+  }.unsafeGetOrThrow
+
+  private val xmlValidators: Map[String, XmlValidator] = Map(
+    "dataset.xml" -> ddmValidator,
+    "files.xml" -> filesValidator
+  )
+
+  private val allRules: Map[ProfileVersion, RuleBase] = {
+    Map(
+      profileVersion0 -> ProfileVersion0(xmlValidators, configuration.allowedLicenses),
+      profileVersion1 -> ProfileVersion1(xmlValidators))
+  }
 
   def validate(uri: URI, infoPackageType: InfoPackageType): Try[ResultMessage] = {
     for {
       bag <- getBagPath(uri)
       version <- getProfileVersion(bag)
-      violations <- validateDansBag(bag, version, infoPackageType)
+      violations <- validation.checkRules(new TargetBag(bag, version), allRules(version), infoPackageType)(isReadable = _.isReadable)
         .map(_ => Seq.empty)
         .recoverWith(extractViolations)
     } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType, violations)

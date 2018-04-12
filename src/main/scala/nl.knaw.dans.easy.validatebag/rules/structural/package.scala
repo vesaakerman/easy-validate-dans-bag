@@ -17,33 +17,38 @@ package nl.knaw.dans.easy.validatebag.rules
 
 import java.nio.file.Path
 
-import nl.knaw.dans.easy.validatebag.BagDir
+import nl.knaw.dans.easy.validatebag.TargetBag
 import nl.knaw.dans.easy.validatebag.validation.fail
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.Try
 
-package object structural {
-  def bagMustContainDir(d: Path)(b: BagDir) = Try {
+package object structural extends DebugEnhancedLogging {
+  def bagMustContainDir(d: Path)(t: TargetBag) = Try {
+    trace(d)
     require(!d.isAbsolute, s"Directory $d must be a relative path")
-    if (!(b / d.toString).isDirectory)
+    if (!(t.bagDir / d.toString).isDirectory)
       fail(s"Mandatory directory '$d' not found in bag.")
   }
 
-  def bagMustContainFile(f: Path)(b: BagDir) = Try {
+  def bagMustContainFile(f: Path)(t: TargetBag) = Try {
+    trace(f)
     require(!f.isAbsolute, s"File $f must be a relative path")
-    if (!(b / f.toString).exists)
+    if (!(t.bagDir / f.toString).exists)
       fail(s"Mandatory file '$f' not found in bag.")
   }
 
-  def bagMustNotContainFile(f: Path)(b: BagDir) = Try {
+  def bagMustNotContainFile(f: Path)(t: TargetBag) = Try {
+    trace(f)
     require(!f.isAbsolute, s"File $f must be a relative path")
-    if ((b / f.toString).exists)
+    if ((t.bagDir / f.toString).exists)
       fail(s"File '$f' MUST NOT exist in bag (of this information package type).")
   }
 
-  def bagDirectoryMustNotContainAnythingElseThan(d: Path, ps: Seq[String])(b: BagDir) = Try {
+  def bagDirectoryMustNotContainAnythingElseThan(d: Path, ps: Seq[String])(t: TargetBag) = Try {
+    trace(d, ps)
     require(!d.isAbsolute, s"Directory $d must be a relative path")
-    val extraFiles = (b / d.toString).list.filter(ps contains _.name)
-    if (extraFiles.nonEmpty) fail(s"Directory $d contains files that are not allowed: ${extraFiles.mkString(", ")}")
+    val extraFiles = (t.bagDir / d.toString).list.filterNot(ps contains _.name)
+    if (extraFiles.nonEmpty) fail(s"Directory $d contains files that are not allowed: ${ extraFiles.mkString(", ") }")
   }
 }

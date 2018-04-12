@@ -15,24 +15,23 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.nio.file.{ Files, Paths }
+import java.nio.file.Paths
 
 import better.files._
 import nl.knaw.dans.easy.validatebag.rules.bagit.bagMustBeValid
 import nl.knaw.dans.easy.validatebag.validation.RuleViolationDetailsException
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.io.FileUtils
 import org.scalatest._
 
 import scala.util.{ Failure, Success }
 import scala.util.matching.Regex
 
-trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInstancePerTest with DebugEnhancedLogging {
-  lazy val testDir: File = {
-    val path = Paths.get(s"target/test/${ getClass.getSimpleName }").toAbsolutePath
-    FileUtils.deleteQuietly(path.toFile)
-    Files.createDirectories(path)
-    path
+trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfter with DebugEnhancedLogging {
+  lazy val testDir: File = File(s"target/test/${ getClass.getSimpleName }")
+
+  def clearTestDir(): Unit = {
+    if (testDir.exists)
+      testDir.delete().createDirectories()
   }
 
   protected val bagsDir: File = Paths.get("src/test/resources/bags")
@@ -41,11 +40,11 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInst
 
 
   private def shouldBeValidAccordingToBagIt(inputBag: String): Unit = {
-    bagMustBeValid(bagsDir / inputBag)
+    bagMustBeValid(new TargetBag(bagsDir / inputBag, 0)) // Profile version does not matter here
   }
 
-  protected def testRuleViolationRegex(rule: Rule, inputBag: String, includedInErrorMsg: Regex, doubleCheckBagItValidity: Boolean = false): Unit = {
-    val result = rule(bagsDir / inputBag)
+  protected def testRuleViolationRegex(rule: Rule, inputBag: String, includedInErrorMsg: Regex, profileVersion: ProfileVersion = profileVersion0, doubleCheckBagItValidity: Boolean = false): Unit = {
+    val result = rule(new TargetBag(bagsDir / inputBag, profileVersion))
     if (doubleCheckBagItValidity) shouldBeValidAccordingToBagIt(inputBag)
     result shouldBe a[Failure[_]]
     inside(result) {
@@ -54,8 +53,8 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInst
     }
   }
 
-  protected def testRuleViolation(rule: Rule, inputBag: String, includedInErrorMsg: String, doubleCheckBagItValidity: Boolean = false): Unit = {
-    val result = rule(bagsDir / inputBag)
+  protected def testRuleViolation(rule: Rule, inputBag: String, includedInErrorMsg: String, profileVersion: ProfileVersion = profileVersion0, doubleCheckBagItValidity: Boolean = false): Unit = {
+    val result = rule(new TargetBag(bagsDir / inputBag, profileVersion))
     if (doubleCheckBagItValidity) shouldBeValidAccordingToBagIt(inputBag)
     result shouldBe a[Failure[_]]
     inside(result) {
@@ -64,8 +63,8 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with OneInst
     }
   }
 
-  protected def testRuleSuccess(rule: Rule, inputBag: String, doubleCheckBagItValidity: Boolean = false): Unit = {
+  protected def testRuleSuccess(rule: Rule, inputBag: String, profileVersion: ProfileVersion = profileVersion0, doubleCheckBagItValidity: Boolean = false): Unit = {
     if (doubleCheckBagItValidity) shouldBeValidAccordingToBagIt(inputBag)
-    rule(bagsDir / inputBag) shouldBe a[Success[_]]
+    rule(new TargetBag(bagsDir / inputBag, profileVersion)) shouldBe a[Success[_]]
   }
 }

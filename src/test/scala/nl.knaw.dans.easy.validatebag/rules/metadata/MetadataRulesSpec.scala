@@ -15,7 +15,37 @@
  */
 package nl.knaw.dans.easy.validatebag.rules.metadata
 
-import nl.knaw.dans.easy.validatebag.TestSupportFixture
+import java.net.URL
+import java.nio.file.Paths
+
+import javax.xml.validation.SchemaFactory
+import nl.knaw.dans.easy.validatebag.{ TestSupportFixture, XmlValidator }
+import nl.knaw.dans.lib.error._
+
+import scala.util.Try
 
 class MetadataRulesSpec extends TestSupportFixture {
+  private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
+
+  private val ddmValidator = Try {
+    logger.info("Creating ddm.xml validator...")
+    val ddmSchema = schemaFactory.newSchema(new URL("https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"))
+    val v = new XmlValidator(ddmSchema)
+    logger.info("ddm.xml validator created.")
+    v
+  }.unsafeGetOrThrow
+
+  "xmlFileMustConformToSchema" should "report validation errors if XML not valid" in {
+    testRuleViolationRegex(
+      rule = xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), ddmValidator),
+      inputBag = "metadata-unknown-element",
+      includedInErrorMsg = "UNKNOWN-ELEMENT".r
+    )
+  }
+
+  it should "succeed if XML is valid" in {
+    testRuleSuccess(
+      rule = xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), ddmValidator),
+      inputBag = "metadata-correct")
+  }
 }

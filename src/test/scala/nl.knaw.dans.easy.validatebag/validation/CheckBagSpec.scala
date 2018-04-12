@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.validatebag.rules
+package nl.knaw.dans.easy.validatebag.validation
 
 import better.files._
-import nl.knaw.dans.easy.validatebag.TestSupportFixture
-import nl.knaw.dans.easy.validatebag.validation.RuleViolationException
-import nl.knaw.dans.lib.error.CompositeException
+import nl.knaw.dans.easy.validatebag.{ NumberedRule, TargetBag, TestSupportFixture }
 
 import scala.util.Failure
 
 class CheckBagSpec extends TestSupportFixture {
+  /*
+   * The functionality of checkRules does not concern itself with the content of the actual rules, so
+   * in this spec the rulebase can be empty.
+   */
+  private val emptyRuleBase = Seq.empty[NumberedRule]
+
   private def expectUnreadable(unreadables: File*)(file: File): Boolean = {
     val readable = !unreadables.contains(file) && file.isReadable
     debug(s"Returning readable = $readable for $file")
@@ -30,14 +34,14 @@ class CheckBagSpec extends TestSupportFixture {
   }
 
   "checkBag" should "fail if bag directory is not found" in {
-    checkBag(bagsDir / "non-existent", 0) should matchPattern {
+    checkRules(new TargetBag(bagsDir / "non-existent"), emptyRuleBase) should matchPattern {
       case Failure(_: IllegalArgumentException) =>
     }
   }
 
   it should "fail if the bag directory is unreadable" in {
     val minimal = bagsDir / "minimal"
-    val result = checkBag(minimal, 0)(expectUnreadable(minimal))
+    val result = checkRules(new TargetBag(minimal), emptyRuleBase)(expectUnreadable(minimal))
     result shouldBe a[Failure[_]]
     inside(result) {
       case Failure(iae: IllegalArgumentException) =>
@@ -48,18 +52,9 @@ class CheckBagSpec extends TestSupportFixture {
   it should "fail if there is a non-readable file in the bag directory" in {
     val minimal = bagsDir / "minimal"
     val leegTxt = minimal / "data/leeg.txt"
-    inside(checkBag(minimal, 0)(expectUnreadable(leegTxt))) {
+    inside(checkRules(new TargetBag(minimal), emptyRuleBase)(expectUnreadable(leegTxt))) {
       case Failure(iae: IllegalArgumentException) =>
         iae.getMessage should include("non-readable")
-    }
-  }
-
-  it should "fail if bag does not contain bag-info.txt" in {
-    inside(checkBag(bagsDir / "missing-bag-info.txt", 0)) {
-      case Failure(CompositeException(exceptions)) =>
-        val t = exceptions.find(_.getMessage.startsWith("[1.2.1]"))
-        t.map(_.getMessage should include("Mandatory file 'bag-info.txt'"))
-          .getOrElse(fail("Rule violation not found"))
     }
   }
 }
