@@ -15,9 +15,13 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import gov.loc.repository.bagit.domain.Bag
+import java.nio.file.Paths
 
-import scala.xml.Elem
+import gov.loc.repository.bagit.domain.Bag
+import gov.loc.repository.bagit.reader.BagReader
+
+import scala.util.Try
+import scala.xml.{ Elem, XML }
 
 // TODO: optimize validation by making sure expensive actions only need to be done once per bag
 
@@ -30,24 +34,20 @@ import scala.xml.Elem
  *
  * @param profileVersion the profile version used
  */
-class TargetBag(profileVersion: ProfileVersion) {
-
-  lazy val bagDir: BagDir = {
-
-
-    ???
+class TargetBag(val bagDir: BagDir, profileVersion: ProfileVersion = profileVersion0) {
+  private val bagReader = new BagReader()
+  private val ddmPath = profileVersion match {
+    case 0 =>  Paths.get("metadata/dataset.xml")
+    case 1 =>  Paths.get("metadata/files.xml")
+  }
+  private val filesXmlPath = profileVersion match {
+    case 0 =>  Paths.get("metadata/files.xml")
+    case 1 =>  Paths.get("data/pdi/files.xml")
   }
 
-  lazy val bag: Bag = {
+  lazy val tryBag: Try[Bag] = Try { bagReader.read(bagDir.path) }
 
+  lazy val tryDdm: Try[Elem] = Try { XML.loadFile((bagDir / ddmPath.toString).toJava) }
 
-    ???
-  }
-
-  lazy val filesXml: Elem = {
-
-
-    ???
-  }
-
+  lazy val tryFilesXml: Try[Elem] = Try { XML.loadFile((bagDir / filesXmlPath.toString).toJava) }
 }

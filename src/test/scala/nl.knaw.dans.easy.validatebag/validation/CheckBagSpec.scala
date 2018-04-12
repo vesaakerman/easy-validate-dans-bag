@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.validatebag.validation
 
 import better.files._
-import nl.knaw.dans.easy.validatebag.{ NumberedRule, TestSupportFixture }
+import nl.knaw.dans.easy.validatebag.{ NumberedRule, TargetBag, TestSupportFixture }
 
 import scala.util.Failure
 
@@ -34,14 +34,14 @@ class CheckBagSpec extends TestSupportFixture {
   }
 
   "checkBag" should "fail if bag directory is not found" in {
-    checkRules(bagsDir / "non-existent", emptyRuleBase) should matchPattern {
+    checkRules(new TargetBag(bagsDir / "non-existent"), emptyRuleBase) should matchPattern {
       case Failure(_: IllegalArgumentException) =>
     }
   }
 
   it should "fail if the bag directory is unreadable" in {
     val minimal = bagsDir / "minimal"
-    val result = checkRules(minimal, emptyRuleBase)(expectUnreadable(minimal))
+    val result = checkRules(new TargetBag(minimal), emptyRuleBase)(expectUnreadable(minimal))
     result shouldBe a[Failure[_]]
     inside(result) {
       case Failure(iae: IllegalArgumentException) =>
@@ -52,7 +52,7 @@ class CheckBagSpec extends TestSupportFixture {
   it should "fail if there is a non-readable file in the bag directory" in {
     val minimal = bagsDir / "minimal"
     val leegTxt = minimal / "data/leeg.txt"
-    inside(checkRules(minimal, emptyRuleBase)(expectUnreadable(leegTxt))) {
+    inside(checkRules(new TargetBag(minimal), emptyRuleBase)(expectUnreadable(leegTxt))) {
       case Failure(iae: IllegalArgumentException) =>
         iae.getMessage should include("non-readable")
     }

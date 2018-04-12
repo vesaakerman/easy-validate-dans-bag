@@ -68,7 +68,7 @@ package object validation extends DebugEnhancedLogging {
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
    *         for every violation of the DANS BagIt Profile rules.
    */
-  def checkRules(bag: BagDir, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
+  def checkRules(bag: TargetBag, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
     /**
      * `isReadable` was added because unit testing this by actually setting files on the file system to non-readable and back
      * can get messy. After a failed build one might be left with a target folder that refuses to be cleaned. Unless you are
@@ -76,12 +76,12 @@ package object validation extends DebugEnhancedLogging {
      */
     trace(bag, asInfoPackageType)
     for {
-      _ <- checkIfValidationCanProceed(bag)
+      _ <- checkIfValidationCanProceed(bag.bagDir)
       result <- evaluateRules(bag, ruleBase, asInfoPackageType)
     } yield result
   }
 
-  private def evaluateRules(bag: BagDir, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
+  private def evaluateRules(bag: TargetBag, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
     ruleBase.filter(numberedRule => numberedRule.infoPackageType == BOTH || numberedRule.infoPackageType == asInfoPackageType)
       .foldLeft(List[Try[String]]()) {
         (results, numberedRule) =>

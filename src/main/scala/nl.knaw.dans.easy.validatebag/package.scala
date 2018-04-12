@@ -25,7 +25,7 @@ package object validatebag {
   type RuleNumber = String
   type ErrorMessage = String
   type BagDir = File
-  type Rule = BagDir => Try[Unit]
+  type Rule = TargetBag => Try[Unit]
   type RuleBase = Seq[NumberedRule]
 
   val profileVersion0 = 0

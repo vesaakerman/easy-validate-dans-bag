@@ -64,7 +64,7 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
     for {
       bag <- getBagPath(uri)
       version <- getProfileVersion(bag)
-      violations <- validation.checkRules(bag, allRules(version), infoPackageType)(isReadable = _.isReadable)
+      violations <- validation.checkRules(new TargetBag(bag, version), allRules(version), infoPackageType)(isReadable = _.isReadable)
         .map(_ => Seq.empty)
         .recoverWith(extractViolations)
     } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType, violations)

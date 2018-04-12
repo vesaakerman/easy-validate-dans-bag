@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.validatebag.rules
 import java.net.{ URI, URL }
 import java.nio.file.Path
 
-import nl.knaw.dans.easy.validatebag.{ BagDir, XmlValidator }
+import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.easy.validatebag.validation._
 
 import scala.util.{ Success, Try }
@@ -28,17 +28,17 @@ package object metadata {
   val namespaceSchemaInstance = new URI("http://www.w3.org/2001/XMLSchema-instance")
   val namespaceDcterms = new URI("http://purl.org/dc/terms/")
 
-  def xmlFileMustConformToSchema(xmlFile: Path, validator: XmlValidator)(b: BagDir): Try[Unit] = {
+  def xmlFileMustConformToSchema(xmlFile: Path, validator: XmlValidator)(b: TargetBag): Try[Unit] = {
     trace(xmlFile)
     require(!xmlFile.isAbsolute, "Path to xmlFile must be relative.")
-    (b / xmlFile.toString).inputStream.map(validator.validate).map {
+    (b.bagDir / xmlFile.toString).inputStream.map(validator.validate).map {
       _.recoverWith { case t: Throwable => Try(fail(t.getMessage)) }
     }
   }.get()
 
-  def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URL])(b: BagDir): Try[Unit] = Try {
+  def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URL])(b: TargetBag): Try[Unit] = Try {
     trace(())
-    val metadata = XML.loadFile((b / ddmPath.toString).toJava) \ "dcmiMetadata"
+    val metadata = b.tryDdm.get \ "dcmiMetadata" // TODO: inside Try
     val licenses = (metadata \ "license").toList
     debug(s"Found licences: ${ licenses.mkString(", ") }")
     lazy val rightsHolders = (metadata \ "rightsHolder").toList
@@ -70,31 +70,31 @@ package object metadata {
       }
   }
 
-  def filesXmlHasDocumentElementFiles(b: BagDir): Try[Unit] = Try {
-    if (loadFilesXml(b).label != "files") fail("files.xml: document element of must be 'files'")
+  def filesXmlHasDocumentElementFiles(b: TargetBag): Try[Unit] = Try {
+    if (b.tryFilesXml.get.label != "files") fail("files.xml: document element of must be 'files'") // TODO: inside Try
   }
 
-  def filesXmlHasOnlyFiles(b: BagDir): Try[Unit] = Try {
-    val files = loadFilesXml(b)
+  def filesXmlHasOnlyFiles(b: TargetBag): Try[Unit] = Try {
+    val files = b.tryFilesXml.get // TODO: inside Try
     val nonFiles = (files \ "*").filterNot(_.label == "file")
     if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
   }
 
-  def filesXmlFileElementsAllHaveFilepathAttribute(b: BagDir): Try[Unit] = Try {
-    val xml = loadFilesXml(b)
+  def filesXmlFileElementsAllHaveFilepathAttribute(b: TargetBag): Try[Unit] = Try {
+    val xml = b.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     if (files.map(_ \@ "filepath").size != files.size) fail("Not al 'file' elements have a 'filepath' attribute")
   }
 
-  def filesXmlAllFilesDescribedOnce(b: BagDir): Try[Unit] = Try {
-    val xml = loadFilesXml(b)
+  def filesXmlAllFilesDescribedOnce(b: TargetBag): Try[Unit] = Try {
+    val xml = b.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     val pathsInFilesXmlList = files.map(_ \@ "filepath")
     val duplicatePathsInFilesXml = pathsInFilesXmlList.groupBy(identity).collect { case (k, vs) if vs.size > 1 => k }
     val noDuplicatesFound = duplicatePathsInFilesXml.isEmpty
     val pathsInFileXml = pathsInFilesXmlList.toSet
-    val filesInBagPayload = (b / "data").walk().filter(_.isRegularFile).toSet
-    val payloadPaths = filesInBagPayload.map(b.path relativize _).map(_.toString)
+    val filesInBagPayload = (b.bagDir / "data").walk().filter(_.isRegularFile).toSet
+    val payloadPaths = filesInBagPayload.map(b.bagDir.path relativize _).map(_.toString)
     val fileSetsEqual = pathsInFileXml == payloadPaths
 
     if (noDuplicatesFound && fileSetsEqual) ()
@@ -110,16 +110,16 @@ package object metadata {
     }
   }
 
-  def filesXmlAllFilesHaveFormat(b: BagDir): Try[Unit] = Try {
-    val xml = loadFilesXml(b)
+  def filesXmlAllFilesHaveFormat(b: TargetBag): Try[Unit] = Try {
+    val xml = b.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     val allFilesHaveFormat = files.forall(_.child.exists(n =>
       xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" && n.label == "format"))
     if (!allFilesHaveFormat) fail("files.xml: not all <file> elements contain a <dcterms:format>")
   }
 
-  def filesXmlFilesHaveOnlyDcTerms(b:BagDir): Try[Unit] = Try {
-    val xml = loadFilesXml(b)
+  def filesXmlFilesHaveOnlyDcTerms(b:TargetBag): Try[Unit] = Try {
+    val xml = b.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     val hasOnlyDcTermsInFileElements = (xml \ "file" \ "_").forall {
       case n: Elem => xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" || xml.getNamespace(n.prefix) == ""
@@ -127,9 +127,4 @@ package object metadata {
     }
     if (!hasOnlyDcTermsInFileElements) fail("files.xml: non-dcterms elements found in some file elements")
   }
-
-  private def loadFilesXml(b: BagDir): Elem = {
-    XML.loadFile((b / "metadata/files.xml").toJava)
-  }
-
 }

@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.validatebag.validation
 import java.util.concurrent.atomic.AtomicBoolean
 
 import better.files._
-import nl.knaw.dans.easy.validatebag.{ validation, BagDir, NumberedRule, Rule, RuleNumber, TestSupportFixture }
+import nl.knaw.dans.easy.validatebag.{ validation, BagDir, NumberedRule, Rule, RuleNumber, TargetBag, TestSupportFixture }
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
 import nl.knaw.dans.lib.error.CompositeException
 
@@ -34,24 +34,24 @@ class ValidationSpec extends TestSupportFixture {
     calls.clear()
   }
 
-  private def registerCall(s: String)(b: BagDir): Try[Unit] = Try {
+  private def registerCall(s: String)(b: TargetBag): Try[Unit] = Try {
     calls.append(s)
   }
 
-  private def failingRule(s: String)(b: BagDir): Try[Unit] = {
+  private def failingRule(s: String)(b: TargetBag): Try[Unit] = {
     calls.append(s)
     Failure(RuleViolationDetailsException(s"Rule $s failed"))
   }
 
   private def addNumberedRule(s: String, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None, failing: Boolean = false): NumberedRule = {
-    NumberedRule(s, if (failing) failingRule(s)else registerCall(s), infoPackageType, dependsOn)
+    NumberedRule(s, if (failing) failingRule(s) else registerCall(s), infoPackageType, dependsOn)
   }
 
   "checkRules" should "run all rules in sequence if not filtered" in {
     val rulesBase = Seq(
       addNumberedRule("1"),
       addNumberedRule("2"))
-    val result = checkRules(dummy, rulesBase)(isReadable = _ => true)
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
     result shouldBe a[Success[_]]
     calls.toList shouldBe List("1", "2")
   }
@@ -62,7 +62,7 @@ class ValidationSpec extends TestSupportFixture {
       addNumberedRule("1", infoPackageType = SIP),
       addNumberedRule("2"),
       addNumberedRule("3", infoPackageType = AIP))
-    val result = checkRules(dummy, rulesBase)(isReadable = _ => true)
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
     result shouldBe a[Success[_]]
     calls.toList shouldBe List("1", "2")
   }
@@ -72,7 +72,7 @@ class ValidationSpec extends TestSupportFixture {
       addNumberedRule("1", failing = true),
       addNumberedRule("2"),
       addNumberedRule("3"))
-    val result = checkRules(dummy, rulesBase)(isReadable = _ => true)
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
     result shouldBe a[Failure[_]]
     calls.toList shouldBe List("1", "2", "3")
   }
@@ -85,7 +85,7 @@ class ValidationSpec extends TestSupportFixture {
       addNumberedRule("4", dependsOn = Some("2")),
       addNumberedRule("5", dependsOn = Some("1")))
 
-    val result = checkRules(dummy, rulesBase)(isReadable = _ => true)
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
     result shouldBe a[Failure[_]]
     calls.toList shouldBe List("1", "3")
   }
