@@ -65,6 +65,12 @@ object ProfileVersion0 {
     // files.xml
     NumberedRule("3.2.1", xmlFileMustConformToSchema(Paths.get("metadata/files.xml"), xmlValidators("files.xml")), dependsOn = Some("2.2")),
     NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.2")),
-    NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2"))
+    NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2")),
+
+    NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = Some("3.2.3")),
+    NumberedRule("3.2.4", filesXmlAllFilesDescribedOnce, dependsOn = Some("3.2.4")),
+    // 3.2.5 already checked by 3.2.4-rule
+    NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = Some("3.2.3")),
+    NumberedRule("3.2.7", filesXmlFilesHaveOnlyDcTerms, dependsOn = Some("3.2.3")),
   )
 }
