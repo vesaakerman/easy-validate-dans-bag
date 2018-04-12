@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy
 
 import better.files._
-import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
 
 import scala.util.Try
 

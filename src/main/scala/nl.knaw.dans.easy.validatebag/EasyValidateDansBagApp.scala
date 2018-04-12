@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.validatebag
 import java.net.{ URI, URL }
 import java.nio.file.{ Path, Paths }
 
-import better.files.File
 import javax.xml.validation.SchemaFactory
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
 import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }

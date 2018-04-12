@@ -49,6 +49,6 @@ package object structural extends DebugEnhancedLogging {
     trace(d, ps)
     require(!d.isAbsolute, s"Directory $d must be a relative path")
     val extraFiles = (t.bagDir / d.toString).list.filterNot(ps contains _.name)
-    if (extraFiles.nonEmpty) fail(s"Directory $d contains files that are not allowed: ${extraFiles.mkString(", ")}")
+    if (extraFiles.nonEmpty) fail(s"Directory $d contains files that are not allowed: ${ extraFiles.mkString(", ") }")
   }
 }

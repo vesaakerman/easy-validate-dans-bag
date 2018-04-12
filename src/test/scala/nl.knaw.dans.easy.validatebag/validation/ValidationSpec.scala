@@ -15,12 +15,8 @@
  */
 package nl.knaw.dans.easy.validatebag.validation
 
-import java.util.concurrent.atomic.AtomicBoolean
-
-import better.files._
-import nl.knaw.dans.easy.validatebag.{ validation, BagDir, NumberedRule, Rule, RuleNumber, TargetBag, TestSupportFixture }
+import nl.knaw.dans.easy.validatebag.{ NumberedRule, RuleNumber, TargetBag, TestSupportFixture }
 import nl.knaw.dans.easy.validatebag.InfoPackageType._
-import nl.knaw.dans.lib.error.CompositeException
 
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
@@ -44,7 +40,8 @@ class ValidationSpec extends TestSupportFixture {
   }
 
   private def addNumberedRule(s: String, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None, failing: Boolean = false): NumberedRule = {
-    NumberedRule(s, if (failing) failingRule(s) else registerCall(s), infoPackageType, dependsOn)
+    NumberedRule(s, if (failing) failingRule(s)
+                    else registerCall(s), infoPackageType, dependsOn)
   }
 
   "checkRules" should "run all rules in sequence if not filtered" in {

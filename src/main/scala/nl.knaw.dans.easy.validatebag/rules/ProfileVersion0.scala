@@ -20,8 +20,8 @@ import java.nio.file.Paths
 
 import nl.knaw.dans.easy.validatebag.{ profileVersion0, profileVersion0Uri, NumberedRule, XmlValidator }
 import nl.knaw.dans.easy.validatebag.rules.bagit._
-import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.rules.metadata._
+import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, SIP }
 
 object ProfileVersion0 {

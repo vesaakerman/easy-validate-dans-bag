@@ -118,7 +118,7 @@ package object metadata {
     if (!allFilesHaveFormat) fail("files.xml: not all <file> elements contain a <dcterms:format>")
   }
 
-  def filesXmlFilesHaveOnlyDcTerms(t:TargetBag): Try[Unit] = Try {
+  def filesXmlFilesHaveOnlyDcTerms(t: TargetBag): Try[Unit] = Try {
     val xml = t.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     val hasOnlyDcTermsInFileElements = (xml \ "file" \ "_").forall {

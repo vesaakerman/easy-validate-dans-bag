@@ -45,5 +45,4 @@ object Configuration {
       allowedLicenses = (File(cfgPath) / "licenses.txt").contentAsString(StandardCharsets.UTF_8).split("""\s*\n\s*""").filterNot(_.isEmpty).map(new URL(_))
     )
   }
-
 }

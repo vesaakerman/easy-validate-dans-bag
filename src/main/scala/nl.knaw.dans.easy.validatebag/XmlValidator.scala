@@ -21,7 +21,7 @@ import javax.xml.parsers.SAXParserFactory
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.Schema
 import nl.knaw.dans.lib.error._
-import org.xml.sax.{ EntityResolver, ErrorHandler, InputSource, SAXParseException }
+import org.xml.sax.{ ErrorHandler, SAXParseException }
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try

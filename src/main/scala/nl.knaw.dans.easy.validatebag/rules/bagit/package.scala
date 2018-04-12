@@ -15,14 +15,13 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.{ NoSuchFileException, Paths }
+import java.nio.file.NoSuchFileException
 
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.exceptions._
 import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms._
-import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.verify.BagVerifier
-import nl.knaw.dans.easy.validatebag.{ BagDir, TargetBag }
+import nl.knaw.dans.easy.validatebag.TargetBag
 import nl.knaw.dans.easy.validatebag.validation._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime
@@ -130,7 +129,7 @@ package object bagit extends DebugEnhancedLogging {
 
   def bagInfoTxtMustContainCreated(t: TargetBag) = Try {
     trace(())
-    val readBag = t.tryBag.get  // TODO: put inside Try
+    val readBag = t.tryBag.get // TODO: put inside Try
     if (!readBag.getMetadata.contains("Created"))
       fail("The bag-info.txt file MUST contain an element called Created")
   }
