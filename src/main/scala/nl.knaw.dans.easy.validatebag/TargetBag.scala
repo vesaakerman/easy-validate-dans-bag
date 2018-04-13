@@ -34,11 +34,11 @@ import scala.xml.{ Elem, XML }
  *
  * @param profileVersion the profile version used
  */
-class TargetBag(val bagDir: BagDir, profileVersion: ProfileVersion = profileVersion0) {
+class TargetBag(val bagDir: BagDir, profileVersion: ProfileVersion = 0) {
   private val bagReader = new BagReader()
   private val ddmPath = profileVersion match {
     case 0 => Paths.get("metadata/dataset.xml")
-    case 1 => Paths.get("metadata/files.xml")
+    case 1 => Paths.get("data/pdi/dataset.xml")
   }
   private val filesXmlPath = profileVersion match {
     case 0 => Paths.get("metadata/files.xml")

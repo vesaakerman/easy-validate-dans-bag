@@ -55,8 +55,8 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
 
   private val allRules: Map[ProfileVersion, RuleBase] = {
     Map(
-      profileVersion0 -> ProfileVersion0(xmlValidators, configuration.allowedLicenses),
-      profileVersion1 -> ProfileVersion1(xmlValidators))
+      0 -> ProfileVersion0(xmlValidators, configuration.allowedLicenses),
+      1 -> ProfileVersion1(xmlValidators))
   }
 
   def validate(uri: URI, infoPackageType: InfoPackageType): Try[ResultMessage] = {

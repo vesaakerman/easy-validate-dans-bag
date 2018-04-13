@@ -18,13 +18,16 @@ package nl.knaw.dans.easy.validatebag.rules
 import java.net.{ URI, URL }
 import java.nio.file.Paths
 
-import nl.knaw.dans.easy.validatebag.{ profileVersion0, profileVersion0Uri, NumberedRule, XmlValidator }
+import nl.knaw.dans.easy.validatebag.{ NumberedRule, XmlValidator }
 import nl.knaw.dans.easy.validatebag.rules.bagit._
 import nl.knaw.dans.easy.validatebag.rules.metadata._
 import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, SIP }
 
 object ProfileVersion0 {
+  val versionNumber = 0
+  val versionUri = "doi:10.17026/dans-z52-ybfe"
+
   def apply(implicit xmlValidators: Map[String, XmlValidator], allowedLicences: Seq[URI]): Seq[NumberedRule] = Seq(
     // BAGIT-RELATED
 
@@ -35,9 +38,9 @@ object ProfileVersion0 {
     // bag-info.txt
     NumberedRule("1.2.1", bagMustContainFile(Paths.get("bag-info.txt"))),
     NumberedRule("1.2.2", bagInfoTxtMayContainOne("BagIt-Profile-Version"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.2", bagInfoTxtElementMustHaveValue("BagIt-Profile-Version", profileVersion0.toString), dependsOn = Some("1.2.2")),
+    NumberedRule("1.2.2", bagInfoTxtElementMustHaveValue("BagIt-Profile-Version", versionNumber.toString), dependsOn = Some("1.2.2")),
     NumberedRule("1.2.3", bagInfoTxtMayContainOne("BagIt-Profile-URI"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.3", bagInfoTxtElementMustHaveValue("BagIt-Profile-URI", profileVersion0Uri), dependsOn = Some("1.2.3")),
+    NumberedRule("1.2.3", bagInfoTxtElementMustHaveValue("BagIt-Profile-URI", versionUri), dependsOn = Some("1.2.3")),
     NumberedRule("1.2.4", bagInfoTxtMustContainExactlyOne("Created"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate, dependsOn = Some("1.2.4")),
     NumberedRule("1.2.5", bagInfoTxtMayContainOne("Is-Version-Of"), dependsOn = Some("1.2.1")),

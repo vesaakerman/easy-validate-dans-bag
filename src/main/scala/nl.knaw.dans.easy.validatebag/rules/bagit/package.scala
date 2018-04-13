@@ -83,7 +83,7 @@ package object bagit extends DebugEnhancedLogging {
   def bagMustBeVirtuallyValid(t: TargetBag): Try[Unit] = {
     trace(())
     bagMustBeValid(t)
-      .recover {
+      .recoverWith {
         case cause: RuleViolationDetailsException =>
           Try(fail(s"${ cause.details } (WARNING: bag may still be virtually-valid, but this version of the service cannot check that."))
       }
@@ -117,7 +117,12 @@ package object bagit extends DebugEnhancedLogging {
 
   def bagInfoTxtElementMustHaveValue(element: String, value: String)(t: TargetBag): Try[Unit] = {
     trace(element, value)
-    getBagInfoTxtValue(t, element).map(_.map(s => if (s != value) Try(fail(s"$element must be $value"))))
+    getBagInfoTxtValue(t, element).map {
+      _.foreach {
+        s =>
+          if (s != value) fail(s"$element must be $value; found: $s")
+      }
+    }
   }
 
   // Relies on there being only one element with the specified name

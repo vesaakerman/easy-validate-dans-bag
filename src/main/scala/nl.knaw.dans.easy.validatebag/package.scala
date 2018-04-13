@@ -27,10 +27,11 @@ package object validatebag {
   type Rule = TargetBag => Try[Unit]
   type RuleBase = Seq[NumberedRule]
 
-  val profileVersion0 = 0
-  val profileVersion0Uri = "doi:10.17026/dans-z52-ybfe"
-  val profileVersion1 = 1
-  val profileVersion1Uri = "doi:10.17026/dans-zf3-q54n"
+
+  val profileVersionDois= Map(
+    0 -> "doi:10.17026/dans-z52-ybfe",
+    1 -> "doi:10.17026/dans-zf3-q54n"
+  )
 
   val datasetXmlNamespace = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   val filesXmlNamespace = "http://easy.dans.knaw.nl/schemas/bag/metadata/files/"
