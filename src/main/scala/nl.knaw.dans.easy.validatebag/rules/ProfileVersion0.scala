@@ -38,7 +38,7 @@ object ProfileVersion0 {
     NumberedRule("1.2.2", bagInfoTxtElementMustHaveValue("BagIt-Profile-Version", profileVersion0.toString), dependsOn = Some("1.2.2")),
     NumberedRule("1.2.3", bagInfoTxtMayContainOne("BagIt-Profile-URI"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.3", bagInfoTxtElementMustHaveValue("BagIt-Profile-URI", profileVersion0Uri), dependsOn = Some("1.2.3")),
-    NumberedRule("1.2.4", bagInfoTxtMustContainCreated, dependsOn = Some("1.2.1")),
+    NumberedRule("1.2.4", bagInfoTxtMustContainExactlyOne("Created"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate, dependsOn = Some("1.2.4")),
     NumberedRule("1.2.5", bagInfoTxtMayContainOne("Is-Version-Of"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.6", bagInfoTxtMustContainExactlyOne("EASY-User-Account"), AIP, dependsOn = Some("1.2.1")),
@@ -63,7 +63,7 @@ object ProfileVersion0 {
     // TODO: 3.1.3
 
     // files.xml
-    NumberedRule("3.2.1", xmlFileMustConformToSchema(Paths.get("metadata/files.xml"), xmlValidators("files.xml")), dependsOn = Some("2.3")),
+    NumberedRule("3.2.1", xmlFileMayConformToSchemaIfDefaultNamespace(xmlValidators("files.xml")), dependsOn = Some("2.3")),
     NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.3")),
     NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2")),
 
@@ -71,6 +71,6 @@ object ProfileVersion0 {
     NumberedRule("3.2.4", filesXmlAllFilesDescribedOnce, dependsOn = Some("3.2.4")),
     // 3.2.5 already checked by 3.2.4-rule
     NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = Some("3.2.3")),
-//    NumberedRule("3.2.7", filesXmlFilesHaveOnlyDcTerms, dependsOn = Some("3.2.3")), //already checked by XSD
+    NumberedRule("3.2.7", filesXmlFilesHaveOnlyDcTerms, dependsOn = Some("3.2.3")),
   )
 }

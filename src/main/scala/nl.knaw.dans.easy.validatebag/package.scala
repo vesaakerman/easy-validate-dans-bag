@@ -32,6 +32,9 @@ package object validatebag {
   val profileVersion1 = 1
   val profileVersion1Uri = "doi:10.17026/dans-zf3-q54n"
 
+  val datasetXmlNamespace = "http://easy.dans.knaw.nl/schemas/md/ddm/"
+  val filesXmlNamespace = "http://easy.dans.knaw.nl/schemas/bag/metadata/files/"
+
   object InfoPackageType extends Enumeration {
     type InfoPackageType = Value
     val SIP, AIP, BOTH = Value

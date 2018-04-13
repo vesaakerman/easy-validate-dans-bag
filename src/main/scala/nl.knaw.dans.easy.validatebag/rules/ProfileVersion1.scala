@@ -36,7 +36,7 @@ object ProfileVersion1 {
     NumberedRule("1.2.2", bagInfoTxtElementMustHaveValue("BagIt-Profile-Version", profileVersion1.toString), dependsOn = Some("1.2.2")),
     NumberedRule("1.2.3", bagInfoTxtMustContainExactlyOne("BagIt-Profile-URI"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.3", bagInfoTxtElementMustHaveValue("BagIt-Profile-URI", profileVersion1Uri), dependsOn = Some("1.2.3")),
-    NumberedRule("1.2.4", bagInfoTxtMustContainCreated, dependsOn = Some("1.2.1")),
+    NumberedRule("1.2.4", bagInfoTxtMustContainExactlyOne("Created"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.4", bagInfoTxtCreatedMustBeIsoDate, dependsOn = Some("1.2.4")),
     NumberedRule("1.2.5", bagInfoTxtMayContainOne("Is-Version-Of"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.6", bagInfoTxtMustContainExactlyOne("EASY-User-Account"), AIP, dependsOn = Some("1.2.1")),

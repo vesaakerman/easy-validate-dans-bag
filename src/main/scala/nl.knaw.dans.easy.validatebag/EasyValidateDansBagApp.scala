@@ -34,7 +34,7 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
 
   private val ddmValidator = Try {
     logger.info("Creating ddm.xml validator...")
-    val ddmSchema = schemaFactory.newSchema(new URL("https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"))
+    val ddmSchema = schemaFactory.newSchema(new URL("https://easy.dans.knaw.nl/schemas/md/2018/03/ddm.xsd"))
     val v = new XmlValidator(ddmSchema)
     logger.info("ddm.xml validator created.")
     v
@@ -42,7 +42,7 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
 
   private val filesValidator = Try {
     logger.info("Creating files.xml validator...")
-    val filesSchema = schemaFactory.newSchema(new URL("https://easy.dans.knaw.nl/schemas/bag/metadata/files/files.xsd"))
+    val filesSchema = schemaFactory.newSchema(new URL("https://easy.dans.knaw.nl/schemas/bag/metadata/files/2018/04/files.xsd"))
     val v = new XmlValidator(filesSchema)
     logger.info("files.xml validator created.")
     v
