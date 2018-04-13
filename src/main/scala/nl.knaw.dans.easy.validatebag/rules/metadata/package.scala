@@ -15,16 +15,20 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
+import java.io.ByteArrayInputStream
 import java.net.{ URI, URL }
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
+import nl.knaw.dans.easy.validatebag
 import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Success, Try }
 import scala.xml._
 
-package object metadata {
+package object metadata extends DebugEnhancedLogging {
   val namespaceSchemaInstance = new URI("http://www.w3.org/2001/XMLSchema-instance")
   val namespaceDcterms = new URI("http://purl.org/dc/terms/")
 
@@ -35,6 +39,19 @@ package object metadata {
       _.recoverWith { case t: Throwable => Try(fail(t.getMessage)) }
     }
   }.get()
+
+  def xmlFileMayConformToSchemaIfDefaultNamespace(validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+    trace(())
+    t.tryFilesXml.map {
+      xml => if (xml.namespace == validatebag.filesXmlNamespace) {
+        logger.debug("Validating files.xml against XML Schema")
+        validator.validate(new ByteArrayInputStream(xml.toString.getBytes(StandardCharsets.UTF_8))).recoverWith {
+          case t: Throwable => Try(fail(t.getMessage))
+        }
+      } else logger.info(s"files.xml does not declare namespace ${validatebag.filesXmlNamespace}, NOT validating with XML Schema")
+    }
+  }
+
 
   def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URL])(t: TargetBag): Try[Unit] = Try {
     trace(())
@@ -71,22 +88,26 @@ package object metadata {
   }
 
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = Try {
+    trace(())
     if (t.tryFilesXml.get.label != "files") fail("files.xml: document element of must be 'files'") // TODO: inside Try
   }
 
   def filesXmlHasOnlyFiles(t: TargetBag): Try[Unit] = Try {
+    trace(())
     val files = t.tryFilesXml.get // TODO: inside Try
     val nonFiles = (files \ "*").filterNot(_.label == "file")
     if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
   }
 
   def filesXmlFileElementsAllHaveFilepathAttribute(t: TargetBag): Try[Unit] = Try {
+    trace(())
     val xml = t.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     if (files.map(_ \@ "filepath").size != files.size) fail("Not al 'file' elements have a 'filepath' attribute")
   }
 
   def filesXmlAllFilesDescribedOnce(t: TargetBag): Try[Unit] = Try {
+    trace(())
     val xml = t.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     val pathsInFilesXmlList = files.map(_ \@ "filepath")
@@ -111,6 +132,7 @@ package object metadata {
   }
 
   def filesXmlAllFilesHaveFormat(t: TargetBag): Try[Unit] = Try {
+    trace(())
     val xml = t.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     val allFilesHaveFormat = files.forall(_.child.exists(n =>
@@ -119,6 +141,7 @@ package object metadata {
   }
 
   def filesXmlFilesHaveOnlyDcTerms(t: TargetBag): Try[Unit] = Try {
+    trace(())
     val xml = t.tryFilesXml.get // TODO: inside Try
     val files = xml \ "file"
     val hasOnlyDcTermsInFileElements = (xml \ "file" \ "_").forall {

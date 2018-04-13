@@ -46,13 +46,6 @@ class BagInfoTxtRulesSpec extends TestSupportFixture {
       doubleCheckBagItValidity = true)
   }
 
-  "bagInfoTxtMustContainCreated" should "fail if 'Created' is missing in bag-info.txt" in {
-    testRuleViolation(bagInfoTxtMustContainCreated,
-      inputBag = "missing-Created",
-      includedInErrorMsg = "Created",
-      doubleCheckBagItValidity = true)
-  }
-
   "bagInfoTxtCreatedMustBeIsoDate" should "fail if 'Created' is lacking time and time zone" in {
     testRuleViolation(bagInfoTxtCreatedMustBeIsoDate,
       inputBag = "missing-time-and-timezone-in-Created",

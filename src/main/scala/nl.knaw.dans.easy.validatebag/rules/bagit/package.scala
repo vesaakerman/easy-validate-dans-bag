@@ -105,8 +105,8 @@ package object bagit extends DebugEnhancedLogging {
   def bagInfoTxtMustContainExactlyOne(element: String)(t: TargetBag): Try[Unit] = Try {
     val bag = t.tryBag.get // TODO: put inside Try
     val values = bag.getMetadata.get(element)
-    val numberFound = Option(values).getOrElse(0)
-    if (numberFound != 1) fail(s"bag-info.txt must contain exactly most one element: $element, number of elements found: $numberFound")
+    val numberFound = Option(values).getOrElse(List.empty[String].asJava).size
+    if (numberFound != 1) fail(s"bag-info.txt must contain exactly one '$element' element; number found: $numberFound")
   }
 
   def bagInfoTxtMustNotContain(element: String)(t: TargetBag): Try[Unit] = Try {
@@ -125,13 +125,6 @@ package object bagit extends DebugEnhancedLogging {
     trace(t, element)
     val bag = t.tryBag.get // TODO: put inside Try
     Option(bag.getMetadata.get(element)).map(_.get(0))
-  }
-
-  def bagInfoTxtMustContainCreated(t: TargetBag) = Try {
-    trace(())
-    val readBag = t.tryBag.get // TODO: put inside Try
-    if (!readBag.getMetadata.contains("Created"))
-      fail("The bag-info.txt file MUST contain an element called Created")
   }
 
   def bagInfoTxtCreatedMustBeIsoDate(t: TargetBag): Try[Unit] = {
