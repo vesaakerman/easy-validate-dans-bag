@@ -22,7 +22,7 @@ class ManifestRulesSpec extends TestSupportFixture {
     testRuleViolationRegex(
       bagSha1PayloadManifestMustContainAllPayloadFiles,
       inputBag = "two-payload-files-without-sha1",
-      includedInErrorMsg = """Missing files.*sine-sha1.txt""".r,
+      includedInErrorMsg = """All payload files must have an SHA-1 checksum.*sine-sha1.txt""".r,
       doubleCheckBagItValidity = true)
   }
 
