@@ -157,7 +157,7 @@ package object bagit extends DebugEnhancedLogging {
           debug(s"Payload files: ${ filesInManifest.mkString(", ") }")
           if (filesInManifest != filesInPayload) {
             val filesOnlyInPayload = filesInPayload -- filesInManifest // The other way around should have been caught by the validity check
-            fail(s"All payload files must have a SHA-1 checksum. Missing files: ${ filesOnlyInPayload.mkString(", ") }")
+            fail(s"All payload files must have an SHA-1 checksum. Files missing from SHA-1 manifest: ${ filesOnlyInPayload.mkString(", ") }")
           }
       }
   }

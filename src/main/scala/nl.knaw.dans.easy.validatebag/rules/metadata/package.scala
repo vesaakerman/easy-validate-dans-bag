@@ -143,11 +143,14 @@ package object metadata extends DebugEnhancedLogging {
   def filesXmlFilesHaveOnlyDcTerms(t: TargetBag): Try[Unit] = Try {
     trace(())
     val xml = t.tryFilesXml.get // TODO: inside Try
-    val files = xml \ "file"
-    val hasOnlyDcTermsInFileElements = (xml \ "file" \ "_").forall {
-      case n: Elem => xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" || xml.getNamespace(n.prefix) == ""
-      case _ => true // Don't check non-element nodes
+    if (xml.namespace == validatebag.filesXmlNamespace) () // Already checked by XML Schema
+    else {
+      val files = xml \ "file"
+      val hasOnlyDcTermsInFileElements = (xml \ "file" \ "_").forall {
+        case n: Elem => xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" || xml.getNamespace(n.prefix) == ""
+        case _ => true // Don't check non-element nodes
+      }
+      if (!hasOnlyDcTermsInFileElements) fail("files.xml: non-dcterms elements found in some file elements")
     }
-    if (!hasOnlyDcTermsInFileElements) fail("files.xml: non-dcterms elements found in some file elements")
   }
 }
