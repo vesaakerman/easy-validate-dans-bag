@@ -32,7 +32,6 @@
     <inceptionYear>2018</inceptionYear>
     <properties>
         <main-class>nl.knaw.dans.easy.validatebag.Command</main-class>
-        <easy-schema.version>1.16.1</easy-schema.version>
     </properties>
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-validate-dans-bag</developerConnection>
