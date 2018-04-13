@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.validatebag.rules
 
 import java.io.ByteArrayInputStream
-import java.net.{ URI, URL }
+import java.net.{ URI }
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
@@ -53,7 +53,7 @@ package object metadata extends DebugEnhancedLogging {
   }
 
 
-  def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URL])(t: TargetBag): Try[Unit] = Try {
+  def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URI])(t: TargetBag): Try[Unit] = Try {
     trace(())
     val metadata = t.tryDdm.get \ "dcmiMetadata" // TODO: inside Try
     val licenses = (metadata \ "license").toList
@@ -62,12 +62,12 @@ package object metadata extends DebugEnhancedLogging {
 
     licenses match {
       case license :: Nil if hasXsiType(namespaceDcterms, "URI")(license) =>
-        val licenseURL = new URL(license.text)
-        if (allowedLicenses.contains(licenseURL)) {
+        val licenseUri = new URI(license.text)
+        if (allowedLicenses.contains(licenseUri)) {
           if (rightsHolders.isEmpty) fail("Valid license found, but no rightsHolder specified")
           else Success(())
         }
-        else fail(s"Found unknown or unsupported license: $licenseURL")
+        else fail(s"Found unknown or unsupported license: $licenseUri")
       case Nil | _ :: Nil =>
         debug("No licences with xsi:type=\"dcterms:URI\"")
         Success(())

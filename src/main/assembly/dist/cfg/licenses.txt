@@ -19,6 +19,6 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 http://www.mozilla.org/en-US/MPL/2.0/FAQ/
 http://www.ohwr.org/attachments/735/CERNOHLv1_1.txt
 http://www.ohwr.org/attachments/2388/cern_ohl_v_1_2.txt
-http://www.ohwr.org/projects/cernohl/wiki (alias for ?)
+http://www.ohwr.org/projects/cernohl/wiki
 http://www.tapr.org/ohl.html
 http://www.tapr.org/TAPR_Open_Hardware_License_v1.0.txt

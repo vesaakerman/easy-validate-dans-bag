@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.net.URL
+import java.net.{ URI, URL }
 import java.nio.file.Paths
 
 import nl.knaw.dans.easy.validatebag.{ profileVersion0, profileVersion0Uri, NumberedRule, XmlValidator }
@@ -25,7 +25,7 @@ import nl.knaw.dans.easy.validatebag.rules.structural._
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, SIP }
 
 object ProfileVersion0 {
-  def apply(implicit xmlValidators: Map[String, XmlValidator], allowedLicences: Seq[URL]): Seq[NumberedRule] = Seq(
+  def apply(implicit xmlValidators: Map[String, XmlValidator], allowedLicences: Seq[URI]): Seq[NumberedRule] = Seq(
     // BAGIT-RELATED
 
     // Validity
