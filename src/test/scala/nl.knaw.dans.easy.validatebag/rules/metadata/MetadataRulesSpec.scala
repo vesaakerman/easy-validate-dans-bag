@@ -48,4 +48,49 @@ class MetadataRulesSpec extends TestSupportFixture {
       rule = xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), ddmValidator),
       inputBag = "metadata-correct")
   }
+
+  // General syntax will be checked by DDM XML Schema
+  "daisAreValid" should "report a DAI that has an invalid check digit" in {
+    testRuleViolation(
+      rule = ddmDaisMustBeValid,
+      inputBag = "ddm-incorrect-dai",
+      includedInErrorMsg = "Invalid DAIs",
+      doubleCheckBagItValidity = true)
+  }
+
+  "ddmGmlPolygonPosListMustMeetExtraConstraints" should "report error if odd number of values in posList" in {
+    testRuleViolation(
+      rule = ddmGmlPolygonPosListMustMeetExtraConstraints,
+      inputBag = "ddm-poslist-odd-number-of-values",
+      includedInErrorMsg = "with odd number of values",
+      doubleCheckBagItValidity = true
+    )
+  }
+
+  it should "report error if less than 8 values found" in {
+    testRuleViolation(
+      rule = ddmGmlPolygonPosListMustMeetExtraConstraints,
+      inputBag = "ddm-poslist-too-few-values",
+      includedInErrorMsg = "too few values",
+      doubleCheckBagItValidity = true
+    )
+  }
+
+  it should "report error if start and end pair are different" in {
+    testRuleViolation(
+      rule = ddmGmlPolygonPosListMustMeetExtraConstraints,
+      inputBag = "ddm-poslist-start-and-end-different",
+      includedInErrorMsg = "unequal first and last pairs",
+      doubleCheckBagItValidity = true
+    )
+  }
+
+  it should "succeed for correct polygon" in {
+    testRuleSuccess(
+      rule = ddmGmlPolygonPosListMustMeetExtraConstraints,
+      inputBag = "ddm-poslist-correct",
+      doubleCheckBagItValidity = true
+    )
+  }
+
 }

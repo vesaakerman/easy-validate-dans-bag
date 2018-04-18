@@ -40,7 +40,7 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeA
 
 
   private def shouldBeValidAccordingToBagIt(inputBag: String): Unit = {
-    bagMustBeValid(new TargetBag(bagsDir / inputBag, 0)) // Profile version does not matter here
+    bagMustBeValid(new TargetBag(bagsDir / inputBag, 0)) shouldBe a[Success[_]]// Profile version does not matter here
   }
 
   protected def testRuleViolationRegex(rule: Rule, inputBag: String, includedInErrorMsg: Regex, profileVersion: ProfileVersion = 0, doubleCheckBagItValidity: Boolean = false): Unit = {
@@ -60,6 +60,7 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeA
     inside(result) {
       case Failure(e: RuleViolationDetailsException) =>
         e.getMessage should include(includedInErrorMsg)
+      case Failure(e) => fail(s"Not the expected type of exception: $e")
     }
   }
 
