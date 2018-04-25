@@ -55,7 +55,6 @@ package object metadata extends DebugEnhancedLogging {
     }
   }
 
-
   def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URI])(t: TargetBag): Try[Unit] = Try {
     trace(())
     val metadata = t.tryDdm.get \ "dcmiMetadata" // TODO: inside Try
@@ -173,7 +172,7 @@ package object metadata extends DebugEnhancedLogging {
     for {
       ddm <- t.tryDdm
       multiSurfaces <- getMultiSurfaces(ddm)
-      _ <- multiSurfaces.map(validateMultiSurface)
+      _ = multiSurfaces.map(validateMultiSurface)
     } yield ()
   }
 
@@ -184,7 +183,7 @@ package object metadata extends DebugEnhancedLogging {
   private def validateMultiSurface(ms: Elem) = {
     for {
       polygons <- getPolygons(ms)
-      _ <- if (polygons.map(_.attribute("srsName").map(_.text)).toSet.size == 1) Success()
+      _ <- if (polygons.map(_.attribute("srsName").map(_.text)).toSet.size == 1) Success(())
            else Try(fail("Found MultiSurface element containing polygons with different srsNames"))
     } yield ()
   }
