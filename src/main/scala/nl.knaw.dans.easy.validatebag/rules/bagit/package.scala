@@ -96,23 +96,28 @@ package object bagit extends DebugEnhancedLogging {
       fail("Mandatory file 'bag-info.txt' not found in bag. ")
   }
 
-  def bagInfoTxtMayContainOne(element: String)(t: TargetBag): Try[Unit] = Try {
-    val bag = t.tryBag.get // TODO: put inside Try
-    val values = bag.getMetadata.get(element)
-    if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
-  }
-
-  def bagInfoTxtMustContainExactlyOne(element: String)(t: TargetBag): Try[Unit] = Try {
-    val bag = t.tryBag.get // TODO: put inside Try
-    val values = bag.getMetadata.get(element)
-    val numberFound = Option(values).getOrElse(List.empty[String].asJava).size
-    if (numberFound != 1) fail(s"bag-info.txt must contain exactly one '$element' element; number found: $numberFound")
-  }
-
-  def bagInfoTxtMustNotContain(element: String)(t: TargetBag): Try[Unit] = Try {
+  def bagInfoTxtMayContainOne(element: String)(t: TargetBag): Try[Unit] = {
     trace(element)
-    val bag = t.tryBag.get // TODO: put inside Try
-    if (bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
+    t.tryBag.map { bag =>
+      val values = bag.getMetadata.get(element)
+      if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
+    }
+  }
+
+  def bagInfoTxtMustContainExactlyOne(element: String)(t: TargetBag): Try[Unit] = {
+    trace(element)
+    t.tryBag.map { bag =>
+      val values = bag.getMetadata.get(element)
+      val numberFound = Option(values).getOrElse(List.empty[String].asJava).size
+      if (numberFound != 1) fail(s"bag-info.txt must contain exactly one '$element' element; number found: $numberFound")
+    }
+  }
+
+  def bagInfoTxtMustNotContain(element: String)(t: TargetBag): Try[Unit] = {
+    trace(element)
+    t.tryBag.map { bag =>
+      if (bag.getMetadata.contains(element)) fail(s"bag-info.txt must not contain element: $element")
+    }
   }
 
   def bagInfoTxtElementMustHaveValue(element: String, value: String)(t: TargetBag): Try[Unit] = {
@@ -126,22 +131,25 @@ package object bagit extends DebugEnhancedLogging {
   }
 
   // Relies on there being only one element with the specified name
-  private def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = Try {
+  private def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = {
     trace(t, element)
-    val bag = t.tryBag.get // TODO: put inside Try
-    Option(bag.getMetadata.get(element)).map(_.get(0))
+    t.tryBag.map { bag =>
+      Option(bag.getMetadata.get(element)).map(_.get(0))
+    }
   }
 
   def bagInfoTxtCreatedMustBeIsoDate(t: TargetBag): Try[Unit] = {
     trace(())
-    val readBag = t.tryBag.get // TODO: put inside Try
-    val valueOfCreated = readBag.getMetadata.get("Created").get(0)
-    Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
-      .map(_ => ())
-      .recoverWith {
-        case _: Throwable =>
-          Failure(RuleViolationDetailsException("Created-entry in bag-info.txt not in correct ISO 8601 format"))
-      }
+    val result = for {
+      bag <- t.tryBag
+      valueOfCreated = bag.getMetadata.get("Created").get(0)
+      datetime <- Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
+    } yield datetime
+
+    result.map(_ => ()).recoverWith {
+      case _: Throwable =>
+        Failure(RuleViolationDetailsException("Created-entry in bag-info.txt not in correct ISO 8601 format"))
+    }
   }
 
   def bagMustContainSha1PayloadManifest(t: TargetBag) = Try {
@@ -150,20 +158,21 @@ package object bagit extends DebugEnhancedLogging {
       fail("Mandatory file 'manifest-sha1.txt' not found in bag.")
   }
 
-  def bagSha1PayloadManifestMustContainAllPayloadFiles(t: TargetBag) = Try {
+  def bagSha1PayloadManifestMustContainAllPayloadFiles(t: TargetBag): Try[Unit] = {
     trace(())
-    val bag = t.tryBag.get // TODO: put inside Try
-    bag.getPayLoadManifests.asScala.find(_.getAlgorithm == SHA1)
-      .foreach {
-        manifest =>
-          val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => t.bagDir.relativize(p)).toSet
-          debug(s"Manifest files: ${ filesInManifest.mkString(", ") }")
-          val filesInPayload = (t.bagDir / "data").walk().filter(_.isRegularFile).map(f => t.bagDir.path.relativize(f.path)).toSet
-          debug(s"Payload files: ${ filesInManifest.mkString(", ") }")
-          if (filesInManifest != filesInPayload) {
-            val filesOnlyInPayload = filesInPayload -- filesInManifest // The other way around should have been caught by the validity check
-            fail(s"All payload files must have an SHA-1 checksum. Files missing from SHA-1 manifest: ${ filesOnlyInPayload.mkString(", ") }")
-          }
-      }
+    t.tryBag.map { bag =>
+      bag.getPayLoadManifests.asScala.find(_.getAlgorithm == SHA1)
+        .foreach {
+          manifest =>
+            val filesInManifest = manifest.getFileToChecksumMap.keySet().asScala.map(p => t.bagDir.relativize(p)).toSet
+            debug(s"Manifest files: ${ filesInManifest.mkString(", ") }")
+            val filesInPayload = (t.bagDir / "data").walk().filter(_.isRegularFile).map(f => t.bagDir.path.relativize(f.path)).toSet
+            debug(s"Payload files: ${ filesInManifest.mkString(", ") }")
+            if (filesInManifest != filesInPayload) {
+              val filesOnlyInPayload = filesInPayload -- filesInManifest // The other way around should have been caught by the validity check
+              fail(s"All payload files must have an SHA-1 checksum. Files missing from SHA-1 manifest: ${ filesOnlyInPayload.mkString(", ") }")
+            }
+        }
+    }
   }
 }

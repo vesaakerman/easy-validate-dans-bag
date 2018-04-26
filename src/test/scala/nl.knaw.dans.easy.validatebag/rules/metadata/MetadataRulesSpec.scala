@@ -37,7 +37,7 @@ class MetadataRulesSpec extends TestSupportFixture {
 
   "xmlFileMustConformToSchema" should "report validation errors if XML not valid" in {
     testRuleViolationRegex(
-      rule = xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), ddmValidator),
+      rule = xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), "some schema name", ddmValidator),
       inputBag = "metadata-unknown-element",
       includedInErrorMsg = "UNKNOWN-ELEMENT".r
     )
@@ -45,7 +45,7 @@ class MetadataRulesSpec extends TestSupportFixture {
 
   it should "succeed if XML is valid" in {
     testRuleSuccess(
-      rule = xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), ddmValidator),
+      rule = xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), "some schema name", ddmValidator),
       inputBag = "metadata-correct")
   }
 
