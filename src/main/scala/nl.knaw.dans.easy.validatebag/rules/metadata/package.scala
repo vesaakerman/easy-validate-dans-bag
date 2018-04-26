@@ -16,13 +16,14 @@
 package nl.knaw.dans.easy.validatebag.rules
 
 import java.io.ByteArrayInputStream
-import java.net.{ URI }
+import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
 import nl.knaw.dans.easy.validatebag
 import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Success, Try }
@@ -43,15 +44,18 @@ package object metadata extends DebugEnhancedLogging {
   def xmlFileMayConformToSchemaIfDefaultNamespace(validator: XmlValidator)(t: TargetBag): Try[Unit] = {
     trace(())
     t.tryFilesXml.map {
-      xml => if (xml.namespace == validatebag.filesXmlNamespace) {
-        logger.debug("Validating files.xml against XML Schema")
-        validator.validate(new ByteArrayInputStream(xml.toString.getBytes(StandardCharsets.UTF_8))).recoverWith {
-          case t: Throwable => Try(fail(t.getMessage))
+      xml =>
+        if (xml.namespace == validatebag.filesXmlNamespace) {
+          logger.debug("Validating files.xml against XML Schema")
+          resource.managed(new ByteArrayInputStream(xml.toString.getBytes(StandardCharsets.UTF_8))).acquireAndGet { is =>
+            validator.validate(is).recoverWith {
+              case t: Throwable => Try(fail(t.getMessage))
+            }
+          }
         }
-      } else logger.info(s"files.xml does not declare namespace ${validatebag.filesXmlNamespace}, NOT validating with XML Schema")
+        else logger.info(s"files.xml does not declare namespace ${ validatebag.filesXmlNamespace }, NOT validating with XML Schema")
     }
   }
-
 
   def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URI])(t: TargetBag): Try[Unit] = Try {
     trace(())
@@ -87,9 +91,97 @@ package object metadata extends DebugEnhancedLogging {
       }
   }
 
-  def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = Try {
+  def ddmDaisMustBeValid(t: TargetBag): Try[Unit] = {
+    for {
+      ddm <- t.tryDdm
+      _ <- daisAreValid(ddm)
+    } yield ()
+  }
+
+  private def daisAreValid(ddm: Elem): Try[Unit] = Try {
+    val dais = (ddm \\ "DAI").filter(_.namespace == validatebag.dcxDaiNamespace)
+    logger.debug(s"DAIs to check: ${ dais.mkString(", ") }")
+    val invalidDais = dais.map(_.text).filterNot(s => digest(s.slice(0, s.length - 1), 9) == s.last)
+    if (invalidDais.nonEmpty) fail(s"Invalid DAIs: ${ invalidDais.mkString(", ") }")
+  }
+
+  // Calculated the check digit of a DAI. Implementation copied from easy-ddm.
+  private def digest(message: String, modeMax: Int): Char = {
+    val reverse = message.reverse
+    var f = 2
+    var w = 0
+    var mod = 0
+    mod = 0
+    while ( { mod < reverse.length }) {
+      val cx = reverse.charAt(mod)
+      val x = cx - 48
+      w += f * x
+      f += 1
+      if (f > modeMax) f = 2
+
+      { mod += 1; mod }
+    }
+    mod = w % 11
+    if (mod == 0) '0'
+    else {
+      val c = 11 - mod
+      if (c == 10) 'X'
+      else (c + 48).toChar
+    }
+  }
+
+  def ddmGmlPolygonPosListMustMeetExtraConstraints(t: TargetBag): Try[Unit] = {
     trace(())
-    if (t.tryFilesXml.get.label != "files") fail("files.xml: document element of must be 'files'") // TODO: inside Try
+    for {
+      ddm <- t.tryDdm
+      posLists <- getPolygonPosLists(ddm)
+      _ <- posLists.map(validatePosList).collectResults.recoverWith {
+        case ce: CompositeException => Try(fail(ce.getMessage))
+      }
+    } yield ()
+  }
+
+  private def getPolygonPosLists(parent: Elem): Try[Seq[Node]] = Try {
+    trace(())
+    val polygons = getPolygons(parent)
+    polygons.flatMap(_ \\ "posList")
+  }
+
+  private def getPolygons(parent: Elem) = (parent \\ "Polygon").filter(_.namespace == validatebag.gmlNamespace)
+
+  private def validatePosList(node: Node): Try[Unit] = Try {
+    trace(node)
+    def offendingPosListMsg(values: Seq[String]) = s"(Offending posList starts with: ${ values.take(10).mkString(", ") }...)"
+
+    val values = node.text.split("""\s+""").toList
+    val numberOfValues = values.size
+    if (numberOfValues % 2 != 0) fail(s"Found posList with odd number of values: $numberOfValues. ${ offendingPosListMsg(values) }")
+    if (numberOfValues < 8) fail(s"Found posList with too few values (less than 4 pairs). ${ offendingPosListMsg(values) }")
+    if (values.take(2) != values.takeRight(2)) fail(s"Found posList with unequal first and last pairs. ${ offendingPosListMsg(values) }")
+  }
+
+  def filesXmlHasDocumentElementFiles(t: TargetBag) = {
+    trace(())
+    t.tryFilesXml.map(xml => if (xml.label != "files") fail("files.xml: document element must be 'files'"))
+  }
+
+  def polygonsInSameMultiSurfaceMustHaveSameSrsName(t: TargetBag) = Try {
+    trace(())
+    for {
+      ddm <- t.tryDdm
+      multiSurfaces <- getMultiSurfaces(ddm)
+      _ = multiSurfaces.map(validateMultiSurface)
+    } yield ()
+  }
+
+  private def getMultiSurfaces(ddm: Elem) = Try {
+    (ddm \\ "MultiSurface").filter(_.namespace == validatebag.gmlNamespace).asInstanceOf[Seq[Elem]]
+  }
+
+  private def validateMultiSurface(ms: Elem) = {
+    val polygons = getPolygons(ms)
+    if (polygons.map(_.attribute("srsName").map(_.text)).distinct.size == 1) Success(())
+    else Try(fail("Found MultiSurface element containing polygons with different srsNames"))
   }
 
   def filesXmlHasOnlyFiles(t: TargetBag): Try[Unit] = Try {
