@@ -93,4 +93,13 @@ class MetadataRulesSpec extends TestSupportFixture {
     )
   }
 
+  "filesXmlHasDocumentElementFiles" should "fail if files.xml has document element other than 'files'" in {
+    testRuleViolation(
+      rule = filesXmlHasDocumentElementFiles,
+      inputBag = "filesxml-no-files-as-document-element",
+      includedInErrorMsg = "document element must be 'files'",
+      doubleCheckBagItValidity = true
+    )
+  }
+
 }

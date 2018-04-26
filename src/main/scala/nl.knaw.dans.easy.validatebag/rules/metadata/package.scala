@@ -47,8 +47,10 @@ package object metadata extends DebugEnhancedLogging {
       xml =>
         if (xml.namespace == validatebag.filesXmlNamespace) {
           logger.debug("Validating files.xml against XML Schema")
-          validator.validate(new ByteArrayInputStream(xml.toString.getBytes(StandardCharsets.UTF_8))).recoverWith {
-            case t: Throwable => Try(fail(t.getMessage))
+          resource.managed(new ByteArrayInputStream(xml.toString.getBytes(StandardCharsets.UTF_8))).acquireAndGet { is =>
+            validator.validate(is).recoverWith {
+              case t: Throwable => Try(fail(t.getMessage))
+            }
           }
         }
         else logger.info(s"files.xml does not declare namespace ${ validatebag.filesXmlNamespace }, NOT validating with XML Schema")
@@ -139,17 +141,13 @@ package object metadata extends DebugEnhancedLogging {
     } yield ()
   }
 
-  private def getPolygonPosLists(parent: Elem): Try[Seq[Node]] = {
+  private def getPolygonPosLists(parent: Elem): Try[Seq[Node]] = Try {
     trace(())
-    for {
-      polygons <- getPolygons(parent)
-      posLists <- Try { polygons.flatMap(_ \\ "posList") }
-    } yield posLists
+    val polygons = getPolygons(parent)
+    polygons.flatMap(_ \\ "posList")
   }
 
-  private def getPolygons(parent: Elem): Try[Seq[Node]] = Try {
-    (parent \\ "Polygon").filter(_.namespace == validatebag.gmlNamespace)
-  }
+  private def getPolygons(parent: Elem) = (parent \\ "Polygon").filter(_.namespace == validatebag.gmlNamespace)
 
   private def validatePosList(node: Node): Try[Unit] = Try {
     trace(node)
@@ -162,9 +160,9 @@ package object metadata extends DebugEnhancedLogging {
     if (values.take(2) != values.takeRight(2)) fail(s"Found posList with unequal first and last pairs. ${ offendingPosListMsg(values) }")
   }
 
-  def filesXmlHasDocumentElementFiles(t: TargetBag) = Try {
+  def filesXmlHasDocumentElementFiles(t: TargetBag) = {
     trace(())
-    if (t.tryFilesXml.get.label != "files") fail("files.xml: document element of must be 'files'") // TODO: inside Try
+    t.tryFilesXml.map(xml => if (xml.label != "files") fail("files.xml: document element must be 'files'"))
   }
 
   def polygonsInSameMultiSurfaceMustHaveSameSrsName(t: TargetBag) = Try {
@@ -181,11 +179,9 @@ package object metadata extends DebugEnhancedLogging {
   }
 
   private def validateMultiSurface(ms: Elem) = {
-    for {
-      polygons <- getPolygons(ms)
-      _ <- if (polygons.map(_.attribute("srsName").map(_.text)).toSet.size == 1) Success(())
-           else Try(fail("Found MultiSurface element containing polygons with different srsNames"))
-    } yield ()
+    val polygons = getPolygons(ms)
+    if (polygons.map(_.attribute("srsName").map(_.text)).distinct.size == 1) Success(())
+    else Try(fail("Found MultiSurface element containing polygons with different srsNames"))
   }
 
   def filesXmlHasOnlyFiles(t: TargetBag): Try[Unit] = Try {
