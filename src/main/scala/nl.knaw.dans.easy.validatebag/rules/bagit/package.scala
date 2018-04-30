@@ -108,7 +108,7 @@ package object bagit extends DebugEnhancedLogging {
     trace(element)
     t.tryBag.map { bag =>
       val values = bag.getMetadata.get(element)
-      val numberFound = Option(values).getOrElse(List.empty[String].asJava).size
+      val numberFound = Option(values).map(_.size).getOrElse(0)
       if (numberFound != 1) fail(s"bag-info.txt must contain exactly one '$element' element; number found: $numberFound")
     }
   }
@@ -143,8 +143,8 @@ package object bagit extends DebugEnhancedLogging {
     val result = for {
       bag <- t.tryBag
       valueOfCreated = bag.getMetadata.get("Created").get(0)
-      datetime <- Try { DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime) }
-    } yield datetime
+      _ = DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime)
+    } yield ()
 
     result.map(_ => ()).recoverWith {
       case _: Throwable =>
