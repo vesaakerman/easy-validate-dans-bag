@@ -61,7 +61,7 @@ object ProfileVersion0 {
     // METADATA
 
     // dataset.xml
-    NumberedRule("3.1.1", xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), xmlValidators("dataset.xml")), dependsOn = Some("2.2")),
+    NumberedRule("3.1.1", xmlFileMustConformToSchema(Paths.get("metadata/dataset.xml"), "DANS dataset metadata schema", xmlValidators("dataset.xml")), dependsOn = Some("2.2")),
     NumberedRule("3.1.2", ddmMayContainDctermsLicenseFromList(Paths.get("metadata/dataset.xml"), allowedLicences), dependsOn = Some("3.1.1")),
     // TODO: 3.1.3
     NumberedRule("3.1.4", ddmDaisMustBeValid, dependsOn = Some("3.1.1")),
@@ -73,7 +73,7 @@ object ProfileVersion0 {
     NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2")),
 
     NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = Some("3.2.3")),
-    NumberedRule("3.2.4", filesXmlAllFilesDescribedOnce, dependsOn = Some("3.2.4")),
+    NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = Some("3.2.4")),
     // 3.2.5 already checked by 3.2.4-rule
     NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = Some("3.2.3")),
     NumberedRule("3.2.7", filesXmlFilesHaveOnlyDcTerms, dependsOn = Some("3.2.3")),

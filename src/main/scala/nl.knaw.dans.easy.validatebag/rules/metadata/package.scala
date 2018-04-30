@@ -33,11 +33,11 @@ package object metadata extends DebugEnhancedLogging {
   val namespaceSchemaInstance = new URI("http://www.w3.org/2001/XMLSchema-instance")
   val namespaceDcterms = new URI("http://purl.org/dc/terms/")
 
-  def xmlFileMustConformToSchema(xmlFile: Path, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+  def xmlFileMustConformToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
     trace(xmlFile)
     require(!xmlFile.isAbsolute, "Path to xmlFile must be relative.")
     (t.bagDir / xmlFile.toString).inputStream.map(validator.validate).map {
-      _.recoverWith { case t: Throwable => Try(fail(t.getMessage)) }
+      _.recoverWith { case t: Throwable => Try(fail(s"$xmlFile does not conform to $schemaName: ${ t.getMessage }")) }
     }
   }.get()
 
@@ -57,25 +57,23 @@ package object metadata extends DebugEnhancedLogging {
     }
   }
 
-  def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URI])(t: TargetBag): Try[Unit] = Try {
+  def ddmMayContainDctermsLicenseFromList(ddmPath: Path, allowedLicenses: Seq[URI])(t: TargetBag): Try[Unit] = {
     trace(())
-    val metadata = t.tryDdm.get \ "dcmiMetadata" // TODO: inside Try
-    val licenses = (metadata \ "license").toList
-    debug(s"Found licences: ${ licenses.mkString(", ") }")
-    lazy val rightsHolders = (metadata \ "rightsHolder").toList
-
-    licenses match {
-      case license :: Nil if hasXsiType(namespaceDcterms, "URI")(license) =>
-        val licenseUri = new URI(license.text)
-        if (allowedLicenses.contains(licenseUri)) {
-          if (rightsHolders.isEmpty) fail("Valid license found, but no rightsHolder specified")
-          else Success(())
+    t.tryDdm.map {
+      ddm =>
+        val metadata = ddm \ "dcmiMetadata"
+        val licenses = (metadata \ "license").toList
+        debug(s"Found licences: ${ licenses.mkString(", ") }")
+        lazy val rightsHolders = (metadata \ "rightsHolder").toList
+        licenses match {
+          case license :: Nil if hasXsiType(namespaceDcterms, "URI")(license) =>
+            val licenseUri = new URI(license.text)
+            if (!allowedLicenses.contains(licenseUri)) fail(s"Found unknown or unsupported license: $licenseUri")
+            if (rightsHolders.isEmpty) fail("Valid license found, but no rightsHolder specified")
+          case Nil | _ :: Nil =>
+            debug("No licences with xsi:type=\"dcterms:URI\"")
+          case _ => fail(s"Found ${ licenses.size } dcterms:license elements. Only one license is allowed.")
         }
-        else fail(s"Found unknown or unsupported license: $licenseUri")
-      case Nil | _ :: Nil =>
-        debug("No licences with xsi:type=\"dcterms:URI\"")
-        Success(())
-      case _ => fail(s"Found ${ licenses.size } dcterms:license elements. Only one license is allowed.")
     }
   }
 
@@ -151,6 +149,7 @@ package object metadata extends DebugEnhancedLogging {
 
   private def validatePosList(node: Node): Try[Unit] = Try {
     trace(node)
+
     def offendingPosListMsg(values: Seq[String]) = s"(Offending posList starts with: ${ values.take(10).mkString(", ") }...)"
 
     val values = node.text.split("""\s+""").toList
@@ -160,7 +159,7 @@ package object metadata extends DebugEnhancedLogging {
     if (values.take(2) != values.takeRight(2)) fail(s"Found posList with unequal first and last pairs. ${ offendingPosListMsg(values) }")
   }
 
-  def filesXmlHasDocumentElementFiles(t: TargetBag) = {
+  def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
     trace(())
     t.tryFilesXml.map(xml => if (xml.label != "files") fail("files.xml: document element must be 'files'"))
   }
@@ -184,65 +183,72 @@ package object metadata extends DebugEnhancedLogging {
     else Try(fail("Found MultiSurface element containing polygons with different srsNames"))
   }
 
-  def filesXmlHasOnlyFiles(t: TargetBag): Try[Unit] = Try {
+  def filesXmlHasOnlyFiles(t: TargetBag): Try[Unit] = {
     trace(())
-    val files = t.tryFilesXml.get // TODO: inside Try
-    val nonFiles = (files \ "*").filterNot(_.label == "file")
-    if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
-  }
-
-  def filesXmlFileElementsAllHaveFilepathAttribute(t: TargetBag): Try[Unit] = Try {
-    trace(())
-    val xml = t.tryFilesXml.get // TODO: inside Try
-    val files = xml \ "file"
-    if (files.map(_ \@ "filepath").size != files.size) fail("Not al 'file' elements have a 'filepath' attribute")
-  }
-
-  def filesXmlAllFilesDescribedOnce(t: TargetBag): Try[Unit] = Try {
-    trace(())
-    val xml = t.tryFilesXml.get // TODO: inside Try
-    val files = xml \ "file"
-    val pathsInFilesXmlList = files.map(_ \@ "filepath")
-    val duplicatePathsInFilesXml = pathsInFilesXmlList.groupBy(identity).collect { case (k, vs) if vs.size > 1 => k }
-    val noDuplicatesFound = duplicatePathsInFilesXml.isEmpty
-    val pathsInFileXml = pathsInFilesXmlList.toSet
-    val filesInBagPayload = (t.bagDir / "data").walk().filter(_.isRegularFile).toSet
-    val payloadPaths = filesInBagPayload.map(t.bagDir.path relativize _).map(_.toString)
-    val fileSetsEqual = pathsInFileXml == payloadPaths
-
-    if (noDuplicatesFound && fileSetsEqual) ()
-    else {
-      val msg =
-        (if (noDuplicatesFound) ""
-         else s" - Duplicate filepaths found: $duplicatePathsInFilesXml\n") +
-          (if (fileSetsEqual) ""
-           else s" - Filepaths in files.xml not equal to files found in data folder. Difference: " +
-             s"(only in bag: ${ payloadPaths.diff(pathsInFileXml) }, only in files.xml: " +
-             s"${ pathsInFileXml.diff(payloadPaths) }\n")
-      fail(s"files.xml: errors in filepath-attributes:\n$msg")
+    t.tryFilesXml.map {
+      files =>
+        val nonFiles = (files \ "*").filterNot(_.label == "file")
+        if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
     }
   }
 
-  def filesXmlAllFilesHaveFormat(t: TargetBag): Try[Unit] = Try {
+  def filesXmlFileElementsAllHaveFilepathAttribute(t: TargetBag): Try[Unit] = {
     trace(())
-    val xml = t.tryFilesXml.get // TODO: inside Try
-    val files = xml \ "file"
-    val allFilesHaveFormat = files.forall(_.child.exists(n =>
-      xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" && n.label == "format"))
-    if (!allFilesHaveFormat) fail("files.xml: not all <file> elements contain a <dcterms:format>")
+    t.tryFilesXml.map {
+      xml =>
+        val files = xml \ "file"
+        if (files.map(_ \@ "filepath").size != files.size) fail("Not al 'file' elements have a 'filepath' attribute")
+    }
   }
 
-  def filesXmlFilesHaveOnlyDcTerms(t: TargetBag): Try[Unit] = Try {
+  def filesXmlAllFilesDescribedOnce(t: TargetBag): Try[Unit] = {
     trace(())
-    val xml = t.tryFilesXml.get // TODO: inside Try
-    if (xml.namespace == validatebag.filesXmlNamespace) () // Already checked by XML Schema
-    else {
+    t.tryFilesXml.map { xml =>
       val files = xml \ "file"
-      val hasOnlyDcTermsInFileElements = (xml \ "file" \ "_").forall {
-        case n: Elem => xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" || xml.getNamespace(n.prefix) == ""
-        case _ => true // Don't check non-element nodes
+      val pathsInFilesXmlList = files.map(_ \@ "filepath")
+      val duplicatePathsInFilesXml = pathsInFilesXmlList.groupBy(identity).collect { case (k, vs) if vs.size > 1 => k }
+      val noDuplicatesFound = duplicatePathsInFilesXml.isEmpty
+      val pathsInFileXml = pathsInFilesXmlList.toSet
+      val filesInBagPayload = (t.bagDir / "data").walk().filter(_.isRegularFile).toSet
+      val payloadPaths = filesInBagPayload.map(t.bagDir.path relativize _).map(_.toString)
+      val fileSetsEqual = pathsInFileXml == payloadPaths
+
+      if (noDuplicatesFound && fileSetsEqual) ()
+      else {
+        val msg =
+          (if (noDuplicatesFound) ""
+           else s" - Duplicate filepaths found: ${ duplicatePathsInFilesXml.mkString(", ") }\n") +
+            (if (fileSetsEqual) ""
+             else s" - Filepaths in files.xml not equal to files found in data folder. Difference: " +
+               s"(only in bag: ${ (payloadPaths diff pathsInFileXml).mkString(", ") }, only in files.xml: " +
+               s"${ (pathsInFileXml diff payloadPaths).mkString(", ") }\n")
+        fail(s"files.xml: errors in filepath-attributes:\n$msg")
       }
-      if (!hasOnlyDcTermsInFileElements) fail("files.xml: non-dcterms elements found in some file elements")
+    }
+  }
+
+  def filesXmlAllFilesHaveFormat(t: TargetBag): Try[Unit] = {
+    trace(())
+    t.tryFilesXml.map { xml =>
+      val files = xml \ "file"
+      val allFilesHaveFormat = files.forall(_.child.exists(n =>
+        xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" && n.label == "format"))
+      if (!allFilesHaveFormat) fail("files.xml: not all <file> elements contain a <dcterms:format>")
+    }
+  }
+
+  def filesXmlFilesHaveOnlyDcTerms(t: TargetBag): Try[Unit] = {
+    trace(())
+    t.tryFilesXml.map { xml =>
+      if (xml.namespace == validatebag.filesXmlNamespace) () // Already checked by XML Schema
+      else {
+        val files = xml \ "file"
+        val hasOnlyDcTermsInFileElements = (xml \ "file" \ "_").forall {
+          case n: Elem => xml.getNamespace(n.prefix) == "http://purl.org/dc/terms/" || xml.getNamespace(n.prefix) == ""
+          case _ => true // Don't check non-element nodes
+        }
+        if (!hasOnlyDcTermsInFileElements) fail("files.xml: non-dcterms elements found in some file elements")
+      }
     }
   }
 }

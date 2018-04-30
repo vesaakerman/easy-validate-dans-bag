@@ -19,11 +19,10 @@ import java.nio.file.Paths
 
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.reader.BagReader
+import nl.knaw.dans.easy.validatebag.validation.fail
 
 import scala.util.Try
 import scala.xml.{ Elem, XML }
-
-// TODO: optimize validation by making sure expensive actions only need to be done once per bag
 
 /**
  * Interface to the bag under validation.
@@ -47,7 +46,15 @@ class TargetBag(val bagDir: BagDir, profileVersion: ProfileVersion = 0) {
 
   lazy val tryBag: Try[Bag] = Try { bagReader.read(bagDir.path) }
 
-  lazy val tryDdm: Try[Elem] = Try { XML.loadFile((bagDir / ddmPath.toString).toJava) }
+  lazy val tryDdm: Try[Elem] = Try {
+    XML.loadFile((bagDir / ddmPath.toString).toJava)
+  }.recoverWith {
+    case t: Throwable => Try { fail(s"Unparseable XML: ${ t.getMessage }") }.asInstanceOf[Try[Elem]]
+  }
 
-  lazy val tryFilesXml: Try[Elem] = Try { XML.loadFile((bagDir / filesXmlPath.toString).toJava) }
+  lazy val tryFilesXml: Try[Elem] = Try {
+    XML.loadFile((bagDir / filesXmlPath.toString).toJava)
+  }.recoverWith {
+    case t: Throwable => Try { fail(s"Unparseable XML: ${ t.getMessage }") }.asInstanceOf[Try[Elem]]
+  }
 }
