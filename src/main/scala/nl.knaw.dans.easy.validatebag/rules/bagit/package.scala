@@ -29,7 +29,7 @@ import org.joda.time.format.ISODateTimeFormat
 
 import scala.collection.JavaConverters._
 import scala.language.postfixOps
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 /**
  * Rules that refer back to the BagIt specifications.
@@ -147,11 +147,17 @@ package object bagit extends DebugEnhancedLogging {
     trace(())
     val result = for {
       bag <- t.tryBag
-      valueOfCreated = bag.getMetadata.get("Created").get(0)
+      valueOfCreated <- Option(bag.getMetadata.get("Created"))
+        .map {
+          case list if list.isEmpty => Failure(RuleViolationDetailsException("No value found for Created-entry in bag-info.txt"))
+          case list => Success(list.get(0))
+        }
+        .getOrElse(Failure(RuleViolationDetailsException("No Created-entry found in bag-info.txt")))
       _ = DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime)
     } yield ()
 
     result.map(_ => ()).recoverWith {
+      case e: RuleViolationDetailsException => Failure(e)
       case _: Throwable =>
         Failure(RuleViolationDetailsException("Created-entry in bag-info.txt not in correct ISO 8601 format"))
     }
