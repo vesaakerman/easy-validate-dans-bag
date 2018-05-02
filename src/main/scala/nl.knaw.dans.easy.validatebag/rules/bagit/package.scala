@@ -29,7 +29,7 @@ import org.joda.time.format.ISODateTimeFormat
 
 import scala.collection.JavaConverters._
 import scala.language.postfixOps
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 /**
  * Rules that refer back to the BagIt specifications.
@@ -99,8 +99,9 @@ package object bagit extends DebugEnhancedLogging {
   def bagInfoTxtMayContainOne(element: String)(t: TargetBag): Try[Unit] = {
     trace(element)
     t.tryBag.map { bag =>
-      val values = bag.getMetadata.get(element)
-      if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
+      Option(bag.getMetadata.get(element))
+        .withFilter(_.size() > 1)
+        .foreach(_ => fail(s"bag-info.txt may contain at most one element: $element"))
     }
   }
 
@@ -134,7 +135,11 @@ package object bagit extends DebugEnhancedLogging {
   private def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = {
     trace(t, element)
     t.tryBag.map { bag =>
-      Option(bag.getMetadata.get(element)).map(_.get(0))
+      Option(bag.getMetadata.get(element))
+        .flatMap {
+          case list if list.isEmpty => None
+          case list => Some(list.get(0))
+        }
     }
   }
 
@@ -142,11 +147,17 @@ package object bagit extends DebugEnhancedLogging {
     trace(())
     val result = for {
       bag <- t.tryBag
-      valueOfCreated = bag.getMetadata.get("Created").get(0)
+      valueOfCreated <- Option(bag.getMetadata.get("Created"))
+        .map {
+          case list if list.isEmpty => Failure(RuleViolationDetailsException("No value found for Created-entry in bag-info.txt"))
+          case list => Success(list.get(0))
+        }
+        .getOrElse(Failure(RuleViolationDetailsException("No Created-entry found in bag-info.txt")))
       _ = DateTime.parse(valueOfCreated, ISODateTimeFormat.dateTime)
     } yield ()
 
     result.map(_ => ()).recoverWith {
+      case e: RuleViolationDetailsException => Failure(e)
       case _: Throwable =>
         Failure(RuleViolationDetailsException("Created-entry in bag-info.txt not in correct ISO 8601 format"))
     }

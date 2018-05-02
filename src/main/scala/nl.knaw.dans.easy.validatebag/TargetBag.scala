@@ -49,12 +49,12 @@ class TargetBag(val bagDir: BagDir, profileVersion: ProfileVersion = 0) {
   lazy val tryDdm: Try[Elem] = Try {
     XML.loadFile((bagDir / ddmPath.toString).toJava)
   }.recoverWith {
-    case t: Throwable => Try { fail(s"Unparseable XML: ${ t.getMessage }") }.asInstanceOf[Try[Elem]]
+    case t: Throwable => Try { fail(s"Unparseable XML: ${ t.getMessage }") }
   }
 
   lazy val tryFilesXml: Try[Elem] = Try {
     XML.loadFile((bagDir / filesXmlPath.toString).toJava)
   }.recoverWith {
-    case t: Throwable => Try { fail(s"Unparseable XML: ${ t.getMessage }") }.asInstanceOf[Try[Elem]]
+    case t: Throwable => Try { fail(s"Unparseable XML: ${ t.getMessage }") }
   }
 }
