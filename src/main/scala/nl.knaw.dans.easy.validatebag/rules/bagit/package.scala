@@ -99,8 +99,9 @@ package object bagit extends DebugEnhancedLogging {
   def bagInfoTxtMayContainOne(element: String)(t: TargetBag): Try[Unit] = {
     trace(element)
     t.tryBag.map { bag =>
-      val values = bag.getMetadata.get(element)
-      if (values != null && values.size > 1) fail(s"bag-info.txt may contain at most one element: $element")
+      Option(bag.getMetadata.get(element))
+        .withFilter(_.size() > 1)
+        .foreach(_ => fail(s"bag-info.txt may contain at most one element: $element"))
     }
   }
 
