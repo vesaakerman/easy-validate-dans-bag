@@ -134,7 +134,11 @@ package object bagit extends DebugEnhancedLogging {
   private def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = {
     trace(t, element)
     t.tryBag.map { bag =>
-      Option(bag.getMetadata.get(element)).map(_.get(0))
+      Option(bag.getMetadata.get(element))
+        .flatMap {
+          case list if list.isEmpty => None
+          case list => Some(list.get(0))
+        }
     }
   }
 
