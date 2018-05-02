@@ -53,7 +53,7 @@ package object validation extends DebugEnhancedLogging {
    *
    * @param details the details about the rule violation
    */
-  def fail(details: String): Unit = throw RuleViolationDetailsException(details)
+  def fail[T](details: String): T = throw RuleViolationDetailsException(details)
 
   /**
    * Validates if the bag pointed to compliant with the DANS BagIt Profile version it claims to
