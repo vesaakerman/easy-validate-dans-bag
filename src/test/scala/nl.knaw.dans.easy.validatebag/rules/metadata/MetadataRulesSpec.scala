@@ -19,13 +19,21 @@ import java.net.URL
 import java.nio.file.Paths
 
 import javax.xml.validation.SchemaFactory
-import nl.knaw.dans.easy.validatebag.{ TestSupportFixture, XmlValidator }
+import nl.knaw.dans.easy.validatebag.{ CanConnectFixture, TestSupportFixture, XmlValidator }
 import nl.knaw.dans.lib.error._
 
 import scala.util.Try
 
-class MetadataRulesSpec extends TestSupportFixture {
+class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
   private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
+  private val xsdUrls = Seq("https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd", "")
+
+  before {
+    assumeCanConnect("https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd",
+      "http://www.w3.org/2001/03/xml.xsd",
+      "http://dublincore.org/schemas/xmls/qdc/2008/02/11/dc.xsd",
+      "http://schema.datacite.org/meta/kernel-4/metadata.xsd")
+  }
 
   private val ddmValidator = Try {
     logger.info("Creating ddm.xml validator...")
