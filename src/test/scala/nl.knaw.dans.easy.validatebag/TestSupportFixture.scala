@@ -26,13 +26,8 @@ import org.scalatest._
 import scala.util.{ Failure, Success }
 import scala.util.matching.Regex
 
-trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfter with DebugEnhancedLogging {
+trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfterEach with DebugEnhancedLogging {
   lazy val testDir: File = File(s"target/test/${ getClass.getSimpleName }")
-
-  def clearTestDir(): Unit = {
-    if (testDir.exists)
-      testDir.delete().createDirectories()
-  }
 
   protected val bagsDir: File = Paths.get("src/test/resources/bags")
 

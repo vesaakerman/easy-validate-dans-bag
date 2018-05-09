@@ -25,6 +25,13 @@ class StructuralRulesSpec extends TestSupportFixture {
     testRuleViolation(bagMustContainDir(Paths.get("metadata")), "missingMetadata", "not found in bag")
   }
 
+  "bagMustContainFile" should "fail if file name is different case" in {
+    /*
+     * This test will fail for different reasons on case sensitive and case insensitive file systems respectively. Hence the regex with two
+     * alternative error messages.
+     */
+    testRuleViolationRegex(bagMustContainFile(Paths.get("Metadata")), "metadata-correct", "(not found in bag|differs in case)".r)
+  }
 }
 
 
