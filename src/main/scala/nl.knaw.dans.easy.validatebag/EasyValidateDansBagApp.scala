@@ -41,9 +41,9 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
   }.unsafeGetOrThrow
 
   private val xmlValidators: Map[String, XmlValidator] = Map(
-    "dataset.xml" -> createValidator(new URL("https://easy.dans.knaw.nl/schemas/md/2018/03/ddm.xsd")),
-    "files.xml" -> createValidator(new URL("https://easy.dans.knaw.nl/schemas/bag/metadata/files/2018/04/files.xsd")),
-    "agreements.xml" -> createValidator(new URL("https://easy.dans.knaw.nl/schemas/bag/metadata/agreements/2018/05/agreements.xsd"))
+    "dataset.xml" -> createValidator(new URL(configuration.properties.getString("schemas.ddm"))),
+    "files.xml" -> createValidator(new URL(configuration.properties.getString("schemas.files"))),
+    "agreements.xml" -> createValidator(new URL(configuration.properties.getString("schemas.agreements")))
   )
 
   private val allRules: Map[ProfileVersion, RuleBase] = {
