@@ -229,7 +229,8 @@ package object metadata extends DebugEnhancedLogging {
   }
 
   private def validatePoint(point: Elem) = {
-    if (point.text.trim.split("""\s+""").length > 1) Success(())
+    val coordinates = point.text.trim.split("""\s+""")
+    if (coordinates.length > 1) Success(())
     else Try(fail(s"Point with only one coordinate: ${ point.text.trim }"))
   }
 
