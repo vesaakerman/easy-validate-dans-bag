@@ -252,7 +252,7 @@ package object metadata extends DebugEnhancedLogging {
     t.tryFilesXml.map {
       xml =>
         val files = xml \ "file"
-        if (files.exists(_.attribute("filepath").isEmpty)) fail("Not al 'file' elements have a 'filepath' attribute")
+        if (files.exists(_.attribute("filepath").isEmpty)) fail("Not all 'file' elements have a 'filepath' attribute")
     }
   }
 

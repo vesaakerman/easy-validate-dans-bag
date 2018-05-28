@@ -205,7 +205,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
     testRuleViolation(
       rule = filesXmlFileElementsAllHaveFilepathAttribute,
       inputBag = "filesxml-file-element-without-filepath",
-      includedInErrorMsg = "Not al 'file' elements have a 'filepath' attribute")
+      includedInErrorMsg = "Not all 'file' elements have a 'filepath' attribute")
   }
 
   "filesXmlAllFilesDescribedOnce" should "fail if a file is described twice" in {
@@ -241,16 +241,15 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
   }
 
   "all files.xml rules" should "succeed if files.xml is correct" in {
-    case class RC(rule: Rule) // Cannot add the rules to a Seq without a container
-    Seq[RC](
-      RC(filesXmlConformsToSchemaIfDeclaredInDefaultNamespace(filesXmlValidator)),
-      RC(filesXmlHasDocumentElementFiles),
-      RC(filesXmlHasOnlyFiles),
-      RC(filesXmlFileElementsAllHaveFilepathAttribute),
-      RC(filesXmlAllFilesDescribedOnce),
-      RC(filesXmlAllFilesHaveFormat),
-      RC(filesXmlFilesHaveOnlyDcTerms))
-      .foreach(rc => testRuleSuccess(rc.rule, inputBag = "metadata-correct"))
+    Seq[Rule](
+      filesXmlConformsToSchemaIfDeclaredInDefaultNamespace(filesXmlValidator),
+      filesXmlHasDocumentElementFiles,
+      filesXmlHasOnlyFiles,
+      filesXmlFileElementsAllHaveFilepathAttribute,
+      filesXmlAllFilesDescribedOnce,
+      filesXmlAllFilesHaveFormat,
+      filesXmlFilesHaveOnlyDcTerms)
+      .foreach(testRuleSuccess(_, inputBag = "metadata-correct"))
   }
 
   // Reusing some test data. This rules is actually not used for files.xml.

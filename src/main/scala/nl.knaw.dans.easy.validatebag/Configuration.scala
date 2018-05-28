@@ -45,8 +45,7 @@ object Configuration {
         load(cfgPath.resolve("application.properties").toFile)
       },
       allowedLicenses = (File(cfgPath) / "licenses.txt")
-        .contentAsString(StandardCharsets.UTF_8)
-        .split("""\s*\n\s*""")
+        .lines(StandardCharsets.UTF_8)
         .filterNot(_.isEmpty)
         .map(s => normalizeLicenseUri(new URI(s))).toSeq.collectResults.unsafeGetOrThrow
     )
