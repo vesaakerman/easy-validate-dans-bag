@@ -115,9 +115,10 @@ package object validation extends DebugEnhancedLogging {
       val b = bagReader.read(bag.path)
 
       Option(b.getMetadata.get("BagIt-Profile-Version")).map(_.asScala.toList).map {
-        case (v :: _) =>  Try { v.toInt }.filter(profileVersionDois.keys.toSet.contains).getOrElse(0)
+        case (v :: _) => Try { v.toInt }.filter(profileVersionDois.keys.toSet.contains).getOrElse(0)
         case _ => 0
       }.getOrElse(0)
-    } else 0
+    }
+    else 0
   }
 }
