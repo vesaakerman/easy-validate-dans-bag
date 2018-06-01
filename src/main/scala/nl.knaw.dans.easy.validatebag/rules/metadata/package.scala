@@ -273,9 +273,9 @@ package object metadata extends DebugEnhancedLogging {
       else {
         val msg =
           (if (noDuplicatesFound) ""
-           else s" - Duplicate filepaths found: ${ duplicatePathsInFilesXml.mkString(", ") }\n") +
+           else s"   - Duplicate filepaths found: ${ duplicatePathsInFilesXml.mkString(", ") }\n") +
             (if (fileSetsEqual) ""
-             else s" - Filepaths in files.xml not equal to files found in data folder. Difference: " +
+             else s"   - Filepaths in files.xml not equal to files found in data folder. Difference: " +
                s"(only in bag: ${ (payloadPaths diff pathsInFileXml).mkString(", ") }, only in files.xml: " +
                s"${ (pathsInFileXml diff payloadPaths).mkString(", ") }\n")
         fail(s"files.xml: errors in filepath-attributes:\n$msg")
