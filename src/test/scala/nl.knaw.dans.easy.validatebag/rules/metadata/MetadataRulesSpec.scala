@@ -182,7 +182,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
 
   "filesXmlConformsToSchemaIfDeclaredInDefaultNamespace" should "fail if a file element is described twice" in {
     testRuleViolation(
-      rule = filesXmlConformsToSchemaIfDeclaredInDefaultNamespace(filesXmlValidator),
+      rule = filesXmlConformsToSchemaIfFilesNamespaceDeclared(filesXmlValidator),
       inputBag = "filesxml-file-described-twice",
       includedInErrorMsg = "Duplicate unique value")
   }
@@ -234,21 +234,43 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
 
   "filesXmlFilesHaveOnlyDcTerms" should "fail if there is a file element with a non dct child" in {
     testRuleViolation(
-      rule = filesXmlFilesHaveOnlyDcTerms,
+      rule = filesXmlFilesHaveOnlyAllowedNamespaces,
       inputBag = "filesxml-non-dct-child",
       includedInErrorMsg = "non-dcterms elements found in some file elements"
     )
   }
 
+  it should "succeed when the default namespace is used" in {
+    testRuleSuccess(
+      rule = filesXmlFilesHaveOnlyAllowedNamespaces,
+      inputBag = "filesxml-default-namespace-child")
+  }
+
+  // NOTE: this test is here to show that invalid elements are accepted here, as long as they're
+  // in the dct namespace
+  it should "succeed when an invalid element in the dct namespace is used" in {
+    testRuleSuccess(
+      rule = filesXmlFilesHaveOnlyAllowedNamespaces,
+      inputBag = "filesxml-invalid-dct-child")
+  }
+
+  // NOTE: this test is here to show that invalid elements are accepted here, as long as they're
+  // in the default namespace
+  it should "succeed when an invalid element in the default namespace is used" in {
+    testRuleSuccess(
+      rule = filesXmlFilesHaveOnlyAllowedNamespaces,
+      inputBag = "filesxml-invalid-default-namespace-child")
+  }
+
   "all files.xml rules" should "succeed if files.xml is correct" in {
     Seq[Rule](
-      filesXmlConformsToSchemaIfDeclaredInDefaultNamespace(filesXmlValidator),
+      filesXmlConformsToSchemaIfFilesNamespaceDeclared(filesXmlValidator),
       filesXmlHasDocumentElementFiles,
       filesXmlHasOnlyFiles,
       filesXmlFileElementsAllHaveFilepathAttribute,
       filesXmlAllFilesDescribedOnce,
       filesXmlAllFilesHaveFormat,
-      filesXmlFilesHaveOnlyDcTerms)
+      filesXmlFilesHaveOnlyAllowedNamespaces)
       .foreach(testRuleSuccess(_, inputBag = "metadata-correct"))
   }
 
