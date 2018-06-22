@@ -36,7 +36,7 @@ package object metadata extends DebugEnhancedLogging {
   val dctermsNamespace = "http://purl.org/dc/terms/"
   val schemaInstanceNamespace = "http://www.w3.org/2001/XMLSchema-instance"
 
-  val allowedFilesXmlNamespaces = List(filesXmlNamespace, dcNamespace, dctermsNamespace)
+  val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
 
   def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
     trace(xmlFile)
@@ -246,8 +246,12 @@ package object metadata extends DebugEnhancedLogging {
     trace(())
     t.tryFilesXml.map {
       files =>
-        val nonFiles = (files \ "_").filterNot(_.label == "file")
-        if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
+        if (files.namespace == filesXmlNamespace) {
+          debug("Rule filesXmlHasOnlyFiles has been checked by files.xsd")
+        } else {
+          val nonFiles = (files \ "_").filterNot(_.label == "file")
+          if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
+        }
     }
   }
 
@@ -296,18 +300,19 @@ package object metadata extends DebugEnhancedLogging {
     }
   }
 
-  // Please note that this method does accept all elements within 'files \ file' that are in the
-  // allowed namespaces, not only those that are valid! This is, however, not a problem, since
-  // invalid elements will be caught by `filesXmlConformsToSchemaIfDeclaredInDefaultNamespace`
   def filesXmlFilesHaveOnlyAllowedNamespaces(t: TargetBag): Try[Unit] = {
     trace(())
     t.tryFilesXml.map { xml =>
-      val fileChildren = xml \ "file" \ "_"
-      val hasOnlyDcTermsInFileElements = fileChildren.forall {
-        case n: Elem => allowedFilesXmlNamespaces contains xml.getNamespace(n.prefix)
-        case _ => true // Don't check non-element nodes
+      if (xml.namespace == filesXmlNamespace) {
+        debug("Rule filesXmlFilesHaveOnlyAllowedNamespaces has been checked by files.xsd")
+      } else {
+        val fileChildren = xml \ "file" \ "_"
+        val hasOnlyDcTermsInFileElements = fileChildren.forall {
+          case n: Elem => allowedFilesXmlNamespaces contains xml.getNamespace(n.prefix)
+          case _ => true // Don't check non-element nodes
+        }
+        if (!hasOnlyDcTermsInFileElements) fail("files.xml: non-dcterms elements found in some file elements")
       }
-      if (!hasOnlyDcTermsInFileElements) fail("files.xml: non-dcterms elements found in some file elements")
     }
   }
 
