@@ -236,7 +236,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
     testRuleViolation(
       rule = filesXmlFilesHaveOnlyAllowedNamespaces,
       inputBag = "filesxml-non-dct-child",
-      includedInErrorMsg = "non-dcterms elements found in some file elements"
+      includedInErrorMsg = "non-dc/dcterms elements found in some file elements"
     )
   }
 
