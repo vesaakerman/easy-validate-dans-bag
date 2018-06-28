@@ -194,7 +194,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       includedInErrorMsg = "document element must be 'files'")
   }
 
-  "filesXmlHasOnlyFiles" should "fail if files.xml/files has non-file child" in {
+  "filesXmlHasOnlyFiles" should "fail if files.xml/files has non-file child and files.xsd namespace has been declared" in {
     testRuleViolation(
       rule = filesXmlHasOnlyFiles,
       inputBag = "filesxml-non-file-element",
@@ -232,11 +232,11 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
     )
   }
 
-  "filesXmlFilesHaveOnlyDcTerms" should "fail if there is a file element with a non dct child" in {
+  "filesXmlFilesHaveOnlyDcTerms" should "fail if there is a file element with a non dct child and files.xsd namespace has been declared" in {
     testRuleViolation(
       rule = filesXmlFilesHaveOnlyAllowedNamespaces,
       inputBag = "filesxml-non-dct-child",
-      includedInErrorMsg = "non-dcterms elements found in some file elements"
+      includedInErrorMsg = "non-dc/dcterms elements found in some file elements"
     )
   }
 
