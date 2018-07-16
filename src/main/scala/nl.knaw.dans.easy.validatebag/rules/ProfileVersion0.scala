@@ -54,8 +54,7 @@ object ProfileVersion0 {
     // STRUCTURAL
     NumberedRule("2.1", containsDir(Paths.get("metadata"))),
     NumberedRule("2.2", containsFile(Paths.get("metadata/dataset.xml")), dependsOn = Some("2.1")),
-    NumberedRule("2.2", containsFile(Paths.get("metadata/files.xml")), dependsOn = Some("2.1")),
-    // 2.3 does not state restrictions, so it does not need checking
+    NumberedRule("2.3", containsFile(Paths.get("metadata/files.xml")), dependsOn = Some("2.1")),
     NumberedRule("2.5", containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml", "agreements.xml")), dependsOn = Some("2.1")),
 
     // METADATA
