@@ -70,7 +70,7 @@ object ProfileVersion0 {
 
     // files.xml
     NumberedRule("3.2.1", filesXmlConformsToSchemaIfFilesNamespaceDeclared(xmlValidators("files.xml")), dependsOn = Some("2.2(b)")),
-    NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.3")),
+    NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.2(b)")),
     NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2")),
 
     NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = Some("3.2.3")),
