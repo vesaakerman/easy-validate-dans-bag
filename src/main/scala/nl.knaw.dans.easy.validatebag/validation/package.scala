@@ -22,7 +22,7 @@ import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 package object validation extends DebugEnhancedLogging {
 
@@ -86,7 +86,7 @@ package object validation extends DebugEnhancedLogging {
       .foldLeft(List[Try[String]]()) {
         (results, numberedRule) =>
           numberedRule match {
-            case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.filter(_.isSuccess).map(_.get).contains) =>
+            case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.collect { case Success(succeededRuleNr) => succeededRuleNr }.contains) =>
               results :+ rule(bag).map(_ => nr).recoverWith {
                 case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
               }
