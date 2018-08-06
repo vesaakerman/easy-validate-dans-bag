@@ -15,41 +15,34 @@
  */
 package nl.knaw.dans.easy.validatebag.rules.profile
 
-import java.net.URI
-import java.nio.charset.StandardCharsets
-
-import better.files.File
 import nl.knaw.dans.easy.validatebag._
-import nl.knaw.dans.easy.validatebag.rules.metadata.normalizeLicenseUri
-import nl.knaw.dans.lib.error._
-import org.apache.commons.configuration.PropertiesConfiguration
+import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }
 
 class NumberedRulesSpec extends TestSupportFixture with CanConnectFixture {
 
-  private val resourceDir = File(getClass.getResource("/"))
-  private val configuration = new Configuration("version x.y.z",
-    new PropertiesConfiguration() {
-      setDelimiterParsingDisabled(true)
-      load(resourceDir / "debug-config" / "application.properties" toJava)
-    },
-    (resourceDir / "debug-config" / "licenses.txt")
-      .lines(StandardCharsets.UTF_8)
-      .filterNot(_.isEmpty)
-      .map(s => normalizeLicenseUri(new URI(s))).toSeq.collectResults.unsafeGetOrThrow
+   private val xmlValidators: Map[String, XmlValidator] = Map(
+    "dataset.xml" -> new XmlValidator(null),
+    "files.xml" -> new XmlValidator(null),
+    "agreements.xml" -> new XmlValidator(null)
   )
+
+  private val allRules: Map[ProfileVersion, RuleBase] = {
+    Map(
+      0 -> ProfileVersion0(xmlValidators, null),
+      1 -> ProfileVersion1(xmlValidators))
+  }
 
   "rulesCheck" should "succeed if all rules, that other rules depend on, exist" in {
     List(0, 1).map(version => {
-      val rulesBase = new EasyValidateDansBagApp(configuration).allRules(version)
-      val ruleNumbers = rulesBase.map(_.nr)
-      val result = rulesBase.flatMap(_.dependsOn).forall(ruleNumber => ruleNumbers.contains(ruleNumber))
+      val ruleNumbers = allRules(version).map(_.nr)
+      val result = allRules(version).flatMap(_.dependsOn).forall(ruleNumber => ruleNumbers.contains(ruleNumber))
       result shouldBe true
     })
   }
 
   it should "succeed if there are no duplicate rule numbers" in {
     List(0, 1).map(version => {
-      val ruleNumbers = new EasyValidateDansBagApp(configuration).allRules(version).map(_.nr)
+      val ruleNumbers = allRules(version).map(_.nr)
       ruleNumbers shouldEqual ruleNumbers.distinct
     })
   }
