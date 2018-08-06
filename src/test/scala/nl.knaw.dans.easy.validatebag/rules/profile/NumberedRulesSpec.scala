@@ -34,18 +34,22 @@ class NumberedRulesSpec extends TestSupportFixture with Inspectors {
   }
 
   "rulesCheck" should "succeed if all rules, that other rules depend on, exist" in {
-    List(0, 1).map(version => {
-      val ruleNumbers = allRules(version).map(_.nr)
-      forEvery(allRules(version).flatMap(_.dependsOn)) {
-        dependency => ruleNumbers.contains(dependency) shouldBe true
+    forEvery(0 to 1) {
+      version => {
+        val ruleNumbers = allRules(version).map(_.nr)
+        forEvery(allRules(version).flatMap(_.dependsOn)) {
+          dependency => ruleNumbers contains dependency shouldBe true
+        }
       }
-    })
+    }
   }
 
   it should "succeed if there are no duplicate rule numbers" in {
-    List(0, 1).map(version => {
-      val ruleNumbers = allRules(version).map(_.nr)
-      ruleNumbers shouldEqual ruleNumbers.distinct
-    })
+    forEvery(0 to 1) {
+      version => {
+        val ruleNumbers = allRules(version).map(_.nr)
+        ruleNumbers shouldEqual ruleNumbers.distinct
+      }
+    }
   }
 }
