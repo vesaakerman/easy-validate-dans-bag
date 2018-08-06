@@ -17,10 +17,11 @@ package nl.knaw.dans.easy.validatebag.rules.profile
 
 import nl.knaw.dans.easy.validatebag._
 import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }
+import org.scalatest.Inspectors
 
-class NumberedRulesSpec extends TestSupportFixture with CanConnectFixture {
+class NumberedRulesSpec extends TestSupportFixture with Inspectors {
 
-   private val xmlValidators: Map[String, XmlValidator] = Map(
+  private val xmlValidators: Map[String, XmlValidator] = Map(
     "dataset.xml" -> new XmlValidator(null),
     "files.xml" -> new XmlValidator(null),
     "agreements.xml" -> new XmlValidator(null)
@@ -35,8 +36,9 @@ class NumberedRulesSpec extends TestSupportFixture with CanConnectFixture {
   "rulesCheck" should "succeed if all rules, that other rules depend on, exist" in {
     List(0, 1).map(version => {
       val ruleNumbers = allRules(version).map(_.nr)
-      val result = allRules(version).flatMap(_.dependsOn).forall(ruleNumber => ruleNumbers.contains(ruleNumber))
-      result shouldBe true
+      forEvery(allRules(version).flatMap(_.dependsOn)) {
+        dependency => ruleNumbers.contains(dependency) shouldBe true
+      }
     })
   }
 
