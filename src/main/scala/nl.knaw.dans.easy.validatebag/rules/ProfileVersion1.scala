@@ -35,9 +35,9 @@ object ProfileVersion1 {
 
     // bag-info.txt
     NumberedRule("1.2.1", containsFile(Paths.get("bag-info.txt"))),
-    NumberedRule("1.2.2(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-Version"), dependsOn = Some("1.2.1")),
+    NumberedRule("1.2.2(a)", bagInfoContainsExactlyOneOf("BagIt-Profile-Version"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.2(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-Version", versionNumber.toString), dependsOn = Some("1.2.2(a)")),
-    NumberedRule("1.2.3(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-URI"), dependsOn = Some("1.2.1")),
+    NumberedRule("1.2.3(a)", bagInfoContainsExactlyOneOf("BagIt-Profile-URI"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.3(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-URI", versionUri), dependsOn = Some("1.2.3(a)")),
     NumberedRule("1.2.4(a)", bagInfoContainsExactlyOneOf("Created"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.4(b)", bagInfoCreatedElementIsIso8601Date, dependsOn = Some("1.2.4(a)")),
