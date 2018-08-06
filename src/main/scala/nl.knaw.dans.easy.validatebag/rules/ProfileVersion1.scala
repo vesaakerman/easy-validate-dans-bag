@@ -43,7 +43,7 @@ object ProfileVersion1 {
     NumberedRule("1.2.4(b)", bagInfoCreatedElementIsIso8601Date, dependsOn = Some("1.2.4(a)")),
     NumberedRule("1.2.5", bagInfoContainsAtMostOneOf("Is-Version-Of"), dependsOn = Some("1.2.1")),
     NumberedRule("1.2.6(a)", bagInfoContainsExactlyOneOf("EASY-User-Account"), AIP, dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.6(b)", bagInfoDoesNotContain("EASY-User-Account"), SIP, dependsOn = Some("1.2.1")),
+    // 1.2.6(b) does not state restrictions, so it does not need checking
 
     // Manifests
     NumberedRule("1.3.1(a)", containsFile(Paths.get("manifest-sha1.txt"))),
