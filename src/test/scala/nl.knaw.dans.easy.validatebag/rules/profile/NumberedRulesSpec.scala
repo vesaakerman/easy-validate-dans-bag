@@ -38,7 +38,7 @@ class NumberedRulesSpec extends TestSupportFixture with Inspectors {
       version => {
         val ruleNumbers = allRules(version).map(_.nr)
         forEvery(allRules(version).flatMap(_.dependsOn)) {
-          dependency => ruleNumbers contains dependency shouldBe true
+          dependency => ruleNumbers should contain (dependency)
         }
       }
     }
