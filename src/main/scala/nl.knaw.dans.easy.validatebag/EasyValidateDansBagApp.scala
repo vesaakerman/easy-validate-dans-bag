@@ -46,7 +46,7 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
     "agreements.xml" -> createValidator(new URL(configuration.properties.getString("schemas.agreements")))
   )
 
-  private val allRules: Map[ProfileVersion, RuleBase] = {
+  val allRules: Map[ProfileVersion, RuleBase] = {
     Map(
       0 -> ProfileVersion0(xmlValidators, configuration.allowedLicenses),
       1 -> ProfileVersion1(xmlValidators))
