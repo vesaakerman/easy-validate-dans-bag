@@ -87,7 +87,7 @@ object ProfileVersion0 {
     NumberedRule("3.4.1", optionalFileIsUtf8Decodable(Paths.get("metadata/message-from-depositor"))),
 
 
-      // BAG-SEQUENCE
-      NumberedRule("4.2", bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStore), dependsOn = Some("1.2.5"))
+    // BAG-SEQUENCE
+    NumberedRule("4.2", bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStore), dependsOn = Some("1.2.5"))
   )
 }
