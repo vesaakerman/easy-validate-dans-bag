@@ -129,18 +129,6 @@ package object bagit extends DebugEnhancedLogging {
     }
   }
 
-  // Relies on there being only one element with the specified name
-  private def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = {
-    trace(t, element)
-    t.tryBag.map { bag =>
-      Option(bag.getMetadata.get(element))
-        .flatMap {
-          case list if list.isEmpty => None
-          case list => Some(list.get(0))
-        }
-    }
-  }
-
   def bagInfoCreatedElementIsIso8601Date(t: TargetBag): Try[Unit] = {
     trace(())
     val result = for {

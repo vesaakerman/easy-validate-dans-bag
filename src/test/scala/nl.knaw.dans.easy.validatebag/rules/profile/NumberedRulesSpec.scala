@@ -29,7 +29,7 @@ class NumberedRulesSpec extends TestSupportFixture with Inspectors {
 
   private val allRules: Map[ProfileVersion, RuleBase] = {
     Map(
-      0 -> ProfileVersion0(xmlValidators, null),
+      0 -> ProfileVersion0(xmlValidators, null, null),
       1 -> ProfileVersion1(xmlValidators))
   }
 
