@@ -53,5 +53,10 @@ class SequenceRulesSpec extends TestSupportFixture with MockFactory  {
     testRuleSuccess(rule = bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStoreMock), inputBag = "baginfo-with-is-version-of", doubleCheckBagItValidity = false)
   }
 
+  it should "succeed if no Is-Version-Of field is present" in {
+    expectUuidDoesNotExist()
+    testRuleSuccess(rule = bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStoreMock), inputBag = "baginfo-without-is-version-of", doubleCheckBagItValidity = false)
+  }
+
 
 }
