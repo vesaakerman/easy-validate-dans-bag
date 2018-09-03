@@ -39,10 +39,10 @@ package object sequence extends DebugEnhancedLogging {
               val result = for {
                 uuid <- getUuidFromIsVersionOfValue(isVersionOf)
                 exists <- bagStore.bagExists(uuid)
-                _ = if (!exists) fail("Bag pointed to by Is-Version-Of field in bag-info.txt is not found in bag stores")
+                _ = if (!exists) fail(s"Bag with bag-id $uuid, pointed to by Is-Version-Of field in bag-info.txt, is not found in bag stores")
               } yield ()
               result.recoverWith {
-                case io: IOException => Try(fail("Bag pointed to by Is-Version-Of field could not be verified, because of an I/O error"))
+                case io: IOException => Try(fail("Bag pointed with bag-id $uuid, to by Is-Version-Of field, could not be verified, because of an I/O error"))
               }
           }
       }.flatMap(_.getOrElse(Success(())))
