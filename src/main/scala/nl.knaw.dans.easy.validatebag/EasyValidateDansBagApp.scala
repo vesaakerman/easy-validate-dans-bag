@@ -46,9 +46,13 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
     "agreements.xml" -> createValidator(new URL(configuration.properties.getString("schemas.agreements")))
   )
 
+  private val bagStore = BagStore(new URI(configuration.properties.getString("bagstore-service.base-url")),
+    configuration.properties.getInt("bagstore-service.connection-timeout-milliseconds", 1000),
+    configuration.properties.getInt("bagstore-service.read-timeout-milliseconds", 5000))
+
   val allRules: Map[ProfileVersion, RuleBase] = {
     Map(
-      0 -> ProfileVersion0(xmlValidators, configuration.allowedLicenses),
+      0 -> ProfileVersion0(xmlValidators, configuration.allowedLicenses, bagStore),
       1 -> ProfileVersion1(xmlValidators))
   }
 

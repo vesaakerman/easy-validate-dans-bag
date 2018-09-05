@@ -1,0 +1,4 @@
+Payload-Oxum: 0.1
+Bagging-Date: 2018-09-03
+Bag-Size: 0.3 KB
+Created: 2015-05-19T00:00:00.000+02:00
