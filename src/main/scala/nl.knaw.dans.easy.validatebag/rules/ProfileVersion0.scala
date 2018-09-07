@@ -58,6 +58,7 @@ object ProfileVersion0 {
     NumberedRule("2.2(b)", containsFile(Paths.get("metadata/files.xml")), dependsOn = Some("2.1")),
     // 2.3 does not state restrictions, so it does not need checking
     NumberedRule("2.5", containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml", "agreements.xml")), dependsOn = Some("2.1")),
+    NumberedRule("2.6", containsDir(Paths.get("data"))),
 
     // METADATA
 
@@ -73,10 +74,9 @@ object ProfileVersion0 {
     NumberedRule("3.2.1", filesXmlConformsToSchemaIfFilesNamespaceDeclared(xmlValidators("files.xml")), dependsOn = Some("2.2(b)")),
     NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.2(b)")),
     NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2")),
-
     NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = Some("3.2.3")),
     // Second part of 3.2.4 (directories not described) is implicitly checked by 3.2.5
-    NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = Some("3.2.4")),
+    NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = Some("2.6")),
     NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = Some("3.2.2")),
     NumberedRule("3.2.7", filesXmlFilesHaveOnlyAllowedNamespaces, dependsOn = Some("3.2.2")),
 
