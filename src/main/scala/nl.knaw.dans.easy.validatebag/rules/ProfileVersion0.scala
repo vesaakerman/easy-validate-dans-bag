@@ -34,6 +34,7 @@ object ProfileVersion0 {
 
     // Validity
     NumberedRule("1.1.1", bagIsValid, SIP),
+    NumberedRule("1.1.1(datadir)", containsDir(Paths.get("data"))),
 
     // bag-info.txt
     NumberedRule("1.2.1", containsFile(Paths.get("bag-info.txt"))),
@@ -58,7 +59,6 @@ object ProfileVersion0 {
     NumberedRule("2.2(b)", containsFile(Paths.get("metadata/files.xml")), dependsOn = List("2.1")),
     // 2.3 does not state restrictions, so it does not need checking
     NumberedRule("2.5", containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml", "agreements.xml")), dependsOn = List("2.1")),
-    NumberedRule("2.6", containsDir(Paths.get("data"))),
 
     // METADATA
 
@@ -76,7 +76,7 @@ object ProfileVersion0 {
     NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = List("3.2.2")),
     NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = List("3.2.3")),
     // Second part of 3.2.4 (directories not described) is implicitly checked by 3.2.5
-    NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = List("2.6", "3.2.4")),
+    NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = List("1.1.1(datadir)", "3.2.4")),
     NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = List("3.2.2")),
     NumberedRule("3.2.7", filesXmlFilesHaveOnlyAllowedNamespaces, dependsOn = List("3.2.2")),
 
