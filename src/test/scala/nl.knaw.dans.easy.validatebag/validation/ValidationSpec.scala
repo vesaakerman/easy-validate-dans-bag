@@ -86,4 +86,29 @@ class ValidationSpec extends TestSupportFixture {
     result shouldBe a[Failure[_]]
     calls.toList shouldBe List("1", "3")
   }
+
+  it should "not execute rules that depend (indirectly) on more than one rule, and some of these rules succeed, but some fail" in {
+    val rulesBase = Seq(
+      addNumberedRule("1"),
+      addNumberedRule("2"),
+      addNumberedRule("3", failing = true),
+      addNumberedRule("4", dependsOn = List("2", "3")),
+      addNumberedRule("5", dependsOn = List("1", "2", "4")))
+
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
+    result shouldBe a[Failure[_]]
+    calls.toList shouldBe List("1", "2", "3")
+  }
+
+  it should "execute a rule whose all dependant rules succeed" in {
+    val rulesBase = Seq(
+      addNumberedRule("1"),
+      addNumberedRule("2"),
+      addNumberedRule("3"),
+      addNumberedRule("4", dependsOn = List("1", "2", "3")))
+
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
+    result shouldBe a[Success[_]]
+    calls.toList shouldBe List("1", "2", "3", "4")
+  }
 }
