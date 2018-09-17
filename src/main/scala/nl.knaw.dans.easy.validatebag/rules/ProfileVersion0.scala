@@ -34,51 +34,51 @@ object ProfileVersion0 {
 
     // Validity
     NumberedRule("1.1.1", bagIsValid, SIP),
+    NumberedRule("1.1.1(datadir)", containsDir(Paths.get("data"))),
 
     // bag-info.txt
     NumberedRule("1.2.1", containsFile(Paths.get("bag-info.txt"))),
-    NumberedRule("1.2.2(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-Version"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.2(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-Version", versionNumber.toString), dependsOn = Some("1.2.2(a)")),
-    NumberedRule("1.2.3(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-URI"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.3(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-URI", versionUri), dependsOn = Some("1.2.3(a)")),
-    NumberedRule("1.2.4(a)", bagInfoContainsExactlyOneOf("Created"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.4(b)", bagInfoCreatedElementIsIso8601Date, dependsOn = Some("1.2.4(a)")),
-    NumberedRule("1.2.5", bagInfoContainsAtMostOneOf("Is-Version-Of"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.6(a)", bagInfoContainsExactlyOneOf("EASY-User-Account"), AIP, dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.6(b)", bagInfoDoesNotContain("EASY-User-Account"), SIP, dependsOn = Some("1.2.1")),
+    NumberedRule("1.2.2(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-Version"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.2(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-Version", versionNumber.toString), dependsOn = List("1.2.2(a)")),
+    NumberedRule("1.2.3(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-URI"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.3(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-URI", versionUri), dependsOn = List("1.2.3(a)")),
+    NumberedRule("1.2.4(a)", bagInfoContainsExactlyOneOf("Created"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.4(b)", bagInfoCreatedElementIsIso8601Date, dependsOn = List("1.2.4(a)")),
+    NumberedRule("1.2.5", bagInfoContainsAtMostOneOf("Is-Version-Of"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.6(a)", bagInfoContainsExactlyOneOf("EASY-User-Account"), AIP, dependsOn = List("1.2.1")),
+    NumberedRule("1.2.6(b)", bagInfoDoesNotContain("EASY-User-Account"), SIP, dependsOn = List("1.2.1")),
 
     // Manifests
     NumberedRule("1.3.1(a)", containsFile(Paths.get("manifest-sha1.txt"))),
-    NumberedRule("1.3.1(b)", bagShaPayloadManifestContainsAllPayloadFiles, dependsOn = Some("1.3.1(a)")),
+    NumberedRule("1.3.1(b)", bagShaPayloadManifestContainsAllPayloadFiles, dependsOn = List("1.3.1(a)")),
     // 1.3.2 does not state restrictions, so it does not need checking
 
     // STRUCTURAL
     NumberedRule("2.1", containsDir(Paths.get("metadata"))),
-    NumberedRule("2.2(a)", containsFile(Paths.get("metadata/dataset.xml")), dependsOn = Some("2.1")),
-    NumberedRule("2.2(b)", containsFile(Paths.get("metadata/files.xml")), dependsOn = Some("2.1")),
+    NumberedRule("2.2(a)", containsFile(Paths.get("metadata/dataset.xml")), dependsOn = List("2.1")),
+    NumberedRule("2.2(b)", containsFile(Paths.get("metadata/files.xml")), dependsOn = List("2.1")),
     // 2.3 does not state restrictions, so it does not need checking
-    NumberedRule("2.5", containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml", "agreements.xml")), dependsOn = Some("2.1")),
+    NumberedRule("2.5", containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml", "agreements.xml")), dependsOn = List("2.1")),
 
     // METADATA
 
     // dataset.xml
-    NumberedRule("3.1.1", xmlFileConformsToSchema(Paths.get("metadata/dataset.xml"), "DANS dataset metadata schema", xmlValidators("dataset.xml")), dependsOn = Some("2.2(a)")),
-    NumberedRule("3.1.2", ddmMayContainDctermsLicenseFromList(allowedLicences), dependsOn = Some("3.1.1")),
-    NumberedRule("3.1.4", ddmDaisAreValid, dependsOn = Some("3.1.1")),
-    NumberedRule("3.1.5", ddmGmlPolygonPosListIsWellFormed, dependsOn = Some("3.1.1")),
-    NumberedRule("3.1.6", polygonsInSameMultiSurfaceHaveSameSrsName, dependsOn = Some("3.1.1")),
-    NumberedRule("3.1.7", pointsHaveAtLeastTwoValues, dependsOn = Some("3.1.1")),
+    NumberedRule("3.1.1", xmlFileConformsToSchema(Paths.get("metadata/dataset.xml"), "DANS dataset metadata schema", xmlValidators("dataset.xml")), dependsOn = List("2.2(a)")),
+    NumberedRule("3.1.2", ddmMayContainDctermsLicenseFromList(allowedLicences), dependsOn = List("3.1.1")),
+    NumberedRule("3.1.4", ddmDaisAreValid, dependsOn = List("3.1.1")),
+    NumberedRule("3.1.5", ddmGmlPolygonPosListIsWellFormed, dependsOn = List("3.1.1")),
+    NumberedRule("3.1.6", polygonsInSameMultiSurfaceHaveSameSrsName, dependsOn = List("3.1.1")),
+    NumberedRule("3.1.7", pointsHaveAtLeastTwoValues, dependsOn = List("3.1.1")),
 
     // files.xml
-    NumberedRule("3.2.1", filesXmlConformsToSchemaIfFilesNamespaceDeclared(xmlValidators("files.xml")), dependsOn = Some("2.2(b)")),
-    NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = Some("2.2(b)")),
-    NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = Some("3.2.2")),
-
-    NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = Some("3.2.3")),
+    NumberedRule("3.2.1", filesXmlConformsToSchemaIfFilesNamespaceDeclared(xmlValidators("files.xml")), dependsOn = List("2.2(b)")),
+    NumberedRule("3.2.2", filesXmlHasDocumentElementFiles, dependsOn = List("2.2(b)")),
+    NumberedRule("3.2.3", filesXmlHasOnlyFiles, dependsOn = List("3.2.2")),
+    NumberedRule("3.2.4", filesXmlFileElementsAllHaveFilepathAttribute, dependsOn = List("3.2.3")),
     // Second part of 3.2.4 (directories not described) is implicitly checked by 3.2.5
-    NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = Some("3.2.4")),
-    NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = Some("3.2.2")),
-    NumberedRule("3.2.7", filesXmlFilesHaveOnlyAllowedNamespaces, dependsOn = Some("3.2.2")),
+    NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = List("1.1.1(datadir)", "3.2.4")),
+    NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = List("3.2.2")),
+    NumberedRule("3.2.7", filesXmlFilesHaveOnlyAllowedNamespaces, dependsOn = List("3.2.2")),
 
     // agreements.xml
     NumberedRule("3.3.1", xmlFileIfExistsConformsToSchema(Paths.get("metadata/agreements.xml"), "Agreements metadata schema", xmlValidators("agreements.xml"))),
@@ -88,6 +88,6 @@ object ProfileVersion0 {
 
 
     // BAG-SEQUENCE
-    NumberedRule("4.2", bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStore), dependsOn = Some("1.2.5"))
+    NumberedRule("4.2", bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStore), dependsOn = List("1.2.5"))
   )
 }

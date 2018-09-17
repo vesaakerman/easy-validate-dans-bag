@@ -40,5 +40,5 @@ package object validatebag {
 
   import InfoPackageType._
 
-  case class NumberedRule(nr: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH, dependsOn: Option[RuleNumber] = None)
+  case class NumberedRule(nr: RuleNumber, rule: Rule, infoPackageType: InfoPackageType = BOTH, dependsOn: List[RuleNumber] = List.empty)
 }

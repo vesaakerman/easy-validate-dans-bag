@@ -35,19 +35,19 @@ object ProfileVersion1 {
 
     // bag-info.txt
     NumberedRule("1.2.1", containsFile(Paths.get("bag-info.txt"))),
-    NumberedRule("1.2.2(a)", bagInfoContainsExactlyOneOf("BagIt-Profile-Version"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.2(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-Version", versionNumber.toString), dependsOn = Some("1.2.2(a)")),
-    NumberedRule("1.2.3(a)", bagInfoContainsExactlyOneOf("BagIt-Profile-URI"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.3(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-URI", versionUri), dependsOn = Some("1.2.3(a)")),
-    NumberedRule("1.2.4(a)", bagInfoContainsExactlyOneOf("Created"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.4(b)", bagInfoCreatedElementIsIso8601Date, dependsOn = Some("1.2.4(a)")),
-    NumberedRule("1.2.5", bagInfoContainsAtMostOneOf("Is-Version-Of"), dependsOn = Some("1.2.1")),
-    NumberedRule("1.2.6(a)", bagInfoContainsExactlyOneOf("EASY-User-Account"), AIP, dependsOn = Some("1.2.1")),
+    NumberedRule("1.2.2(a)", bagInfoContainsExactlyOneOf("BagIt-Profile-Version"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.2(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-Version", versionNumber.toString), dependsOn = List("1.2.2(a)")),
+    NumberedRule("1.2.3(a)", bagInfoContainsExactlyOneOf("BagIt-Profile-URI"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.3(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-URI", versionUri), dependsOn = List("1.2.3(a)")),
+    NumberedRule("1.2.4(a)", bagInfoContainsExactlyOneOf("Created"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.4(b)", bagInfoCreatedElementIsIso8601Date, dependsOn = List("1.2.4(a)")),
+    NumberedRule("1.2.5", bagInfoContainsAtMostOneOf("Is-Version-Of"), dependsOn = List("1.2.1")),
+    NumberedRule("1.2.6(a)", bagInfoContainsExactlyOneOf("EASY-User-Account"), AIP, dependsOn = List("1.2.1")),
     // 1.2.6(b) does not state restrictions, so it does not need checking
 
     // Manifests
     NumberedRule("1.3.1(a)", containsFile(Paths.get("manifest-sha1.txt"))),
-    NumberedRule("1.3.1(b)", bagShaPayloadManifestContainsAllPayloadFiles, dependsOn = Some("1.3.1(a)")),
+    NumberedRule("1.3.1(b)", bagShaPayloadManifestContainsAllPayloadFiles, dependsOn = List("1.3.1(a)")),
     // 1.3.2 does not state restrictions, so it does not need checking
 
 
@@ -57,15 +57,15 @@ object ProfileVersion1 {
     NumberedRule("2.3", containsDir(Paths.get("data/lic")), AIP),
 
     // data/pdi
-    NumberedRule("2.2.1", containsFile(Paths.get("data/pdi/dataset.xml")), dependsOn = Some("2.2")),
-    NumberedRule("2.2.2", containsFile(Paths.get("data/pdi/files.xml")), dependsOn = Some("2.2")),
-    NumberedRule("2.2.3(a)", containsFile(Paths.get("data/pdi/emd.xml")), AIP, dependsOn = Some("2.2")),
-    NumberedRule("2.2.3(b)", doesNotContainFile(Paths.get("data/pdi/emd.xml")), SIP, dependsOn = Some("2.2")),
-    NumberedRule("2.2.4(a)", containsFile(Paths.get("data/pdi/amd.xml")), AIP, dependsOn = Some("2.2")),
-    NumberedRule("2.2.4(b)", doesNotContainFile(Paths.get("data/pdi/amd.xml")), SIP, dependsOn = Some("2.2")),
-    NumberedRule("2.2.5(a)", containsFile(Paths.get("data/pdi/prov.xml")), AIP, dependsOn = Some("2.2")),
-    NumberedRule("2.2.5(b)", doesNotContainFile(Paths.get("data/pdi/prov.xml")), SIP, dependsOn = Some("2.2")),
-    NumberedRule("2.2.6", containsNothingElseThan(Paths.get("data/pdi"), Seq("dataset.xml", "files.xml", "emd.xml", "amd.xml", "prov.xml ")), dependsOn = Some("2.2")),
+    NumberedRule("2.2.1", containsFile(Paths.get("data/pdi/dataset.xml")), dependsOn = List("2.2")),
+    NumberedRule("2.2.2", containsFile(Paths.get("data/pdi/files.xml")), dependsOn = List("2.2")),
+    NumberedRule("2.2.3(a)", containsFile(Paths.get("data/pdi/emd.xml")), AIP, dependsOn = List("2.2")),
+    NumberedRule("2.2.3(b)", doesNotContainFile(Paths.get("data/pdi/emd.xml")), SIP, dependsOn = List("2.2")),
+    NumberedRule("2.2.4(a)", containsFile(Paths.get("data/pdi/amd.xml")), AIP, dependsOn = List("2.2")),
+    NumberedRule("2.2.4(b)", doesNotContainFile(Paths.get("data/pdi/amd.xml")), SIP, dependsOn = List("2.2")),
+    NumberedRule("2.2.5(a)", containsFile(Paths.get("data/pdi/prov.xml")), AIP, dependsOn = List("2.2")),
+    NumberedRule("2.2.5(b)", doesNotContainFile(Paths.get("data/pdi/prov.xml")), SIP, dependsOn = List("2.2")),
+    NumberedRule("2.2.6", containsNothingElseThan(Paths.get("data/pdi"), Seq("dataset.xml", "files.xml", "emd.xml", "amd.xml", "prov.xml ")), dependsOn = List("2.2")),
 
     // METADATA
   )

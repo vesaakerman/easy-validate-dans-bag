@@ -86,7 +86,7 @@ package object validation extends DebugEnhancedLogging {
       .foldLeft(List[Try[String]]()) {
         (results, numberedRule) =>
           numberedRule match {
-            case NumberedRule(nr, rule, ipType, optDependsOn) if optDependsOn.forall(results.collect { case Success(succeededRuleNr) => succeededRuleNr }.contains) =>
+            case NumberedRule(nr, rule, ipType, dependsOn) if dependsOn.forall(results.collect { case Success(succeededRuleNr) => succeededRuleNr }.contains) =>
               results :+ rule(bag).map(_ => nr).recoverWith {
                 case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
               }
