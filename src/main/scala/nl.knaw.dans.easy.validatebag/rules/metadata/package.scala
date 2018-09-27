@@ -20,23 +20,27 @@ import java.nio.ByteBuffer
 import java.nio.charset.{ CharacterCodingException, Charset }
 import java.nio.file.{ Path, Paths }
 
-import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
+import scala.util.matching.Regex
 import scala.util.{ Success, Try }
 import scala.xml._
 
 package object metadata extends DebugEnhancedLogging {
   val filesXmlNamespace = "http://easy.dans.knaw.nl/schemas/bag/metadata/files/"
   val dcxDaiNamespace = "http://easy.dans.knaw.nl/schemas/dcx/dai/"
+  val identifierTypeNamespace = "http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"
   val gmlNamespace = "http://www.opengis.net/gml"
   val dcNamespace = "http://purl.org/dc/elements/1.1/"
   val dctermsNamespace = "http://purl.org/dc/terms/"
   val schemaInstanceNamespace = "http://www.w3.org/2001/XMLSchema-instance"
 
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
+
+  val doiPattern: Regex = raw"^(https://doi.org/)?10(\.\d+)+/.+".r
 
   def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
     trace(xmlFile)
@@ -86,6 +90,30 @@ package object metadata extends DebugEnhancedLogging {
           case _ => fail(s"Found ${ licenses.size } dcterms:license elements. Only one license is allowed.")
         }
     }
+  }
+
+  def ddmContainsValidDoiIdentifier(t: TargetBag): Try[Unit] = {
+    for {
+      ddm <- t.tryDdm
+      dois <- doiIdentifierPresent(ddm)
+      _ <- doisAreValid(dois)
+    } yield ()
+  }
+
+  private def doiIdentifierPresent(ddm: Elem): Try[NodeSeq] = Try {
+    val dois = (ddm \\ "identifier").filter(hasXsiType(identifierTypeNamespace, "DOI"))
+    if (dois.isEmpty) fail("DOI identifier is missing")
+    dois
+  }
+
+  private def doisAreValid(dois: NodeSeq): Try[Unit] = Try {
+    logger.debug(s"DOIs to check: ${ dois.mkString(", ") }")
+    val invalidDois = dois.map(_.text).filterNot(s => validDoi(s))
+    if (invalidDois.nonEmpty) fail(s"Invalid DOIs: ${ invalidDois.mkString(", ") }")
+  }
+
+  private def validDoi(doi: String): Boolean = {
+    doiPattern.findFirstIn(doi).nonEmpty
   }
 
   /**
@@ -248,7 +276,8 @@ package object metadata extends DebugEnhancedLogging {
       files =>
         if (files.namespace == filesXmlNamespace) {
           debug("Rule filesXmlHasOnlyFiles has been checked by files.xsd")
-        } else {
+        }
+        else {
           val nonFiles = (files \ "_").filterNot(_.label == "file")
           if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
         }
@@ -305,7 +334,8 @@ package object metadata extends DebugEnhancedLogging {
     t.tryFilesXml.map { xml =>
       if (xml.namespace == filesXmlNamespace) {
         debug("Rule filesXmlFilesHaveOnlyAllowedNamespaces has been checked by files.xsd")
-      } else {
+      }
+      else {
         val fileChildren = xml \ "file" \ "_"
         val hasOnlyAllowedNamespaces = fileChildren.forall {
           case n: Elem => allowedFilesXmlNamespaces contains xml.getNamespace(n.prefix)
