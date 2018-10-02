@@ -77,6 +77,6 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
   val extractViolations: PartialFunction[Throwable, Try[Seq[(RuleNumber, String)]]] = {
     case x @ CompositeException(xs) =>
       if (xs.forall(_.isInstanceOf[RuleViolationException])) Try(xs.map { case RuleViolationException(nr, details) => (nr, details) })
-      else Failure(new IllegalStateException("Rule violations mixed with fatal exceptions. This should not be possible!!!"))
+      else Failure(new IllegalStateException("Rule violations mixed with fatal exceptions. This should not be possible!!!", x))
   }
 }
