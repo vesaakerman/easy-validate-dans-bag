@@ -33,22 +33,6 @@ class StructuralRulesSpec extends TestSupportFixture {
     testRuleSuccess(containsDir(Paths.get("metadata")), "metadata-correct")
   }
 
-  "containsFile" should "fail if file name is different case" in {
-    /*
-     * This test will fail for different reasons on case sensitive and case insensitive file systems respectively. Hence the regex with two
-     * alternative error messages.
-     */
-    testRuleViolationRegex(containsFile(Paths.get("Metadata")), "metadata-correct", "(not found in bag|differs in case)".r)
-  }
-
-  it should "fail if target is a directory instead of a file" in {
-    testRuleViolation(containsFile(Paths.get("data")), "generic-minimal", "not found in bag")
-  }
-
-  it should "succeed if file exists" in {
-    testRuleSuccess(containsFile(Paths.get("bagit.txt")), "metadata-correct")
-  }
-
   "containsNothingElseThan" should "fail if other file is present" in {
     testRuleViolation(
       rule = containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml")),

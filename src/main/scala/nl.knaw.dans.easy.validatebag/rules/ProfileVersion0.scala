@@ -37,7 +37,7 @@ object ProfileVersion0 {
     NumberedRule("1.1.1(datadir)", containsDir(Paths.get("data"))),
 
     // bag-info.txt
-    NumberedRule("1.2.1", containsFile(Paths.get("bag-info.txt"))),
+    NumberedRule("1.2.1", bagInfoExistsAndIsWellFormed),
     NumberedRule("1.2.2(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-Version"), dependsOn = List("1.2.1")),
     NumberedRule("1.2.2(b)", bagInfoElementIfExistsHasValue("BagIt-Profile-Version", versionNumber.toString), dependsOn = List("1.2.2(a)")),
     NumberedRule("1.2.3(a)", bagInfoContainsAtMostOneOf("BagIt-Profile-URI"), dependsOn = List("1.2.1")),
@@ -50,7 +50,7 @@ object ProfileVersion0 {
 
     // Manifests
     NumberedRule("1.3.1(a)", containsFile(Paths.get("manifest-sha1.txt"))),
-    NumberedRule("1.3.1(b)", bagShaPayloadManifestContainsAllPayloadFiles, dependsOn = List("1.3.1(a)")),
+    NumberedRule("1.3.1(b)", bagShaPayloadManifestContainsAllPayloadFiles, dependsOn = List("1.2.1", "1.3.1(a)")),
     // 1.3.2 does not state restrictions, so it does not need checking
 
     // STRUCTURAL

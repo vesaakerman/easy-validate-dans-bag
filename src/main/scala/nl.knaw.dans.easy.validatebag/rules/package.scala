@@ -15,11 +15,14 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import nl.knaw.dans.easy.validatebag.rules.bagit.trace
+import java.nio.file.Path
+
+import nl.knaw.dans.easy.validatebag.validation.fail
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.Try
 
-package object rules {
+package object rules extends DebugEnhancedLogging {
   // Relies on there being only one element with the specified name
   def getBagInfoTxtValue(t: TargetBag, element: String): Try[Option[String]] = {
     trace(t, element)
@@ -31,4 +34,17 @@ package object rules {
         }
     }
   }
+
+  def containsFile(f: Path)(t: TargetBag) = Try {
+    trace(f)
+    require(!f.isAbsolute, s"File $f must be a relative path")
+    val fileToCheck = t.bagDir / f.toString
+    if (!fileToCheck.isRegularFile)
+      fail(s"Mandatory file '$f' not found in bag.")
+    val relativeRealPath = t.bagDir.path.relativize(fileToCheck.path.toRealPath())
+    val relativeRequiredPath = t.bagDir.path.relativize(fileToCheck.path)
+    if (relativeRealPath != relativeRequiredPath)
+      fail(s"Path name differs in case; found: $relativeRealPath, required: $relativeRequiredPath")
+  }
+
 }

@@ -34,13 +34,19 @@ class ValidationSpec extends TestSupportFixture {
     calls.append(s)
   }
 
-  private def failingRule(s: String)(b: TargetBag): Try[Unit] = {
+  private def triggersRuleViolation(s: String)(b: TargetBag): Try[Unit] = {
     calls.append(s)
     Failure(RuleViolationDetailsException(s"Rule $s failed"))
   }
 
-  private def addNumberedRule(s: String, infoPackageType: InfoPackageType = BOTH, dependsOn: List[RuleNumber] = List.empty, failing: Boolean = false): NumberedRule = {
-    NumberedRule(s, if (failing) failingRule(s)
+  private def triggersFatalError(s: String)(b: TargetBag): Try[Unit] = {
+    calls.append(s)
+    Failure(new RuntimeException("Unexpected exception!!!"))
+  }
+
+  private def addNumberedRule(s: String, infoPackageType: InfoPackageType = BOTH, dependsOn: List[RuleNumber] = List.empty, ruleViolation: Boolean = false, fatalError: Boolean = false): NumberedRule = {
+    NumberedRule(s, if (ruleViolation) triggersRuleViolation(s)
+                    else if (fatalError) triggersFatalError(s)
                     else registerCall(s), infoPackageType, dependsOn)
   }
 
@@ -66,7 +72,7 @@ class ValidationSpec extends TestSupportFixture {
 
   it should "fail if one rule fails" in {
     val rulesBase = Seq(
-      addNumberedRule("1", failing = true),
+      addNumberedRule("1", ruleViolation = true),
       addNumberedRule("2"),
       addNumberedRule("3"))
     val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
@@ -74,9 +80,29 @@ class ValidationSpec extends TestSupportFixture {
     calls.toList shouldBe List("1", "2", "3")
   }
 
+  it should "fail fast if an exception other than a rule violation is encountered" in {
+    val rulesBase = Seq(
+      addNumberedRule("1", fatalError = true),
+      addNumberedRule("2"),
+      addNumberedRule("3"))
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
+    result shouldBe a[Failure[_]]
+    calls.toList shouldBe List("1")
+  }
+
+  it should "fail fast after two calls if an exception other than a rule violation is encountered" in {
+    val rulesBase = Seq(
+      addNumberedRule("1"),
+      addNumberedRule("2", fatalError = true),
+      addNumberedRule("3"))
+    val result = checkRules(new TargetBag(dummy), rulesBase)(isReadable = _ => true)
+    result shouldBe a[Failure[_]]
+    calls.toList shouldBe List("1", "2")
+  }
+
   it should "not execute rules that depend (indirectly) on a failing rule" in {
     val rulesBase = Seq(
-      addNumberedRule("1", failing = true),
+      addNumberedRule("1", ruleViolation = true),
       addNumberedRule("2", dependsOn = List("1")),
       addNumberedRule("3"),
       addNumberedRule("4", dependsOn = List("2")),
@@ -91,7 +117,7 @@ class ValidationSpec extends TestSupportFixture {
     val rulesBase = Seq(
       addNumberedRule("1"),
       addNumberedRule("2"),
-      addNumberedRule("3", failing = true),
+      addNumberedRule("3", ruleViolation = true),
       addNumberedRule("4", dependsOn = List("2", "3")),
       addNumberedRule("5", dependsOn = List("1", "2", "4")))
 
@@ -100,7 +126,7 @@ class ValidationSpec extends TestSupportFixture {
     calls.toList shouldBe List("1", "2", "3")
   }
 
-  it should "execute a rule whose all dependant rules succeed" in {
+  it should "execute a rule whose all dependent rules succeed" in {
     val rulesBase = Seq(
       addNumberedRule("1"),
       addNumberedRule("2"),
