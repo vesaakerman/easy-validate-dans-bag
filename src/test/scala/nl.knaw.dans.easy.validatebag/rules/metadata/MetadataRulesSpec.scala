@@ -180,6 +180,14 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       includedInErrorMsg = "Point with only one coordinate")
   }
 
+  "archisIdentifiersHaveAtMost10Characters" should "fail if archis identifiers have too long values" in {
+    testRuleViolation(
+      rule = archisIdentifiersHaveAtMost10Characters,
+      inputBag = "ddm-invalid-archis-identifiers",
+      includedInErrorMsg = "(1) Archis identifier is too long: niet kunnen vinden1\n(2) Archis identifier is too long: niet kunnen vinden2"
+    )
+  }
+
   "filesXmlConformsToSchemaIfDeclaredInDefaultNamespace" should "fail if a file element is described twice" in {
     testRuleViolation(
       rule = filesXmlConformsToSchemaIfFilesNamespaceDeclared(filesXmlValidator),

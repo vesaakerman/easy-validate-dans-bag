@@ -20,12 +20,12 @@ import java.nio.ByteBuffer
 import java.nio.charset.{ CharacterCodingException, Charset }
 import java.nio.file.{ Path, Paths }
 
-import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.easy.validatebag.validation._
+import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.util.{ Success, Try }
+import scala.util.{ Failure, Success, Try }
 import scala.xml._
 
 package object metadata extends DebugEnhancedLogging {
@@ -38,14 +38,16 @@ package object metadata extends DebugEnhancedLogging {
 
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
 
-  def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+  def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)
+                                     (t: TargetBag): Try[Unit] = {
     trace(xmlFile)
     require(!xmlFile.isAbsolute, "Path to xmlFile must be relative.")
     if ((t.bagDir / xmlFile.toString).exists) xmlFileConformsToSchema(xmlFile, schemaName, validator)(t)
     else Success(())
   }
 
-  def xmlFileConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+  def xmlFileConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)
+                             (t: TargetBag): Try[Unit] = {
     trace(xmlFile)
     require(!xmlFile.isAbsolute, "Path to xmlFile must be relative.")
     (t.bagDir / xmlFile.toString).inputStream.map(validator.validate).map {
@@ -53,7 +55,8 @@ package object metadata extends DebugEnhancedLogging {
     }
   }.get()
 
-  def filesXmlConformsToSchemaIfFilesNamespaceDeclared(validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+  def filesXmlConformsToSchemaIfFilesNamespaceDeclared(validator: XmlValidator)
+                                                      (t: TargetBag): Try[Unit] = {
     trace(())
     t.tryFilesXml.flatMap {
       xml =>
@@ -237,9 +240,39 @@ package object metadata extends DebugEnhancedLogging {
     else Try(fail(s"Point with only one coordinate: ${ point.text.trim }"))
   }
 
+  def archisIdentifiersHaveAtMost10Characters(t: TargetBag): Try[Unit] = {
+    trace(())
+    for {
+      ddm <- t.tryDdm
+      identifiers = getArchisIdentifiers(ddm)
+      validationResult = identifiers.map(validateArchisIdentifier)
+      _ = fail(formatInvalidArchisIdentifiers(validationResult).mkString("\n"))
+    } yield ()
+  }
+
+  private def getArchisIdentifiers(ddm: Node): NodeSeq = {
+    (ddm \\ "identifier")
+      .filter(_.attributes
+        .filter(_.prefixedKey == "xsi:type")
+        .filter(_.value.text == "id-type:ARCHIS-ZAAK-IDENTIFICATIE")
+        .nonEmpty)
+  }
+
+  private def validateArchisIdentifier(identifier: Node): Try[Unit] = {
+    if (identifier.text.length <= 10) Success(())
+    else Try(fail(s"Archis identifier is too long: ${ identifier.text }"))
+  }
+
+  private def formatInvalidArchisIdentifiers(results: Seq[Try[Unit]]): Seq[String] = {
+    results.collect { case Failure(e) => e.getMessage }
+      .zipWithIndex
+      .map { case (msg, index) => s"(${index + 1}) $msg" }
+  }
+
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
     trace(())
-    t.tryFilesXml.map(xml => if (xml.label != "files") fail("files.xml: document element must be 'files'"))
+    t.tryFilesXml.map(
+      xml => if (xml.label != "files") fail("files.xml: document element must be 'files'"))
   }
 
   def filesXmlHasOnlyFiles(t: TargetBag): Try[Unit] = {
@@ -248,7 +281,8 @@ package object metadata extends DebugEnhancedLogging {
       files =>
         if (files.namespace == filesXmlNamespace) {
           debug("Rule filesXmlHasOnlyFiles has been checked by files.xsd")
-        } else {
+        }
+        else {
           val nonFiles = (files \ "_").filterNot(_.label == "file")
           if (nonFiles.nonEmpty) fail(s"files.xml: children of document element must only be 'file'. Found non-file elements: ${ nonFiles.mkString(", ") }")
         }
@@ -305,7 +339,8 @@ package object metadata extends DebugEnhancedLogging {
     t.tryFilesXml.map { xml =>
       if (xml.namespace == filesXmlNamespace) {
         debug("Rule filesXmlFilesHaveOnlyAllowedNamespaces has been checked by files.xsd")
-      } else {
+      }
+      else {
         val fileChildren = xml \ "file" \ "_"
         val hasOnlyAllowedNamespaces = fileChildren.forall {
           case n: Elem => allowedFilesXmlNamespaces contains xml.getNamespace(n.prefix)
