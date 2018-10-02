@@ -18,6 +18,19 @@ package nl.knaw.dans.easy.validatebag.rules.bagit
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
 
 class BagInfoTxtRulesSpec extends TestSupportFixture {
+
+  "bagInfoExistsAndIsWellFormed" should "fail if bag-info.txt does not exist" in {
+    testRuleViolation(rule = bagInfoExistsAndIsWellFormed, inputBag = "baginfo-missing-bag-infotxt", includedInErrorMsg = "not found in bag")
+  }
+
+  it should "fail if bag-info.txt contains an empty line" in {
+    testRuleViolation(rule = bagInfoExistsAndIsWellFormed, inputBag = "baginfo-added-empty-line", includedInErrorMsg = "exists but is malformed", doubleCheckBagItValidity = false)
+  }
+
+  it should "Succeed if it exists and is well-formed" in {
+    testRuleSuccess(rule = bagInfoExistsAndIsWellFormed, inputBag = "generic-minimal")
+  }
+
   "bagInfoContainsAtMostOneOf(\"ELEMENT\")" should "fail if bag-info.txt contains two ELEMENT elements" in {
     testRuleViolation(bagInfoContainsAtMostOneOf("ELEMENT"),
       inputBag = "baginfo-two-elements-of-same-key",
