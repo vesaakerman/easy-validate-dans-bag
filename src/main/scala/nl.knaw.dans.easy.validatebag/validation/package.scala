@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.validatebag
 import better.files._
 import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }
+import nl.knaw.dans.easy.validatebag.rules.ProfileVersion0
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
@@ -56,7 +57,7 @@ package object validation extends DebugEnhancedLogging {
   def fail[T](details: String): T = throw RuleViolationDetailsException(details)
 
   /**
-   * Validates if the bag pointed to compliant with the DANS BagIt Profile version it claims to
+   * Validates if the bag pointed to is compliant with the DANS BagIt Profile version it claims to
    * adhere to. If no claim is made, by default it is assumed that the bag is supposed to comply
    * with v0.
    *
@@ -66,7 +67,8 @@ package object validation extends DebugEnhancedLogging {
    * @param isReadable        function to check the readability of a file (added for unit testing purposes)
    * @return Success if compliant, Failure if not compliant or an error occurred. The Failure will contain
    *         `nl.knaw.dans.lib.error.CompositeException`, which will contain a [[RuleViolationException]]
-   *         for every violation of the DANS BagIt Profile rules.
+   *         for every violation of the DANS BagIt Profile rules. If a fatal exception occurred, the Failure will
+   *         contain only that exception.
    */
   def checkRules(bag: TargetBag, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP)(implicit isReadable: File => Boolean): Try[Unit] = {
     /**
@@ -81,19 +83,22 @@ package object validation extends DebugEnhancedLogging {
     } yield result
   }
 
-  private def evaluateRules(bag: TargetBag, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = {
+  private def evaluateRules(bag: TargetBag, ruleBase: RuleBase, asInfoPackageType: InfoPackageType = SIP): Try[Unit] = Try {
     ruleBase.filter(numberedRule => numberedRule.infoPackageType == BOTH || numberedRule.infoPackageType == asInfoPackageType)
       .foldLeft(List[Try[String]]()) {
         (results, numberedRule) =>
           numberedRule match {
-            case NumberedRule(nr, rule, ipType, dependsOn) if dependsOn.forall(results.collect { case Success(succeededRuleNr) => succeededRuleNr }.contains) =>
-              results :+ rule(bag).map(_ => nr).recoverWith {
-                case RuleViolationDetailsException(details) => Failure(RuleViolationException(nr, details))
+            case NumberedRule(nr, rule, _, dependsOn) if dependsOn.forall(results.collect { case Success(succeededRuleNr) => succeededRuleNr }.contains) =>
+              val nextResult = rule(bag).map(_ => nr) match {
+                case Success(value) => Success(value)
+                case Failure(RuleViolationDetailsException(details)) => Failure(RuleViolationException(nr, details))
+                case Failure(e) => throw e // failing fast on unexpected type of exception
               }
+              results :+ nextResult
             case _ => results
           }
       }.collectResults.map(_ => ())
-  }
+  }.flatten
 
   private def checkIfValidationCanProceed(bag: BagDir)(implicit isReadable: File => Boolean): Try[Unit] = Try {
     trace(bag)
@@ -112,13 +117,14 @@ package object validation extends DebugEnhancedLogging {
 
   def getProfileVersion(bag: BagDir): Try[ProfileVersion] = Try {
     if ((bag / "bag-info.txt").exists) {
-      val b = bagReader.read(bag.path)
-
-      Option(b.getMetadata.get("BagIt-Profile-Version")).map(_.asScala.toList).map {
-        case (v :: _) => Try { v.toInt }.filter(profileVersionDois.keys.toSet.contains).getOrElse(0)
-        case _ => 0
-      }.getOrElse(0)
-    }
-    else 0
+      Try { bagReader.read(bag.path) } // Reading the bag will fail if bag-info.txt is malformed
+        .map { b =>
+          Option(b.getMetadata.get("BagIt-Profile-Version")).map(_.asScala.toList).map {
+            case v :: _ => Try { v.toInt }.filter(profileVersionDois.keys.toSet.contains).getOrElse(ProfileVersion0.versionNumber)
+            case _ => ProfileVersion0.versionNumber
+          }.getOrElse(ProfileVersion0.versionNumber)
+        }
+    }.getOrElse(ProfileVersion0.versionNumber)
+    else ProfileVersion0.versionNumber
   }
 }

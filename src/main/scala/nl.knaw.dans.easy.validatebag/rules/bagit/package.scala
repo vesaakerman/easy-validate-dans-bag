@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.validatebag.rules
 
-import java.nio.file.NoSuchFileException
+import java.nio.file.{ NoSuchFileException, Paths }
 
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.exceptions._
@@ -83,6 +83,16 @@ package object bagit extends DebugEnhancedLogging {
           case cause: InvalidBagitFileFormatException => failBecauseInvalid(cause)
         }
     }
+  }
+
+  def bagInfoExistsAndIsWellFormed(t: TargetBag): Try[Unit] = {
+    trace(())
+    for {
+      _ <- containsFile(Paths.get("bag-info.txt"))(t)
+      _ <- t.tryBag.recoverWith {
+        case e: InvalidBagMetadataException => Try(fail(s"bag-info.txt exists but is malformed: ${ e.getMessage }"))
+      }
+    } yield ()
   }
 
   def bagIsVirtuallyValid(t: TargetBag): Try[Unit] = {

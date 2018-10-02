@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.validatebag.rules.structural
 import java.nio.file.Paths
 
 import nl.knaw.dans.easy.validatebag.TestSupportFixture
+import nl.knaw.dans.easy.validatebag.rules.containsFile
 
 class StructuralRulesSpec extends TestSupportFixture {
 
