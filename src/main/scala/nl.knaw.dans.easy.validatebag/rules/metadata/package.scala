@@ -250,17 +250,18 @@ package object metadata extends DebugEnhancedLogging {
     } yield ()
   }
 
-  private def getArchisIdentifiers(ddm: Node): NodeSeq = {
+  private def getArchisIdentifiers(ddm: Node): Seq[String] = {
     (ddm \\ "identifier")
-      .filter(_.attributes
+      .withFilter(_.attributes
         .filter(_.prefixedKey == "xsi:type")
         .filter(_.value.text == "id-type:ARCHIS-ZAAK-IDENTIFICATIE")
         .nonEmpty)
+      .map(_.text)
   }
 
-  private def validateArchisIdentifier(identifier: Node): Try[Unit] = {
-    if (identifier.text.length <= 10) Success(())
-    else Try(fail(s"Archis identifier is too long: ${ identifier.text }"))
+  private def validateArchisIdentifier(identifier: String): Try[Unit] = {
+    if (identifier.length <= 10) Success(())
+    else Try(fail(s"Archis identifier is too long: $identifier"))
   }
 
   private def formatInvalidArchisIdentifiers(results: Seq[Try[Unit]]): Seq[String] = {
