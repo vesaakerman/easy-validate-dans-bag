@@ -40,7 +40,7 @@ package object metadata extends DebugEnhancedLogging {
 
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
 
-  val doiPattern: Regex = raw"^(https://doi.org/)?10(\.\d+)+/.+".r
+  val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
 
   def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
     trace(xmlFile)
@@ -95,24 +95,24 @@ package object metadata extends DebugEnhancedLogging {
   def ddmContainsValidDoiIdentifier(t: TargetBag): Try[Unit] = {
     for {
       ddm <- t.tryDdm
-      dois <- doiIdentifierPresent(ddm)
-      _ <- doisAreValid(dois)
+      dois <- getDoiIdentifiers(ddm)
+      _ <- doisAreSyntacticallyValid(dois)
     } yield ()
   }
 
-  private def doiIdentifierPresent(ddm: Elem): Try[NodeSeq] = Try {
+  private def getDoiIdentifiers(ddm: Elem): Try[Seq[String]] = Try {
     val dois = (ddm \\ "identifier").filter(hasXsiType(identifierTypeNamespace, "DOI"))
     if (dois.isEmpty) fail("DOI identifier is missing")
-    dois
+    dois.map(_.text)
   }
 
-  private def doisAreValid(dois: NodeSeq): Try[Unit] = Try {
+  private def doisAreSyntacticallyValid(dois: Seq[String]): Try[Unit] = Try {
     logger.debug(s"DOIs to check: ${ dois.mkString(", ") }")
-    val invalidDois = dois.map(_.text).filterNot(s => validDoi(s))
+    val invalidDois = dois.filterNot(syntacticallyValidDoi)
     if (invalidDois.nonEmpty) fail(s"Invalid DOIs: ${ invalidDois.mkString(", ") }")
   }
 
-  private def validDoi(doi: String): Boolean = {
+  private def syntacticallyValidDoi(doi: String): Boolean = {
     doiPattern.findFirstIn(doi).nonEmpty
   }
 

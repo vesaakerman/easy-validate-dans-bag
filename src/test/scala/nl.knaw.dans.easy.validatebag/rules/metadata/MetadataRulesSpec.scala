@@ -142,7 +142,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
     testRuleViolation(
       rule = ddmContainsValidDoiIdentifier,
       inputBag = "ddm-incorrect-doi",
-      includedInErrorMsg = "Invalid DOIs: 11.1234/fantasy-doi-id, 10/1234/fantasy-doi-id, 10.1234.fantasy-doi-id, http://doi.org/10.1234.567/issn-987-654, https://doi/10.1234.567/issn-987-654, https://doi.org/10.1234:567/issn-987-654")
+      includedInErrorMsg = "Invalid DOIs: 11.1234/fantasy-doi-id, 10/1234/fantasy-doi-id, 10.1234.fantasy-doi-id, http://doi.org/10.1234.567/issn-987-654, https://doi.org/10.1234.567/issn-987-654")
   }
 
   "ddmGmlPolygonPosListIsWellFormed" should "report error if odd number of values in posList" in {
