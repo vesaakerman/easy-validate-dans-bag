@@ -261,7 +261,7 @@ package object metadata extends DebugEnhancedLogging {
 
   private def validateArchisIdentifier(identifier: String): Try[Unit] = {
     if (identifier.length <= 10) Success(())
-    else Try(fail(s"Archis identifier is too long: $identifier"))
+    else Try(fail(s"Archis identifier must be 10 or less characters long: $identifier"))
   }
 
   private def formatInvalidArchisIdentifiers(results: Seq[Try[Unit]]): Seq[String] = {
