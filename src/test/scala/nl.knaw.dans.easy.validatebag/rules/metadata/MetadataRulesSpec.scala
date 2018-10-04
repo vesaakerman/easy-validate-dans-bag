@@ -125,6 +125,26 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       inputBag = "ddm-correct-dai")
   }
 
+  "ddmContainsValidDoiIdentifier" should "succeed if one or more DOIs are present and they are valid" in {
+    testRuleSuccess(
+      rule = ddmContainsValidDoiIdentifier,
+      inputBag = "ddm-correct-doi")
+  }
+
+  it should "fail if there is no DOI-identifier" in {
+    testRuleViolation(
+      rule = ddmContainsValidDoiIdentifier,
+      inputBag = "ddm-missing-doi",
+      includedInErrorMsg = "DOI identifier is missing")
+  }
+
+  it should "report invalid DOI-identifiers" in {
+    testRuleViolation(
+      rule = ddmContainsValidDoiIdentifier,
+      inputBag = "ddm-incorrect-doi",
+      includedInErrorMsg = "Invalid DOIs: 11.1234/fantasy-doi-id, 10/1234/fantasy-doi-id, 10.1234.fantasy-doi-id, http://doi.org/10.1234.567/issn-987-654, https://doi.org/10.1234.567/issn-987-654")
+  }
+
   "ddmGmlPolygonPosListIsWellFormed" should "report error if odd number of values in posList" in {
     testRuleViolation(
       rule = ddmGmlPolygonPosListIsWellFormed,
