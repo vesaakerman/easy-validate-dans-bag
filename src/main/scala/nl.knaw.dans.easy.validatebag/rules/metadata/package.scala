@@ -27,6 +27,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.matching.Regex
 import scala.util.{ Success, Try }
+import scala.util.{ Failure, Success, Try }
 import scala.xml._
 
 package object metadata extends DebugEnhancedLogging {
@@ -42,14 +43,16 @@ package object metadata extends DebugEnhancedLogging {
 
   val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
 
-  def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+  def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)
+                                     (t: TargetBag): Try[Unit] = {
     trace(xmlFile)
     require(!xmlFile.isAbsolute, "Path to xmlFile must be relative.")
     if ((t.bagDir / xmlFile.toString).exists) xmlFileConformsToSchema(xmlFile, schemaName, validator)(t)
     else Success(())
   }
 
-  def xmlFileConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+  def xmlFileConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)
+                             (t: TargetBag): Try[Unit] = {
     trace(xmlFile)
     require(!xmlFile.isAbsolute, "Path to xmlFile must be relative.")
     (t.bagDir / xmlFile.toString).inputStream.map(validator.validate).map {
@@ -57,7 +60,8 @@ package object metadata extends DebugEnhancedLogging {
     }
   }.get()
 
-  def filesXmlConformsToSchemaIfFilesNamespaceDeclared(validator: XmlValidator)(t: TargetBag): Try[Unit] = {
+  def filesXmlConformsToSchemaIfFilesNamespaceDeclared(validator: XmlValidator)
+                                                      (t: TargetBag): Try[Unit] = {
     trace(())
     t.tryFilesXml.flatMap {
       xml =>
@@ -215,7 +219,7 @@ package object metadata extends DebugEnhancedLogging {
     val values = node.text.split("""\s+""").toList
     val numberOfValues = values.size
     if (numberOfValues % 2 != 0) fail(s"Found posList with odd number of values: $numberOfValues. ${ offendingPosListMsg(values) }")
-    if (numberOfValues < 8) fail(s"Found posList with too few values (less than 4 pairs). ${ offendingPosListMsg(values) }")
+    if (numberOfValues < 8) fail(s"Found posList with too few values (fewer than 4 pairs). ${ offendingPosListMsg(values) }")
     if (values.take(2) != values.takeRight(2)) fail(s"Found posList with unequal first and last pairs. ${ offendingPosListMsg(values) }")
   }
 
@@ -265,9 +269,40 @@ package object metadata extends DebugEnhancedLogging {
     else Try(fail(s"Point with only one coordinate: ${ point.text.trim }"))
   }
 
+  def archisIdentifiersHaveAtMost10Characters(t: TargetBag): Try[Unit] = {
+    trace(())
+    for {
+      ddm <- t.tryDdm
+      identifiers = getArchisIdentifiers(ddm)
+      validationResult = identifiers.map(validateArchisIdentifier)
+      _ = fail(formatInvalidArchisIdentifiers(validationResult).mkString("\n"))
+    } yield ()
+  }
+
+  private def getArchisIdentifiers(ddm: Node): Seq[String] = {
+    (ddm \\ "identifier")
+      .withFilter(_.attributes
+        .filter(_.prefixedKey == "xsi:type")
+        .filter(_.value.text == "id-type:ARCHIS-ZAAK-IDENTIFICATIE")
+        .nonEmpty)
+      .map(_.text)
+  }
+
+  private def validateArchisIdentifier(identifier: String): Try[Unit] = {
+    if (identifier.length <= 10) Success(())
+    else Try(fail(s"Archis identifier must be 10 or fewer characters long: $identifier"))
+  }
+
+  private def formatInvalidArchisIdentifiers(results: Seq[Try[Unit]]): Seq[String] = {
+    results.collect { case Failure(e) => e.getMessage }
+      .zipWithIndex
+      .map { case (msg, index) => s"(${index + 1}) $msg" }
+  }
+
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
     trace(())
-    t.tryFilesXml.map(xml => if (xml.label != "files") fail("files.xml: document element must be 'files'"))
+    t.tryFilesXml.map(
+      xml => if (xml.label != "files") fail("files.xml: document element must be 'files'"))
   }
 
   def filesXmlHasOnlyFiles(t: TargetBag): Try[Unit] = {

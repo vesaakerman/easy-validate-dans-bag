@@ -31,18 +31,6 @@ package object structural extends DebugEnhancedLogging {
       fail(s"Mandatory directory '$d' not found in bag.")
   }
 
-  def containsFile(f: Path)(t: TargetBag) = Try {
-    trace(f)
-    require(!f.isAbsolute, s"File $f must be a relative path")
-    val fileToCheck = t.bagDir / f.toString
-    if (!fileToCheck.isRegularFile)
-      fail(s"Mandatory file '$f' not found in bag.")
-    val relativeRealPath = t.bagDir.path.relativize(fileToCheck.path.toRealPath())
-    val relativeRequiredPath = t.bagDir.path.relativize(fileToCheck.path)
-    if (relativeRealPath != relativeRequiredPath)
-      fail(s"Path name differs in case; found: $relativeRealPath, required: $relativeRequiredPath")
-  }
-
   def doesNotContainFile(f: Path)(t: TargetBag) = Try {
     trace(f)
     require(!f.isAbsolute, s"File $f must be a relative path")
