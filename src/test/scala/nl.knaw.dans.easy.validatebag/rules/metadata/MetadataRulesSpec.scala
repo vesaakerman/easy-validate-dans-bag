@@ -185,8 +185,8 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       rule = archisIdentifiersHaveAtMost10Characters,
       inputBag = "ddm-invalid-archis-identifiers",
       includedInErrorMsg =
-        """(1) Archis identifier must be 10 or less characters long: niet kunnen vinden1
-          |(2) Archis identifier must be 10 or less characters long: niet kunnen vinden2""".stripMargin
+        """(1) Archis identifier must be 10 or fewer characters long: niet kunnen vinden1
+          |(2) Archis identifier must be 10 or fewer characters long: niet kunnen vinden2""".stripMargin
     )
   }
 
