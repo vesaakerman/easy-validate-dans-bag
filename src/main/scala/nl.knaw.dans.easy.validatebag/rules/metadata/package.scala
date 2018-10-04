@@ -190,7 +190,7 @@ package object metadata extends DebugEnhancedLogging {
     val values = node.text.split("""\s+""").toList
     val numberOfValues = values.size
     if (numberOfValues % 2 != 0) fail(s"Found posList with odd number of values: $numberOfValues. ${ offendingPosListMsg(values) }")
-    if (numberOfValues < 8) fail(s"Found posList with too few values (less than 4 pairs). ${ offendingPosListMsg(values) }")
+    if (numberOfValues < 8) fail(s"Found posList with too few values (fewer than 4 pairs). ${ offendingPosListMsg(values) }")
     if (values.take(2) != values.takeRight(2)) fail(s"Found posList with unequal first and last pairs. ${ offendingPosListMsg(values) }")
   }
 
@@ -261,7 +261,7 @@ package object metadata extends DebugEnhancedLogging {
 
   private def validateArchisIdentifier(identifier: String): Try[Unit] = {
     if (identifier.length <= 10) Success(())
-    else Try(fail(s"Archis identifier must be 10 or less characters long: $identifier"))
+    else Try(fail(s"Archis identifier must be 10 or fewer characters long: $identifier"))
   }
 
   private def formatInvalidArchisIdentifiers(results: Seq[Try[Unit]]): Seq[String] = {
