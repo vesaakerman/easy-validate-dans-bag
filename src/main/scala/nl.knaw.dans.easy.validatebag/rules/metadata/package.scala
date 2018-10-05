@@ -26,7 +26,6 @@ import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.matching.Regex
-import scala.util.{ Success, Try }
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
 
@@ -296,7 +295,7 @@ package object metadata extends DebugEnhancedLogging {
   private def formatInvalidArchisIdentifiers(results: Seq[Try[Unit]]): Seq[String] = {
     results.collect { case Failure(e) => e.getMessage }
       .zipWithIndex
-      .map { case (msg, index) => s"(${index + 1}) $msg" }
+      .map { case (msg, index) => s"(${ index + 1 }) $msg" }
   }
 
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
@@ -342,13 +341,22 @@ package object metadata extends DebugEnhancedLogging {
 
       if (noDuplicatesFound && fileSetsEqual) ()
       else {
-        val msg =
-          (if (noDuplicatesFound) ""
-           else s"   - Duplicate filepaths found: ${ duplicatePathsInFilesXml.mkString(", ") }\n") +
-            (if (fileSetsEqual) ""
-             else s"   - Filepaths in files.xml not equal to files found in data folder. Difference: " +
-               s"(only in bag: ${ (payloadPaths diff pathsInFileXml).mkString(", ") }, only in files.xml: " +
-               s"${ (pathsInFileXml diff payloadPaths).mkString(", ") }\n")
+        def stringDiff[T](left: Set[T], right: Set[T]): String = {
+          val set = left diff right
+          if (set.isEmpty) "{}"
+          else set.mkString("{", ", ", "}")
+        }
+
+        lazy val onlyInBag = stringDiff(payloadPaths, pathsInFileXml)
+        lazy val onlyInFilesXml = stringDiff(pathsInFileXml, payloadPaths)
+
+        val msg1 = if (noDuplicatesFound) ""
+                   else s"   - Duplicate filepaths found: ${ duplicatePathsInFilesXml.mkString("{", ", ", "}") }\n"
+        val msg2 = if (fileSetsEqual) ""
+                   else "   - Filepaths in files.xml not equal to files found in data folder. Difference: " +
+                     s"(only in bag: $onlyInBag, only in files.xml: $onlyInFilesXml)"
+
+        val msg = msg1 + msg2
         fail(s"files.xml: errors in filepath-attributes:\n$msg")
       }
     }
