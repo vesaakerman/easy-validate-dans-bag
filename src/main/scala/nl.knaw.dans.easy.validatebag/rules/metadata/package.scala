@@ -274,7 +274,7 @@ package object metadata extends DebugEnhancedLogging {
       ddm <- t.tryDdm
       identifiers = getArchisIdentifiers(ddm)
       validationResult = identifiers.map(validateArchisIdentifier)
-      _ = fail(formatInvalidArchisIdentifiers(validationResult).mkString("\n"))
+      _ = if (validationResult.nonEmpty) fail(formatInvalidArchisIdentifiers(validationResult).mkString("\n"))
     } yield ()
   }
 
