@@ -210,6 +210,20 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
     )
   }
 
+  it should "succeed when no archis identifiers are given" in {
+    testRuleSuccess(
+      rule = archisIdentifiersHaveAtMost10Characters,
+      inputBag = "ddm-no-archis-identifiers",
+    )
+  }
+
+  it should "succeed with valid archis identifiers" in {
+    testRuleSuccess(
+      rule = archisIdentifiersHaveAtMost10Characters,
+      inputBag = "ddm-valid-archis-identifiers",
+    )
+  }
+
   "filesXmlConformsToSchemaIfDeclaredInDefaultNamespace" should "fail if a file element is described twice" in {
     testRuleViolation(
       rule = filesXmlConformsToSchemaIfFilesNamespaceDeclared(filesXmlValidator),
