@@ -273,8 +273,8 @@ package object metadata extends DebugEnhancedLogging {
     for {
       ddm <- t.tryDdm
       identifiers = getArchisIdentifiers(ddm)
-      validationResult = identifiers.map(validateArchisIdentifier)
-      _ = if (validationResult.nonEmpty) fail(formatInvalidArchisIdentifiers(validationResult).mkString("\n"))
+      validationErrors = identifiers.map(validateArchisIdentifier).collect { case Failure(e) => e.getMessage }
+      _ = if (validationErrors.nonEmpty) fail(formatInvalidArchisIdentifiers(validationErrors).mkString("\n"))
     } yield ()
   }
 
@@ -292,10 +292,8 @@ package object metadata extends DebugEnhancedLogging {
     else Try(fail(s"Archis identifier must be 10 or fewer characters long: $identifier"))
   }
 
-  private def formatInvalidArchisIdentifiers(results: Seq[Try[Unit]]): Seq[String] = {
-    results.collect { case Failure(e) => e.getMessage }
-      .zipWithIndex
-      .map { case (msg, index) => s"(${ index + 1 }) $msg" }
+  private def formatInvalidArchisIdentifiers(results: Seq[String]): Seq[String] = {
+    results.zipWithIndex.map { case (msg, index) => s"(${ index + 1 }) $msg" }
   }
 
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
