@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.validatebag
 import java.net.{ URI, URL }
 import java.nio.file.{ Path, Paths }
 
+import better.files.File
 import javax.xml.validation.SchemaFactory
 import nl.knaw.dans.easy.validatebag.InfoPackageType.InfoPackageType
 import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }
@@ -57,13 +58,27 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
   }
 
   def validate(uri: URI, infoPackageType: InfoPackageType): Try[ResultMessage] = {
+    val bagName = resolveAndLogBagName(uri)
     for {
       bag <- getBagPath(uri)
       version <- getProfileVersion(bag)
       violations <- validation.checkRules(new TargetBag(bag, version), allRules(version), infoPackageType)(isReadable = _.isReadable)
         .map(_ => Seq.empty)
         .recoverWith(extractViolations)
+      _ = logResult(bagName, violations)
     } yield ResultMessage(uri, bag.getFileName.toString, version, infoPackageType, violations)
+  }
+
+  private def resolveAndLogBagName(uri: URI): String = {
+    Try { File(uri).name }
+      .doIfSuccess(bagName => logger.info(s"[$bagName]: start validating bag"))
+      .doIfFailure { case e => logger.warn(s"${ uri.toString } is a malformed uri, could not resolve the name of the bag dir: ${ e.getMessage }") }
+      .getOrElse(uri.toString).toString
+  }
+
+  private def logResult(bagName: String, violations: Seq[(String, String)]) = {
+    if (violations.isEmpty) logger.info(s"[$bagName] did not violate any rules and is validated successfully")
+    else violations.foreach { case (number: String, message: String) => logger.warn(s"[$bagName] broke rule $number: $message") }
   }
 
   private def getProfileVersion(path: BagDir): Try[Int] = {
