@@ -14,7 +14,7 @@
     <appender name="journal" class="org.gnieh.logback.SystemdJournalAppender" >
         <logStackTrace>true</logStackTrace>
         <logLoggerName>true</logLoggerName>
-        <syslogIdentifier>easy-validate-dans-bag.log</syslogIdentifier>
+        <syslogIdentifier>easy-validate-dans-bag</syslogIdentifier>
     </appender>
     <root level="warn">
         <appender-ref ref="FILE"/>
