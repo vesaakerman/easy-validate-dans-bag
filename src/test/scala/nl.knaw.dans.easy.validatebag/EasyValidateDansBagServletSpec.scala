@@ -22,8 +22,9 @@ import org.apache.commons.configuration.PropertiesConfiguration
 import org.eclipse.jetty.http.HttpStatus.{ BAD_REQUEST_400, OK_200 }
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.scalatest.OptionValues._
+import org.scalatra.test.EmbeddedJettyContainer
 
-class EasyValidateDansBagServletSpec extends TestSupportFixture with ServletFixture with ScalatraSuite {
+class EasyValidateDansBagServletSpec extends TestSupportFixture with EmbeddedJettyContainer with ScalatraSuite {
   private val app = new EasyValidateDansBagApp(Configuration("0", createProperties(), Seq(new URI("http://creativecommons.org/licenses/by-sa/4.0"))))
   private val validateBagServlet = new EasyValidateDansBagServlet(app)
   addServlet(validateBagServlet, "/*")
