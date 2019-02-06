@@ -239,9 +239,9 @@ package object metadata extends DebugEnhancedLogging {
     (ddm \\ "MultiSurface").filter(_.namespace == gmlNamespace).asInstanceOf[Seq[Elem]]
   }
 
-  private def validateMultiSurface(ms: Elem) = {
+  private def validateMultiSurface(ms: Elem): Try[Unit] = {
     val polygons = getPolygons(ms)
-    if (polygons.map(_.attribute("srsName").map(_.text)).distinct.size == 1) Success(())
+    if (polygons.isEmpty || polygons.flatMap(_.attribute("srsName").map(_.text)).distinct.size <= 1) Success(())
     else Try(fail("Found MultiSurface element containing polygons with different srsNames"))
   }
 
