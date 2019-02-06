@@ -179,6 +179,18 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       includedInErrorMsg = "Found MultiSurface element containing polygons with different srsNames")
   }
 
+  it should "succeed if a MultiSurface element doesn't have any surfaceMember elements in it" in {
+    testRuleSuccess(
+      rule = polygonsInSameMultiSurfaceHaveSameSrsName,
+      inputBag = "ddm-empty-multisurface")
+  }
+
+  it should "succeed if a MultiSurface element has surfaceMembers but no srsNames on any of them" in {
+    testRuleSuccess(
+      rule = polygonsInSameMultiSurfaceHaveSameSrsName,
+      inputBag = "ddm-no-srs-names")
+  }
+
   "pointsHaveAtLeastTwoValues" should "fail if a Point with one coordinate is found" in {
     testRuleViolation(
       rule = pointsHaveAtLeastTwoValues,
