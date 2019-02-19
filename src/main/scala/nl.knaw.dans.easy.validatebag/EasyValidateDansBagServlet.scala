@@ -19,16 +19,21 @@ import java.net.URI
 
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.lib.logging.servlet._
 import org.joda.time.DateTime
 import org.scalatra._
 
 import scala.util.{ Failure, Try }
 
-class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraServlet with DebugEnhancedLogging {
+class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraServlet
+  with ServletLogger
+  with PlainLogFormatter
+  with DebugEnhancedLogging {
 
   get("/") {
     contentType = "text/plain"
     Ok("EASY Validate DANS Bag Service running...")
+      .logResponse
   }
 
   post("/validate") {
@@ -50,7 +55,7 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
       case t =>
         logger.error(s"Server error: ${ t.getMessage }", t)
         InternalServerError(s"[${ new DateTime() }] The server encountered an error. Consult the logs.")
-    }
+    }.logResponse
   }
 
   private def getFileUrl(uriStr: String): Try[URI] = Try {
