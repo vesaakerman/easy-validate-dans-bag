@@ -32,7 +32,7 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
 
   get("/") {
     contentType = "text/plain"
-    Ok("EASY Validate DANS Bag Service running...")
+    Ok(s"EASY Validate DANS Bag Service running v${ app.version }.")
       .logResponse
   }
 
