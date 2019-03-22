@@ -15,14 +15,16 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.net.URI
+import java.net.{ URI, URLEncoder }
+import java.nio.charset.StandardCharsets
 
+import better.files.File
 import nl.knaw.dans.easy.validatebag.InfoPackageType.SIP
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.eclipse.jetty.http.HttpStatus.{ BAD_REQUEST_400, OK_200 }
-import org.scalatra.test.scalatest.ScalatraSuite
 import org.scalatest.OptionValues._
 import org.scalatra.test.EmbeddedJettyContainer
+import org.scalatra.test.scalatest.ScalatraSuite
 
 class EasyValidateDansBagServletSpec extends TestSupportFixture
   with EmbeddedJettyContainer
@@ -32,8 +34,12 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   private val validateBagServlet = new EasyValidateDansBagServlet(app)
   addServlet(validateBagServlet, "/*")
 
+  def encodedURI(file: File): String = {
+    URLEncoder.encode(file.uri.toString, StandardCharsets.UTF_8.displayName())
+  }
+
   "the validate handler" should "return a 200 and the response when presented a valid bag uri" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=file://${ bagsDir.path.toAbsolutePath }/valid-bag", headers = Seq(("Accept", "application/json"))) {
+    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "valid-bag") }", headers = Seq(("Accept", "application/json"))) {
       status shouldBe OK_200
       val resultMessage = ResultMessage.read(body)
       resultMessage.infoPackageType shouldBe SIP
@@ -42,10 +48,10 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   }
 
   it should "return a 200 and a response including 'compliant: false' and reasons when presented an invalid bag" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=file://${ bagsDir.path.toAbsolutePath }/metadata-correct", headers = Seq(("Accept", "application/json"))) {
+    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "metadata-correct") }", headers = Seq(("Accept", "application/json"))) {
       status shouldBe OK_200
       val resultMessage = ResultMessage.read(body)
-      resultMessage.bagUri shouldBe new URI(s"file://${ bagsDir.path.toAbsolutePath }/metadata-correct")
+      resultMessage.bagUri shouldBe new URI(s"file://${ bagsDir.path.toAbsolutePath }/metadata-correct/")
       resultMessage.bag shouldBe "metadata-correct"
       resultMessage.profileVersion shouldBe 0
       resultMessage.infoPackageType shouldBe SIP
@@ -58,9 +64,18 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   }
 
   it should "return a 400 if presented a non existing bag uri" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=file://${ bagsDir.path.toAbsolutePath }/_._metadata-correct", headers = Seq(("Accept", "application/json"))) {
+    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "_._metadata-correct") }", headers = Seq(("Accept", "application/json"))) {
       status shouldBe BAD_REQUEST_400
       body should include("Bag does not exist")
+    }
+  }
+
+  it should "return a 200 for a bag with spaces in the name and mark it as 'compliant'" in {
+    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "bag with spaces") }", headers = Seq(("Accept", "application/json"))) {
+      status shouldBe OK_200
+      val resultMessage = ResultMessage.read(body)
+      resultMessage.infoPackageType shouldBe SIP
+      resultMessage.isCompliant shouldBe true
     }
   }
 
