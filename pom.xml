@@ -128,6 +128,14 @@
             <groupId>com.github.pathikrit</groupId>
             <artifactId>better-files_2.12</artifactId>
         </dependency>
+
+        <!-- guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>20.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
