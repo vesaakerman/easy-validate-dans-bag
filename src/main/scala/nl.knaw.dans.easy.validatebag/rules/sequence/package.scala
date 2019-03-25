@@ -19,9 +19,9 @@ import java.io.IOException
 import java.net.URI
 import java.util.UUID
 
+import nl.knaw.dans.easy.validatebag.validation.fail
 import nl.knaw.dans.easy.validatebag.{ BagStore, TargetBag }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import nl.knaw.dans.easy.validatebag.validation.fail
 
 import scala.util.{ Success, Try }
 
@@ -32,20 +32,16 @@ package object sequence extends DebugEnhancedLogging {
   def bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStore: BagStore)(t: TargetBag): Try[Unit] = {
     trace(())
     getBagInfoTxtValue(t, "Is-Version-Of")
-      .map {
-        optIsVersionOf =>
-          optIsVersionOf.map {
-            isVersionOf =>
-              val result = for {
-                uuid <- getUuidFromIsVersionOfValue(isVersionOf)
-                exists <- bagStore.bagExists(uuid)
-                _ = if (!exists) fail(s"Bag with bag-id $uuid, pointed to by Is-Version-Of field in bag-info.txt, is not found in bag stores")
-              } yield ()
-              result.recoverWith {
-                case io: IOException => Try(fail("Bag pointed with bag-id $uuid, to by Is-Version-Of field, could not be verified, because of an I/O error"))
-              }
+      .map(_.map(isVersionOf =>
+        for {
+          uuid <- getUuidFromIsVersionOfValue(isVersionOf)
+          exists <- bagStore.bagExists(uuid).recoverWith {
+            case _: IOException => Try(fail(s"Bag with bag-id $uuid, pointed to by Is-Version-Of field in bag-info.txt, could not be verified, because of an I/O error"))
           }
-      }.flatMap(_.getOrElse(Success(())))
+          _ = if (!exists) fail(s"Bag with bag-id $uuid, pointed to by Is-Version-Of field in bag-info.txt, is not found in bag stores")
+        } yield ()
+      ))
+      .flatMap(_.getOrElse(Success(())))
   }
 
   private def getUuidFromIsVersionOfValue(s: String): Try[UUID] = Try {
