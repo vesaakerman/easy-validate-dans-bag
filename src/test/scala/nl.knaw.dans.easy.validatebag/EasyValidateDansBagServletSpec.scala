@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.validatebag
 import java.net.URI
 
 import better.files.File
-import com.google.common.net.UrlEscapers
+import nl.knaw.dans.lib.encode.StringEncoding
 import nl.knaw.dans.easy.validatebag.InfoPackageType.SIP
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.eclipse.jetty.http.HttpStatus.{ BAD_REQUEST_400, OK_200 }
@@ -35,7 +35,7 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   addServlet(validateBagServlet, "/*")
 
   def encodedURI(file: File): String = {
-    UrlEscapers.urlPathSegmentEscaper().escape(file.uri.toString)
+    file.uri.toString.escapeString
   }
 
   "the validate handler" should "return a 200 and the response when presented a valid bag uri" in {
