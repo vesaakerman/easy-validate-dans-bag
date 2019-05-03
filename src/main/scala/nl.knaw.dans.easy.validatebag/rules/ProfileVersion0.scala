@@ -58,7 +58,7 @@ object ProfileVersion0 {
     NumberedRule("2.2(a)", containsFile(Paths.get("metadata/dataset.xml")), dependsOn = List("2.1")),
     NumberedRule("2.2(b)", containsFile(Paths.get("metadata/files.xml")), dependsOn = List("2.1")),
     // 2.3 does not state restrictions, so it does not need checking
-    NumberedRule("2.5", containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "files.xml", "agreements.xml", "message-from-depositor.txt")), dependsOn = List("2.1")),
+    NumberedRule("2.5", containsNothingElseThan(Paths.get("metadata"), Seq("dataset.xml", "depositor-info", "files.xml", "depositor-info/agreements.xml", "depositor-info/message-from-depositor.txt")), dependsOn = List("2.1")),
 
     // METADATA
 
@@ -83,10 +83,10 @@ object ProfileVersion0 {
     NumberedRule("3.2.7", filesXmlFilesHaveOnlyAllowedNamespaces, dependsOn = List("3.2.2")),
 
     // agreements.xml
-    NumberedRule("3.3.1", xmlFileIfExistsConformsToSchema(Paths.get("metadata/agreements.xml"), "Agreements metadata schema", xmlValidators("agreements.xml"))),
+    NumberedRule("3.3.1", xmlFileIfExistsConformsToSchema(Paths.get("metadata/depositor-info/agreements.xml"), "Agreements metadata schema", xmlValidators("agreements.xml"))),
 
     // message-from-depositor.txt
-    NumberedRule("3.4.1", optionalFileIsUtf8Decodable(Paths.get("metadata/message-from-depositor.txt"))),
+    NumberedRule("3.4.1", optionalFileIsUtf8Decodable(Paths.get("metadata/depositor-info/message-from-depositor.txt"))),
 
 
     // BAG-SEQUENCE
