@@ -21,10 +21,10 @@ import java.nio.file.Paths
 
 import better.files.File
 import javax.xml.validation.SchemaFactory
-import nl.knaw.dans.easy.validatebag.{ CanConnectFixture, Rule, TestSupportFixture, XmlValidator }
+import nl.knaw.dans.easy.validatebag._
 import nl.knaw.dans.lib.error._
 
-import scala.util.Try
+import scala.util.{ Failure, Try }
 
 class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
   private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
@@ -108,7 +108,6 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       rule = ddmMayContainDctermsLicenseFromList(licenses),
       inputBag = "ddm-two-license-uris",
       includedInErrorMsg = "Only one license is allowed")
-
   }
 
   // General syntax will be checked by DDM XML Schema
@@ -118,7 +117,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       inputBag = "ddm-incorrect-dai",
       includedInErrorMsg = "Invalid DAIs")
   }
-  
+
   it should "accept a DOI with a valid check digit and prefix" in {
     testRuleSuccess(
       rule = ddmDaisAreValid,
@@ -362,5 +361,11 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       rule = optionalFileIsUtf8Decodable(Paths.get("data/ceci-n-est-pas-d-utf8.jpg")),
       inputBag = "generic-minimal-with-binary-data",
       includedInErrorMsg = "Input not valid UTF-8")
+  }
+
+  it should "fail if an absolute path is inserted" in {
+    optionalFileIsUtf8Decodable(Paths.get("/an/absolute/path.jpeg"))(new TargetBag(bagsDir / "generic-minimal-with-binary-data", 0)) should matchPattern {
+      case Failure(ae: AssertionError) if ae.getMessage == "assumption failed: Path to UTF-8 text file must be relative." =>
+    }
   }
 }
