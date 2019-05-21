@@ -39,6 +39,7 @@ package object metadata extends DebugEnhancedLogging {
   val schemaInstanceNamespace = "http://www.w3.org/2001/XMLSchema-instance"
 
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
+  val allowedAccessRights = List("ANONYMOUS", "RESTRICTED_REQUEST", "NONE")
 
   val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
 
@@ -386,6 +387,15 @@ package object metadata extends DebugEnhancedLogging {
         }
         if (!hasOnlyAllowedNamespaces) fail("files.xml: non-dc/dcterms elements found in some file elements")
       }
+    }
+  }
+
+  def filesXmlFilesHaveOnlyAllowedAccessRights(t: TargetBag): Try[Unit] = {
+    trace(())
+    t.tryFilesXml.map { xml =>
+      val accessRights = xml \ "file" \ "accessRights"
+      val hasOnlyAllowedAccessRights = accessRights.forall(r => allowedAccessRights.contains(r.text))
+      if (!hasOnlyAllowedAccessRights) fail("files.xml: invalid access right(s) in dct:accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE")
     }
   }
 

@@ -81,6 +81,7 @@ object ProfileVersion0 {
     NumberedRule("3.2.5", filesXmlAllFilesDescribedOnce, dependsOn = List("1.1.1(datadir)", "3.2.4")),
     NumberedRule("3.2.6", filesXmlAllFilesHaveFormat, dependsOn = List("3.2.2")),
     NumberedRule("3.2.7", filesXmlFilesHaveOnlyAllowedNamespaces, dependsOn = List("3.2.2")),
+    NumberedRule("3.2.8", filesXmlFilesHaveOnlyAllowedAccessRights, dependsOn = List("3.2.2")),
 
     // agreements.xml
     NumberedRule("3.3.1", xmlFileIfExistsConformsToSchema(Paths.get("metadata/depositor-info/agreements.xml"), "Agreements metadata schema", xmlValidators("agreements.xml"))),

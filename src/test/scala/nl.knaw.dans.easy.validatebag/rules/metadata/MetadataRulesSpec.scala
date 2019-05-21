@@ -323,6 +323,26 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       inputBag = "filesxml-invalid-default-namespace-child")
   }
 
+  "filesXmlFilesHaveOnlyAllowedAccessRights" should "fail if there is a dcterms:accessRight other than those defined in allowedAccessRights" in {
+    testRuleViolation(
+      rule = filesXmlFilesHaveOnlyAllowedAccessRights,
+      inputBag = "filesxml-invalid-access-rights",
+      includedInErrorMsg = "invalid access right(s) in dct:accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE"
+    )
+  }
+
+  it should "succeed when there is a valid dcterms:accessRight defined" in {
+    testRuleSuccess(
+      rule = filesXmlFilesHaveOnlyAllowedAccessRights,
+      inputBag = "filesxml-valid-access-rights")
+  }
+
+  it should "succeed when there is no dcterms:accessRight defined" in {
+    testRuleSuccess(
+      rule = filesXmlFilesHaveOnlyAllowedAccessRights,
+      inputBag = "valid-bag")
+  }
+
   "all files.xml rules" should "succeed if files.xml is correct" in {
     Seq[Rule](
       filesXmlConformsToSchemaIfFilesNamespaceDeclared(filesXmlValidator),
@@ -331,8 +351,9 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       filesXmlFileElementsAllHaveFilepathAttribute,
       filesXmlAllFilesDescribedOnce,
       filesXmlAllFilesHaveFormat,
-      filesXmlFilesHaveOnlyAllowedNamespaces)
-      .foreach(testRuleSuccess(_, inputBag = "metadata-correct"))
+      filesXmlFilesHaveOnlyAllowedNamespaces,
+      filesXmlFilesHaveOnlyAllowedAccessRights)
+    .foreach(testRuleSuccess(_, inputBag = "metadata-correct"))
   }
 
   // Reusing some test data. This rules is actually not used for files.xml.
