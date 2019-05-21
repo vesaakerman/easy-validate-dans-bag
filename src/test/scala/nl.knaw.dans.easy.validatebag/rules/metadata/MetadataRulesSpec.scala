@@ -323,15 +323,18 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       inputBag = "filesxml-invalid-default-namespace-child")
   }
 
-  "filesXmlFilesHaveOnlyAllowedAccessRights" should "fail if there is a dcterms:accessRight other than those defined in allowedAccessRights" in {
+  "filesXmlFilesHaveOnlyAllowedAccessRights" should "fail if there are access rights values other than those defined in allowedAccessRights" in {
     testRuleViolation(
       rule = filesXmlFilesHaveOnlyAllowedAccessRights,
       inputBag = "filesxml-invalid-access-rights",
-      includedInErrorMsg = "invalid access right(s) in dct:accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE"
+      includedInErrorMsg =
+        "(0) files.xml: invalid access rights 'open access' in accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)\n" +
+        "(1) files.xml: invalid access rights 'KNOWN' in accessibleToRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)\n" +
+        "(2) files.xml: invalid access rights 'ANONYM' in visibleToRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)"
     )
   }
 
-  it should "succeed when there is a valid dcterms:accessRight defined" in {
+  it should "succeed when all access rights are valid" in {
     testRuleSuccess(
       rule = filesXmlFilesHaveOnlyAllowedAccessRights,
       inputBag = "filesxml-valid-access-rights")

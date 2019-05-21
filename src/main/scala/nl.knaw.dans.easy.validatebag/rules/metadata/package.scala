@@ -392,11 +392,25 @@ package object metadata extends DebugEnhancedLogging {
 
   def filesXmlFilesHaveOnlyAllowedAccessRights(t: TargetBag): Try[Unit] = {
     trace(())
-    t.tryFilesXml.map { xml =>
-      val accessRights = xml \ "file" \ "accessRights"
-      val hasOnlyAllowedAccessRights = accessRights.forall(r => allowedAccessRights.contains(r.text))
-      if (!hasOnlyAllowedAccessRights) fail("files.xml: invalid access right(s) in dct:accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE")
+      for {
+        xml <- t.tryFilesXml
+        accessRights <- getAccessRightElements(xml)
+        _ <- accessRights.map(validateAccessRights).collectResults.recoverWith {
+          case ce: CompositeException => Try(fail(ce.getMessage))
+        }
+      } yield ()
     }
+
+  private def getAccessRightElements(xml: Elem): Try[Seq[NodeSeq]] = Try {
+    trace(())
+    val accessRights = xml \ "file" \ "accessRights"
+    val accessibleToRights = xml \ "file" \ "accessibleToRights"
+    val visibleToRights = xml \ "file" \ "visibleToRights"
+    Seq(accessRights, accessibleToRights, visibleToRights)
+  }
+
+  private def validateAccessRights(nodes: NodeSeq): Try[Unit] = Try {
+    nodes.foreach(node => if (!allowedAccessRights.contains(node.text)) fail(s"files.xml: invalid access rights '${node.text}' in ${node.label} element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)"))
   }
 
   def optionalFileIsUtf8Decodable(f: Path)(t: TargetBag): Try[Unit] = {

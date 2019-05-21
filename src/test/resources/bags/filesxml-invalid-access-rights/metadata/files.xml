@@ -9,5 +9,7 @@
         <dcterms:format>application/x-zip-compressed</dcterms:format>
         <dcterms:created>2019-03-26</dcterms:created>
         <dcterms:accessRights>open access</dcterms:accessRights>
+        <accessibleToRights>KNOWN</accessibleToRights>
+        <visibleToRights>ANONYM</visibleToRights>
     </file>
 </files>
