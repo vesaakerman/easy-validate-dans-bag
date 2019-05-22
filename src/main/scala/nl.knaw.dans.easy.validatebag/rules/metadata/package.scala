@@ -405,7 +405,7 @@ package object metadata extends DebugEnhancedLogging {
   }
 
   private def validateAccessRights(accessRights: Node): Try[Unit] = Try {
-    if (!allowedAccessRights.contains(accessRights.text)) fail(s"files.xml: invalid access rights '${accessRights.text}' in ${accessRights.label} element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)")
+    if (!allowedAccessRights.contains(accessRights.text)) fail(s"files.xml: invalid access rights '${accessRights.text}' in ${accessRights.label} element (allowed values ${allowedAccessRights.mkString(", ")})")
   }
 
   def optionalFileIsUtf8Decodable(f: Path)(t: TargetBag): Try[Unit] = {
