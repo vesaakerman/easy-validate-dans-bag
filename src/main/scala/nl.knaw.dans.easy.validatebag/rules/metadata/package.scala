@@ -394,14 +394,18 @@ package object metadata extends DebugEnhancedLogging {
     trace(())
       for {
         xml <- t.tryFilesXml
-        _ <- (xml \ "file" \ "accessRights").map(validateAccessRights).collectResults.recoverWith {
+        _ <- getAccessRightElements(xml).map(validateAccessRights).collectResults.recoverWith {
           case ce: CompositeException => Try(fail(ce.getMessage))
         }
       } yield ()
     }
 
-  private def validateAccessRights(accessRights: NodeSeq): Try[Unit] = Try {
-    accessRights.foreach(rights => if (!allowedAccessRights.contains(rights.text)) fail(s"files.xml: invalid access rights '${rights.text}' in ${rights.label} element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)"))
+  private def getAccessRightElements(xml: Elem): NodeSeq = {
+    xml \ "file" \ "accessRights"
+  }
+
+  private def validateAccessRights(accessRights: Node): Try[Unit] = Try {
+    if (!allowedAccessRights.contains(accessRights.text)) fail(s"files.xml: invalid access rights '${accessRights.text}' in ${accessRights.label} element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)")
   }
 
   def optionalFileIsUtf8Decodable(f: Path)(t: TargetBag): Try[Unit] = {
