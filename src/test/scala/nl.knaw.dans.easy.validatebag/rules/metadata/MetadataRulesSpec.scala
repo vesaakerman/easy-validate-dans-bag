@@ -328,9 +328,8 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       rule = filesXmlFilesHaveOnlyAllowedAccessRights,
       inputBag = "filesxml-invalid-access-rights",
       includedInErrorMsg =
-        "(0) files.xml: invalid access rights 'open access' in accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)\n" +
-        "(1) files.xml: invalid access rights 'KNOWN' in accessibleToRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)\n" +
-        "(2) files.xml: invalid access rights 'ANONYM' in visibleToRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)"
+        "(0) files.xml: invalid access rights 'restricted access' in accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)\n" +
+        "(1) files.xml: invalid access rights 'admin' in accessRights element (allowed values ANONYMOUS, RESTRICTED_REQUEST and NONE)\n"
     )
   }
 

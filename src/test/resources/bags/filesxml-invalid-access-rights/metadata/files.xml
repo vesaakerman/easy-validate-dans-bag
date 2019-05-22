@@ -8,8 +8,7 @@
         <dcterms:description>584102</dcterms:description>
         <dcterms:format>application/x-zip-compressed</dcterms:format>
         <dcterms:created>2019-03-26</dcterms:created>
-        <dcterms:accessRights>open access</dcterms:accessRights>
-        <accessibleToRights>KNOWN</accessibleToRights>
-        <visibleToRights>ANONYM</visibleToRights>
+        <dcterms:accessRights>restricted access</dcterms:accessRights>
+        <dcterms:accessRights>admin</dcterms:accessRights>
     </file>
 </files>
