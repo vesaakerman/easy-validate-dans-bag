@@ -105,7 +105,7 @@ package object metadata extends DebugEnhancedLogging {
     } yield ()
   }
 
-  private def getDoiIdentifiers(ddm: Elem): Try[Seq[String]] = Try {
+  private def getDoiIdentifiers(ddm: Node): Try[Seq[String]] = Try {
     val dois = (ddm \\ "identifier").filter(hasXsiType(identifierTypeNamespace, "DOI"))
     if (dois.isEmpty) fail("DOI identifier is missing")
     dois.map(_.text)
@@ -129,12 +129,12 @@ package object metadata extends DebugEnhancedLogging {
    * @return normalized URI
    */
   def normalizeLicenseUri(uri: URI): Try[URI] = Try {
-    def normalizeLicenseUriPath(p: String) = {
+    def normalizeLicenseUriPath(p: String): String = {
       val nTrailingSlashes = p.toCharArray.reverse.takeWhile(_ == '/').length
       p.substring(0, p.length - nTrailingSlashes)
     }
 
-    def normalizeLicenseUriScheme(s: String) = {
+    def normalizeLicenseUriScheme(s: String): String = {
       if (s == "http" || s == "https") "http"
       else throw new IllegalArgumentException(s"Only http or https license URIs allowed. URI scheme found: $s")
     }
@@ -161,7 +161,7 @@ package object metadata extends DebugEnhancedLogging {
     } yield ()
   }
 
-  private def daisAreValid(ddm: Elem): Try[Unit] = Try {
+  private def daisAreValid(ddm: Node): Try[Unit] = Try {
     val dais = (ddm \\ "DAI").filter(_.namespace == dcxDaiNamespace)
     logger.debug(s"DAIs to check: ${ dais.mkString(", ") }")
     val invalidDais = dais.map(_.text.stripPrefix(daiPrefix)).filterNot(s => digest(s.slice(0, s.length - 1), 9) == s.last)
@@ -204,18 +204,22 @@ package object metadata extends DebugEnhancedLogging {
     } yield ()
   }
 
-  private def getPolygonPosLists(parent: Elem): Try[Seq[Node]] = Try {
+  private def getPolygonPosLists(parent: Node): Try[Seq[Node]] = Try {
     trace(())
     val polygons = getPolygons(parent)
     polygons.flatMap(_ \\ "posList")
   }
 
-  private def getPolygons(parent: Elem) = (parent \\ "Polygon").filter(_.namespace == gmlNamespace)
+  private def getPolygons(parent: Node): NodeSeq = {
+    (parent \\ "Polygon").filter(_.namespace == gmlNamespace)
+  }
 
   private def validatePosList(node: Node): Try[Unit] = Try {
     trace(node)
 
-    def offendingPosListMsg(values: Seq[String]) = s"(Offending posList starts with: ${ values.take(10).mkString(", ") }...)"
+    def offendingPosListMsg(values: Seq[String]): String = {
+      s"(Offending posList starts with: ${ values.take(10).mkString(", ") }...)"
+    }
 
     val values = node.text.split("""\s+""").toList
     val numberOfValues = values.size
@@ -237,11 +241,11 @@ package object metadata extends DebugEnhancedLogging {
     }
   }
 
-  private def getMultiSurfaces(ddm: Elem) = Try {
-    (ddm \\ "MultiSurface").filter(_.namespace == gmlNamespace).asInstanceOf[Seq[Elem]]
+  private def getMultiSurfaces(ddm: Node): Try[NodeSeq] = Try {
+    (ddm \\ "MultiSurface").filter(_.namespace == gmlNamespace)
   }
 
-  private def validateMultiSurface(ms: Elem): Try[Unit] = {
+  private def validateMultiSurface(ms: Node): Try[Unit] = {
     val polygons = getPolygons(ms)
     if (polygons.isEmpty || polygons.flatMap(_.attribute("srsName").map(_.text)).distinct.size <= 1) Success(())
     else Try(fail("Found MultiSurface element containing polygons with different srsNames"))
@@ -260,11 +264,11 @@ package object metadata extends DebugEnhancedLogging {
     }
   }
 
-  private def getGmlPoints(ddm: Elem) = Try {
-    ((ddm \\ "Point") ++ (ddm \\ "lowerCorner") ++ (ddm \\ "upperCorner")).filter(_.namespace == gmlNamespace).asInstanceOf[Seq[Elem]]
+  private def getGmlPoints(ddm: Node): Try[NodeSeq] = Try {
+    ((ddm \\ "Point") ++ (ddm \\ "lowerCorner") ++ (ddm \\ "upperCorner")).filter(_.namespace == gmlNamespace)
   }
 
-  private def validatePoint(point: Elem) = {
+  private def validatePoint(point: Node): Try[Unit] = {
     val coordinates = point.text.trim.split("""\s+""")
     if (coordinates.length > 1) Success(())
     else Try(fail(s"Point with only one coordinate: ${ point.text.trim }"))
