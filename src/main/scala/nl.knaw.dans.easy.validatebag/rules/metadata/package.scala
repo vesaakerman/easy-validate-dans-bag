@@ -394,26 +394,25 @@ package object metadata extends DebugEnhancedLogging {
     trace(())
     for {
       xml <- t.tryFilesXml
-      files <- getFileElements(xml)
-      _ <- validateFileAccessRights(files)
+      _ <- validateFileAccessRights(xml \ "file")
     } yield ()
   }
 
-  private def getFileElements(xml: Elem): Try[NodeSeq] = Try {
-    xml \ "file"
-  }
-
-  private def validateFileAccessRights(files: NodeSeq): Try[Seq[Unit]] = {
-    files.map(validateAccessRights).collectResults.recoverWith {
+  private def validateFileAccessRights(files: NodeSeq): Try[Unit] = {
+    files.map(validateAccessRights).collectResults.map(_ => ()).recoverWith {
       case ce: CompositeException => Try(fail(ce.getMessage))
     }
   }
 
-  private def validateAccessRights(file: Node): Try[Unit] = Try {
+  private def validateAccessRights(file: Node): Try[Unit] = {
     val accessRights = file \ "accessRights"
-    accessRights.foreach(rights =>
-      if (!allowedAccessRights.contains(rights.text)) fail(s"files.xml: invalid access rights '${ rights.text }' in accessRights element, file ${ file \@ "filepath" } (allowed values ${ allowedAccessRights.mkString(", ") })")
+    accessRights.map(rights =>
+      if (!allowedAccessRights.contains(rights.text))
+        Try { fail(s"files.xml: invalid access rights '${ rights.text }' in accessRights element, file ${ file \@ "filepath" } (allowed values ${ allowedAccessRights.mkString(", ") })") }
+      else Success(())
     )
+      .collectResults
+      .map(_ => ())
   }
 
   def optionalFileIsUtf8Decodable(f: Path)(t: TargetBag): Try[Unit] = {

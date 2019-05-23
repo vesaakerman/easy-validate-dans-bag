@@ -10,5 +10,6 @@
         <dcterms:format>application/x-zip-compressed</dcterms:format>
         <dcterms:created>2019-03-26</dcterms:created>
         <dcterms:accessRights>restricted access</dcterms:accessRights>
+        <dcterms:accessRights>admin</dcterms:accessRights>
     </file>
 </files>

@@ -328,8 +328,9 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       rule = filesXmlFilesHaveOnlyAllowedAccessRights,
       inputBag = "filesxml-invalid-access-rights",
       includedInErrorMsg =
-        "(0) files.xml: invalid access rights 'open access' in accessRights element, file data/leeg.txt (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)\n" +
-        "(1) files.xml: invalid access rights 'restricted access' in accessRights element, file data/leeg2.txt (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)\n"
+        """(0) files.xml: invalid access rights 'open access' in accessRights element, file data/leeg.txt (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)
+          |(1) files.xml: invalid access rights 'restricted access' in accessRights element, file data/leeg2.txt (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)
+          |(2) files.xml: invalid access rights 'admin' in accessRights element, file data/leeg2.txt (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)""".stripMargin
     )
   }
 
@@ -355,7 +356,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       filesXmlAllFilesHaveFormat,
       filesXmlFilesHaveOnlyAllowedNamespaces,
       filesXmlFilesHaveOnlyAllowedAccessRights)
-    .foreach(testRuleSuccess(_, inputBag = "metadata-correct"))
+      .foreach(testRuleSuccess(_, inputBag = "metadata-correct"))
   }
 
   // Reusing some test data. This rules is actually not used for files.xml.
