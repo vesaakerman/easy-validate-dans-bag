@@ -39,6 +39,7 @@ package object metadata extends DebugEnhancedLogging {
   val schemaInstanceNamespace = "http://www.w3.org/2001/XMLSchema-instance"
 
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
+  val allowedAccessRights = List("ANONYMOUS", "RESTRICTED_REQUEST", "NONE")
 
   val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
 
@@ -391,6 +392,31 @@ package object metadata extends DebugEnhancedLogging {
         if (!hasOnlyAllowedNamespaces) fail("files.xml: non-dc/dcterms elements found in some file elements")
       }
     }
+  }
+
+  def filesXmlFilesHaveOnlyAllowedAccessRights(t: TargetBag): Try[Unit] = {
+    trace(())
+    for {
+      xml <- t.tryFilesXml
+      _ <- validateFileAccessRights(xml \ "file")
+    } yield ()
+  }
+
+  private def validateFileAccessRights(files: NodeSeq): Try[Unit] = {
+    files.map(validateAccessRights).collectResults.map(_ => ()).recoverWith {
+      case ce: CompositeException => Try(fail(ce.getMessage))
+    }
+  }
+
+  private def validateAccessRights(file: Node): Try[Unit] = {
+    val accessRights = file \ "accessRights"
+    accessRights.map(rights =>
+      if (!allowedAccessRights.contains(rights.text))
+        Try { fail(s"files.xml: invalid access rights '${ rights.text }' in accessRights element for file: '${ file \@ "filepath" }' (allowed values ${ allowedAccessRights.mkString(", ") })") }
+      else Success(())
+    )
+      .collectResults
+      .map(_ => ())
   }
 
   def optionalFileIsUtf8Decodable(f: Path)(t: TargetBag): Try[Unit] = {

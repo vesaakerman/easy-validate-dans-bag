@@ -329,6 +329,29 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       inputBag = "filesxml-invalid-default-namespace-child")
   }
 
+  "filesXmlFilesHaveOnlyAllowedAccessRights" should "fail if there are access rights values other than those defined in allowedAccessRights" in {
+    testRuleViolation(
+      rule = filesXmlFilesHaveOnlyAllowedAccessRights,
+      inputBag = "filesxml-invalid-access-rights",
+      includedInErrorMsg =
+        """(0) files.xml: invalid access rights 'open access' in accessRights element for file: 'data/leeg.txt' (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)
+          |(1) files.xml: invalid access rights 'restricted access' in accessRights element for file: 'data/leeg2.txt' (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)
+          |(2) files.xml: invalid access rights 'admin' in accessRights element for file: 'data/leeg2.txt' (allowed values ANONYMOUS, RESTRICTED_REQUEST, NONE)""".stripMargin
+    )
+  }
+
+  it should "succeed when all access rights are valid" in {
+    testRuleSuccess(
+      rule = filesXmlFilesHaveOnlyAllowedAccessRights,
+      inputBag = "filesxml-valid-access-rights")
+  }
+
+  it should "succeed when there is no dcterms:accessRight defined" in {
+    testRuleSuccess(
+      rule = filesXmlFilesHaveOnlyAllowedAccessRights,
+      inputBag = "valid-bag")
+  }
+
   "all files.xml rules" should "succeed if files.xml is correct" in {
     Seq[Rule](
       filesXmlConformsToSchemaIfFilesNamespaceDeclared(filesXmlValidator),
@@ -337,7 +360,8 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       filesXmlFileElementsAllHaveFilepathAttribute,
       filesXmlAllFilesDescribedOnce,
       filesXmlAllFilesHaveFormat,
-      filesXmlFilesHaveOnlyAllowedNamespaces)
+      filesXmlFilesHaveOnlyAllowedNamespaces,
+      filesXmlFilesHaveOnlyAllowedAccessRights)
       .foreach(testRuleSuccess(_, inputBag = "metadata-correct"))
   }
 
