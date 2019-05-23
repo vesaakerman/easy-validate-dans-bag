@@ -408,7 +408,7 @@ package object metadata extends DebugEnhancedLogging {
     val accessRights = file \ "accessRights"
     accessRights.map(rights =>
       if (!allowedAccessRights.contains(rights.text))
-        Try { fail(s"files.xml: invalid access rights '${ rights.text }' in accessRights element, file ${ file \@ "filepath" } (allowed values ${ allowedAccessRights.mkString(", ") })") }
+        Try { fail(s"files.xml: invalid access rights '${ rights.text }' in accessRights element for file: '${ file \@ "filepath" }' (allowed values ${ allowedAccessRights.mkString(", ") })") }
       else Success(())
     )
       .collectResults
