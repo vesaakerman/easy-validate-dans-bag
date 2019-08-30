@@ -16,22 +16,20 @@
 package nl.knaw.dans.easy.validatebag.rules.metadata
 
 import java.net.{ URI, URL }
-import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 
-import better.files.File
 import javax.xml.validation.SchemaFactory
 import nl.knaw.dans.easy.validatebag._
 import nl.knaw.dans.lib.error._
+import org.apache.commons.configuration.PropertiesConfiguration
 
+import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
 class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
   private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
-  private lazy val licenses = File("src/main/assembly/dist/cfg/licenses.txt")
-    .contentAsString(StandardCharsets.UTF_8)
-    .split("""\s*\n\s*""")
-    .filterNot(_.isEmpty)
+  private lazy val licenses = new PropertiesConfiguration(licensesDir.resolve("licenses.properties").toFile)
+    .getKeys.asScala.filterNot(_.isEmpty)
     .map(s => normalizeLicenseUri(new URI(s))).toSeq.collectResults.unsafeGetOrThrow
 
   override def beforeEach() {

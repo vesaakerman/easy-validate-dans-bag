@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy
 
+import java.nio.file.Paths
+
 import better.files._
 
 import scala.util.Try
@@ -32,6 +34,8 @@ package object validatebag {
     0 -> "doi:10.17026/dans-z52-ybfe",
     1 -> "doi:10.17026/dans-zf3-q54n"
   )
+
+  val licensesDir = Paths.get("target/easy-licenses/licenses")
 
   object InfoPackageType extends Enumeration {
     type InfoPackageType = Value
