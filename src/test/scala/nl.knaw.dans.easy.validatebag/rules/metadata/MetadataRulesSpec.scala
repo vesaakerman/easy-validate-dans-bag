@@ -28,6 +28,7 @@ import scala.util.{ Failure, Try }
 
 class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
   private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
+  private lazy val licensesDir = Paths.get(getClass.getResource("/licenses").toURI)
   private lazy val licenses = new PropertiesConfiguration(licensesDir.resolve("licenses.properties").toFile)
     .getKeys.asScala.filterNot(_.isEmpty)
     .map(s => normalizeLicenseUri(new URI(s))).toSeq.collectResults.unsafeGetOrThrow

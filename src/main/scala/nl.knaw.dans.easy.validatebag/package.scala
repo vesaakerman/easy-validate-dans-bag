@@ -35,8 +35,6 @@ package object validatebag {
     1 -> "doi:10.17026/dans-zf3-q54n"
   )
 
-  val licensesDir = Paths.get("target/easy-licenses/licenses")
-
   object InfoPackageType extends Enumeration {
     type InfoPackageType = Value
     val SIP, AIP, BOTH = Value

@@ -37,6 +37,7 @@ object Configuration {
       .find(Files.exists(_))
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
 
+    val licensesDir = Paths.get(getClass.getResource("/licenses").toURI)
     new Configuration(
       version = managed(Source.fromFile(home.resolve("bin/version").toFile)).acquireAndGet(_.mkString),
       properties = new PropertiesConfiguration() {
