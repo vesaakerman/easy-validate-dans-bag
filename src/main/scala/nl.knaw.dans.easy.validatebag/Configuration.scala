@@ -37,15 +37,14 @@ object Configuration {
       .find(Files.exists(_))
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
 
-    val licensesDir = Paths.get(getClass.getResource("/licenses").toURI)
+    val licenses = new PropertiesConfiguration(home.resolve("lic").toFile)
     new Configuration(
       version = managed(Source.fromFile(home.resolve("bin/version").toFile)).acquireAndGet(_.mkString),
       properties = new PropertiesConfiguration() {
         setDelimiterParsingDisabled(true)
         load(cfgPath.resolve("application.properties").toFile)
       },
-      allowedLicenses = new PropertiesConfiguration(licensesDir.resolve("licenses.properties").toFile)
-        .getKeys.asScala.filterNot(_.isEmpty)
+      allowedLicenses = licenses.getKeys.asScala.filterNot(_.isEmpty)
         .map(s => normalizeLicenseUri(new URI(s))).toSeq.collectResults.unsafeGetOrThrow
     )
   }
