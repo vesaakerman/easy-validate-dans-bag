@@ -15,8 +15,6 @@
  */
 package nl.knaw.dans.easy
 
-import java.nio.file.Paths
-
 import better.files._
 
 import scala.util.Try
@@ -28,7 +26,6 @@ package object validatebag {
   type BagDir = File
   type Rule = TargetBag => Try[Unit]
   type RuleBase = Seq[NumberedRule]
-
 
   val profileVersionDois = Map(
     0 -> "doi:10.17026/dans-z52-ybfe",
