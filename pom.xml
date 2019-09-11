@@ -200,7 +200,8 @@
                             <group>Applications/Archiving</group>
                             <mappings combine.children="append">
                                 <mapping>
-                                    <directory>/etc/${dans-provider-name}/${project.artifactId}/lic</directory>
+                                    <directory>/etc/opt/${dans-provider-name}/${project.artifactId}/lic</directory>
+                                    <configuration>${rpm-replace-configuration}</configuration>
                                     <filemode>755</filemode>
                                     <sources>
                                         <source>

@@ -37,7 +37,7 @@ object Configuration {
       .find(Files.exists(_))
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
 
-    val licenses = new PropertiesConfiguration(home.resolve("lic/licenses.properties").toFile)
+    val licenses = new PropertiesConfiguration(Paths.get(s"/etc/opt/dans.knaw.nl/easy-validate-dans-bag/lic/licenses.properties").toFile)
     new Configuration(
       version = managed(Source.fromFile(home.resolve("bin/version").toFile)).acquireAndGet(_.mkString),
       properties = new PropertiesConfiguration() {
