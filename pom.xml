@@ -32,6 +32,7 @@
     <inceptionYear>2018</inceptionYear>
     <properties>
         <main-class>nl.knaw.dans.easy.validatebag.Command</main-class>
+        <easy.licenses.version>1.0.1-SNAPSHOT</easy.licenses.version>
     </properties>
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
@@ -171,7 +172,7 @@
                                 <artifactItem>
                                     <groupId>nl.knaw.dans.easy</groupId>
                                     <artifactId>easy-licenses</artifactId>
-                                    <version>1.0.1-SNAPSHOT</version>
+                                    <version>${easy.licenses.version}</version>
                                     <outputDirectory>${project.build.directory}/easy-licenses</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -201,7 +202,6 @@
                                 <mapping>
                                     <directory>/etc/opt/${dans-provider-name}/${project.artifactId}/lic</directory>
                                     <configuration>${rpm-replace-configuration}</configuration>
-                                    <filemode>755</filemode>
                                     <sources>
                                         <source>
                                             <location>target/easy-licenses/licenses</location>
