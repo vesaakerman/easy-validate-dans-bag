@@ -16,15 +16,14 @@
 package nl.knaw.dans.easy.validatebag
 
 import java.net.URI
-import java.nio.charset.StandardCharsets
 import java.nio.file.{ Files, Path, Paths }
 
-import better.files.File
 import nl.knaw.dans.easy.validatebag.rules.metadata.normalizeLicenseUri
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.PropertiesConfiguration
 import resource.managed
 
+import scala.collection.JavaConverters._
 import scala.io.Source
 
 case class Configuration(version: String, properties: PropertiesConfiguration, allowedLicenses: Seq[URI])
@@ -38,15 +37,14 @@ object Configuration {
       .find(Files.exists(_))
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
 
+    val licenses = new PropertiesConfiguration(cfgPath.resolve("lic/licenses.properties").toFile)
     new Configuration(
       version = managed(Source.fromFile(home.resolve("bin/version").toFile)).acquireAndGet(_.mkString),
       properties = new PropertiesConfiguration() {
         setDelimiterParsingDisabled(true)
         load(cfgPath.resolve("application.properties").toFile)
       },
-      allowedLicenses = (File(cfgPath) / "licenses.txt")
-        .lines(StandardCharsets.UTF_8)
-        .filterNot(_.isEmpty)
+      allowedLicenses = licenses.getKeys.asScala.filterNot(_.isEmpty)
         .map(s => normalizeLicenseUri(new URI(s))).toSeq.collectResults.unsafeGetOrThrow
     )
   }

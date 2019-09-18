@@ -27,7 +27,6 @@ package object validatebag {
   type Rule = TargetBag => Try[Unit]
   type RuleBase = Seq[NumberedRule]
 
-
   val profileVersionDois = Map(
     0 -> "doi:10.17026/dans-z52-ybfe",
     1 -> "doi:10.17026/dans-zf3-q54n"
