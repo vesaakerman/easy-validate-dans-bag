@@ -41,8 +41,6 @@
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>easy-validate-dans-bag</include>
-                <include>easy-validate-dans-bag-service-start</include>
-                <include>easy-validate-dans-bag-initd.sh</include>
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>
