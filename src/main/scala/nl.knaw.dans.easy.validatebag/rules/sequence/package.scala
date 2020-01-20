@@ -22,12 +22,11 @@ import java.util.UUID
 import nl.knaw.dans.easy.validatebag.validation.fail
 import nl.knaw.dans.easy.validatebag.{ BagStore, TargetBag }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.lib.string._
 
-import scala.util.{ Success, Try }
+import scala.util.{ Failure, Success, Try }
 
 package object sequence extends DebugEnhancedLogging {
-  private val uuidHexLength = 32
-  private val uuidCanonicalNumberOfDashes = 4
 
   def bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStore: BagStore)(t: TargetBag): Try[Unit] = {
     trace(())
@@ -49,8 +48,10 @@ package object sequence extends DebugEnhancedLogging {
     failIfNotTrueWithMessage(uri.getScheme == "urn", "Is-Version-Of value must be a URN")
     failIfNotTrueWithMessage(uri.getSchemeSpecificPart.startsWith("uuid:"), "Is-Version-Of URN must be of subtype UUID")
     val Array(_, uuidStr) = uri.getSchemeSpecificPart.split(':')
-    failIfNotTrueWithMessage(uuidStr.length == uuidHexLength + uuidCanonicalNumberOfDashes, "UUID must be in canonical textual representation")
-    UUID.fromString(uuidStr)
+    uuidStr.toUUID.toTry match {
+      case Success(uuid) => uuid
+      case Failure(e) => fail(e.getMessage)
+    }
   }
 
   private def failIfNotTrueWithMessage(bool: Boolean, msg: String): Unit = {
