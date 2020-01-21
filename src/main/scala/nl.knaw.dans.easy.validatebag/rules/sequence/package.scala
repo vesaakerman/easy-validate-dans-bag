@@ -21,10 +21,11 @@ import java.util.UUID
 
 import nl.knaw.dans.easy.validatebag.validation.fail
 import nl.knaw.dans.easy.validatebag.{ BagStore, TargetBag }
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.string._
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Success, Try }
 
 package object sequence extends DebugEnhancedLogging {
 
@@ -48,10 +49,7 @@ package object sequence extends DebugEnhancedLogging {
     failIfNotTrueWithMessage(uri.getScheme == "urn", "Is-Version-Of value must be a URN")
     failIfNotTrueWithMessage(uri.getSchemeSpecificPart.startsWith("uuid:"), "Is-Version-Of URN must be of subtype UUID")
     val Array(_, uuidStr) = uri.getSchemeSpecificPart.split(':')
-    uuidStr.toUUID.toTry match {
-      case Success(uuid) => uuid
-      case Failure(e) => fail(e.getMessage)
-    }
+    uuidStr.toUUID.toTry.getOrRecover(e => fail(e.getMessage))
   }
 
   private def failIfNotTrueWithMessage(bool: Boolean, msg: String): Unit = {
