@@ -162,6 +162,17 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       includedInErrorMsg = "Invalid DOIs: 11.1234/fantasy-doi-id, 10/1234/fantasy-doi-id, 10.1234.fantasy-doi-id, http://doi.org/10.1234.567/issn-987-654, https://doi.org/10.1234.567/issn-987-654")
   }
 
+  "allUrlsAreValid" should "report all url values where the protocol is not one of the accepted protocols" in {
+    testRuleViolation(
+      rule = allUrlsAreValid,
+      inputBag = "ddm-incorrect-attributes",
+      includedInErrorMsg =
+      """(0) protocol 'ettp' in URI 'ettp://creativecommons.org/licenses/by-nc-sa/4.0/' is not one of the accepted protocols [http,https]
+        |(1) protocol 'xttps' in URI 'xttps://data.cultureelerfgoed.nl/term/id/pan/17-01-01' is not one of the accepted protocols [http,https]
+        |(2) protocol 'xttps' in URI 'xttps://www.portable-antiquities.nl/pan/#/object/public/8136' is not one of the accepted protocols [http,https]
+        |(3) protocol 'xttps' in URI 'xttps://data.cultureelerfgoed.nl/term/id/pan/PAN' is not one of the accepted protocols [http,https]""".stripMargin)
+  }
+
   "ddmGmlPolygonPosListIsWellFormed" should "report error if odd number of values in posList" in {
     testRuleViolation(
       rule = ddmGmlPolygonPosListIsWellFormed,

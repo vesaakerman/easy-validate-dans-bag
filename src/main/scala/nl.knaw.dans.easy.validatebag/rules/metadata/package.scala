@@ -20,11 +20,12 @@ import java.nio.ByteBuffer
 import java.nio.charset.{ CharacterCodingException, Charset }
 import java.nio.file.{ Path, Paths }
 
-import nl.knaw.dans.easy.validatebag.validation._ 
+import nl.knaw.dans.easy.validatebag.validation._
 import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
+import scala.collection._
 import scala.util.matching.Regex
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
@@ -44,6 +45,8 @@ package object metadata extends DebugEnhancedLogging {
   val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
 
   val daiPrefix = "info:eu-repo/dai/nl/"
+
+  val protocols = List("http", "https")
 
   def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)
                                      (t: TargetBag): Try[Unit] = {
@@ -92,7 +95,7 @@ package object metadata extends DebugEnhancedLogging {
               licenseUri <- getUri(license.text).recover { case _: URISyntaxException => fail("License must be a valid URI") }
               _ = if (licenseUri.getScheme != "http" && licenseUri.getScheme != "https") fail("License URI must have scheme http or https")
               normalizedLicenseUri <- normalizeLicenseUri(licenseUri)
-              _ = if (!allowedLicenses.contains(normalizedLicenseUri)) fail (s"Found unknown or unsupported license: $licenseUri")
+              _ = if (!allowedLicenses.contains(normalizedLicenseUri)) fail(s"Found unknown or unsupported license: $licenseUri")
             } yield ()).get
             if (rightsHolders.isEmpty) fail("Valid license found, but no rightsHolder specified")
           case Nil | _ :: Nil =>
@@ -309,6 +312,74 @@ package object metadata extends DebugEnhancedLogging {
 
   private def formatInvalidArchisIdentifiers(results: Seq[String]): Seq[String] = {
     results.zipWithIndex.map { case (msg, index) => s"(${ index + 1 }) $msg" }
+  }
+
+  def allUrlsAreValid(t: TargetBag): Try[Unit] = {
+    trace(())
+    val result = for {
+      ddm <- t.tryDdm
+      urlAttributeValues <- getUrlTypeAttributeValues(ddm)
+      urlElementValues <- getUrlTypeElementValues(ddm)
+      _ <- validateUrls(urlAttributeValues ++ urlElementValues)
+    } yield ()
+
+    result.recoverWith {
+      case ce: CompositeException => Try(fail(ce.getMessage))
+    }
+  }
+
+  private def getUrlTypeAttributeValues(ddm: Node): Try[Map[String, Seq[String]]] = Try {
+    val attributes = mutable.Map[String, Seq[String]]()
+
+    attributes += ("href" -> getAttributeValues(ddm, "href"))
+    List("schemeURI", "valueURI")
+      .foreach(attribute => attributes += (attribute -> getAttributeValues(ddm \\ "subject", attribute)))
+    attributes
+  }
+
+  private def getAttributeValues(nodes: NodeSeq, attribute: String): Seq[String] = {
+    (nodes \\ s"@$attribute")
+      .map(_.text)
+  }
+
+  private def getUrlTypeElementValues(ddm: Node): Try[Map[String, Seq[String]]] = Try {
+    val attributes = mutable.Map[String, Seq[String]]()
+
+    List("xsi:type", "scheme")
+      .foreach(attribute => attributes += (attribute -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL"))))
+    attributes
+  }
+
+  private def getElementValues(node: Node, attribute: String, attributeValues: List[String]): Seq[String] = {
+    (node \\ "_")
+      .withFilter(_.attributes
+        .filter(_.prefixedKey == attribute)
+        .filter(attributeValues contains _.value.text)
+        .nonEmpty)
+      .map(_.text)
+  }
+
+  private def validateUrls(attributes: Map[String, Seq[String]]): Try[Unit] = {
+    attributes
+      .map { case (name, urls) =>
+        urls.map(url =>
+          validateUrl(name, url)
+        )
+          .collectResults
+      }
+      .toSeq
+      .collectResults
+      .map(_ => ())
+  }
+
+  private def validateUrl(name: String, url: String): Try[Unit] = {
+    for {
+      uri <- getUri(url).recover { case _: URISyntaxException => fail(s"$url is not a valid URI") }
+      result <- if (!(protocols contains uri.toString.split(":").head))
+                  Try { fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ protocols.mkString(",") }]") }
+                else
+                  Success(())
+    } yield result
   }
 
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
