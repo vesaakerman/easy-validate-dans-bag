@@ -43,10 +43,11 @@ package object metadata extends DebugEnhancedLogging {
   val allowedAccessRights = List("ANONYMOUS", "RESTRICTED_REQUEST", "NONE")
 
   val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
+  val urnPattern: Regex = "^urn:[A-Za-z0-9][A-Za-z0-9-]{0,31}:[a-z0-9()+,\\-\\\\.:=@;$_!*'%/?#]+$".r
 
   val daiPrefix = "info:eu-repo/dai/nl/"
 
-  val protocols = List("http", "https")
+  val urlProtocols = List("http", "https")
 
   def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)
                                      (t: TargetBag): Try[Unit] = {
@@ -131,6 +132,10 @@ package object metadata extends DebugEnhancedLogging {
 
   private def syntacticallyValidDoi(doi: String): Boolean = {
     doiPattern.findFirstIn(doi).nonEmpty
+  }
+
+  private def syntacticallyValidUrn(urn: String): Boolean = {
+    urnPattern.findFirstIn(urn).nonEmpty
   }
 
   /**
@@ -320,7 +325,9 @@ package object metadata extends DebugEnhancedLogging {
       ddm <- t.tryDdm
       urlAttributeValues <- getUrlTypeAttributeValues(ddm)
       urlElementValues <- getUrlTypeElementValues(ddm)
-      _ <- validateUrls(urlAttributeValues ++ urlElementValues)
+      doiElementValues <- getDoiTypeElementValues(ddm)
+      urnElementValues <- getUrnTypeElementValues(ddm)
+      _ <- validateUrls(urlAttributeValues ++ urlElementValues ++ doiElementValues ++ urnElementValues)
     } yield ()
 
     result.recoverWith {
@@ -328,13 +335,13 @@ package object metadata extends DebugEnhancedLogging {
     }
   }
 
-  private def getUrlTypeAttributeValues(ddm: Node): Try[Map[String, Seq[String]]] = Try {
-    val attributes = mutable.Map[String, Seq[String]]()
+  private def getUrlTypeAttributeValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
+    val urls = mutable.Map[(String, String), Seq[String]]()
 
-    attributes += ("href" -> getAttributeValues(ddm, "href"))
+    urls += (("URL_ATTRIBUTE", "href") -> getAttributeValues(ddm, "href"))
     List("schemeURI", "valueURI")
-      .foreach(attribute => attributes += (attribute -> getAttributeValues(ddm \\ "subject", attribute)))
-    attributes
+      .foreach(attribute => urls += (("URL_ATTRIBUTE", attribute) -> getAttributeValues(ddm \\ "subject", attribute)))
+    urls
   }
 
   private def getAttributeValues(nodes: NodeSeq, attribute: String): Seq[String] = {
@@ -342,12 +349,20 @@ package object metadata extends DebugEnhancedLogging {
       .map(_.text)
   }
 
-  private def getUrlTypeElementValues(ddm: Node): Try[Map[String, Seq[String]]] = Try {
-    val attributes = mutable.Map[String, Seq[String]]()
+  private def getUrlTypeElementValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
+    val urls = mutable.Map[(String, String), Seq[String]]()
 
     List("xsi:type", "scheme")
-      .foreach(attribute => attributes += (attribute -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL"))))
-    attributes
+      .foreach(attribute => urls += (("URL", attribute) -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL", "URI", "URL"))))
+    urls
+  }
+
+  private def getDoiTypeElementValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
+    Map(("DOI", "scheme") -> getElementValues(ddm, "scheme", List("DOI")))
+  }
+
+  private def getUrnTypeElementValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
+    Map(("URN", "scheme") -> getElementValues(ddm, "scheme", List("URN")))
   }
 
   private def getElementValues(node: Node, attribute: String, attributeValues: List[String]): Seq[String] = {
@@ -359,12 +374,10 @@ package object metadata extends DebugEnhancedLogging {
       .map(_.text)
   }
 
-  private def validateUrls(attributes: Map[String, Seq[String]]): Try[Unit] = {
-    attributes
-      .map { case (name, urls) =>
-        urls.map(url =>
-          validateUrl(name, url)
-        )
+  private def validateUrls(urlsMap: Map[(String, String), Seq[String]]): Try[Unit] = {
+    urlsMap
+      .map { case (key, urls) =>
+        urls.map(url => validateUrl(url, key))
           .collectResults
       }
       .toSeq
@@ -372,14 +385,39 @@ package object metadata extends DebugEnhancedLogging {
       .map(_ => ())
   }
 
-  private def validateUrl(name: String, url: String): Try[Unit] = {
+  private def validateUrl(url: String, key: (String, String)): Try[Unit] = {
+    key match {
+      case ("URL_ATTRIBUTE", name) => validateUrlType(url, "URL_ATTRIBUTE", name)
+      case ("URL", name) => validateUrlType(url, "URL", name)
+      case ("DOI", _) => validateDoiType(url)
+      case ("URN", _) => validateUrnType(url)
+    }
+  }
+
+  private def validateUrlType(url: String, urlType: String, name: String): Try[Unit] = {
+    val inAttributeValue = if (urlType == "URL_ATTRIBUTE") s" (value of attribute '${ name }')"
+                        else ""
     for {
       uri <- getUri(url).recover { case _: URISyntaxException => fail(s"$url is not a valid URI") }
-      result <- if (!(protocols contains uri.toString.split(":").head))
-                  Try { fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ protocols.mkString(",") }]") }
+      _ <- if (!(urlProtocols contains uri.toString.split(":").head))
+                  Try { fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$inAttributeValue") }
                 else
                   Success(())
-    } yield result
+    } yield ()
+  }
+
+  private def validateDoiType(doi: String): Try[Unit] = {
+    if (syntacticallyValidDoi(doi))
+      Success(())
+    else
+      Try { fail(s"DOI '$doi' is not valid") }
+  }
+
+  private def validateUrnType(urn: String): Try[Unit] = {
+    if (syntacticallyValidUrn(urn))
+      Success(())
+    else
+      Try { fail(s"URN '$urn' is not valid") }
   }
 
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
