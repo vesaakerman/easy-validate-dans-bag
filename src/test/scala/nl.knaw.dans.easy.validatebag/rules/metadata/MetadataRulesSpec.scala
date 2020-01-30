@@ -162,15 +162,23 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       includedInErrorMsg = "Invalid DOIs: 11.1234/fantasy-doi-id, 10/1234/fantasy-doi-id, 10.1234.fantasy-doi-id, http://doi.org/10.1234.567/issn-987-654, https://doi.org/10.1234.567/issn-987-654")
   }
 
-  "allUrlsAreValid" should "report all url values where the protocol is not one of the accepted protocols" in {
+  "allUrlsAreValid" should "succeed with valid urls" in {
+    testRuleSuccess(
+      rule = allUrlsAreValid,
+      inputBag = "ddm-correct-urls")
+  }
+
+  it should "report all non-valid urls" in {
     testRuleViolation(
       rule = allUrlsAreValid,
-      inputBag = "ddm-incorrect-attributes",
+      inputBag = "ddm-incorrect-urls",
       includedInErrorMsg =
-      """(0) protocol 'ettp' in URI 'ettp://creativecommons.org/licenses/by-nc-sa/4.0/' is not one of the accepted protocols [http,https]
-        |(1) protocol 'xttps' in URI 'xttps://data.cultureelerfgoed.nl/term/id/pan/17-01-01' is not one of the accepted protocols [http,https]
-        |(2) protocol 'xttps' in URI 'xttps://www.portable-antiquities.nl/pan/#/object/public/8136' is not one of the accepted protocols [http,https]
-        |(3) protocol 'xttps' in URI 'xttps://data.cultureelerfgoed.nl/term/id/pan/PAN' is not one of the accepted protocols [http,https]""".stripMargin)
+        """(0) protocol 'xttps' in URI 'xttps://www.portable-antiquities.nl/pan/#/object/public/8136' is not one of the accepted protocols [http,https] (value of attribute 'href')
+          |(1) URN 'uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66' is not valid
+          |(2) DOI '99.1234.abc' is not valid
+          |(3) protocol 'xttp' in URI 'xttp://abc.def' is not one of the accepted protocols [http,https]
+          |(4) protocol 'ettp' in URI 'ettp://creativecommons.org/licenses/by-nc-sa/4.0/' is not one of the accepted protocols [http,https]
+          |(5) protocol 'xttps' in URI 'xttps://data.cultureelerfgoed.nl/term/id/pan/PAN' is not one of the accepted protocols [http,https] (value of attribute 'schemeURI')""".stripMargin)
   }
 
   "ddmGmlPolygonPosListIsWellFormed" should "report error if odd number of values in posList" in {
