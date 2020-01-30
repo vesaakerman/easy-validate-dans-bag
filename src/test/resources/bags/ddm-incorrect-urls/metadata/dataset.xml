@@ -18,6 +18,9 @@
         <dcterms:spatial>Overbetuwe</dcterms:spatial>
         <dcterms:isFormatOf>PAN-00008136</dcterms:isFormatOf>
         <ddm:references href="xttps://www.portable-antiquities.nl/pan/#/object/public/8136">Portable Antiquities of The Netherlands</ddm:references>
+        <ddm:references scheme="URL">xttp://abc.def</ddm:references>
+        <ddm:references scheme="DOI">99.1234.abc</ddm:references>
+        <ddm:references scheme="URN">uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66</ddm:references>
         <ddm:subject schemeURI="xttps://data.cultureelerfgoed.nl/term/id/pan/PAN" subjectScheme="PAN thesaurus ideaaltypes" valueURI="xttps://data.cultureelerfgoed.nl/term/id/pan/17-01-01" xml:lang="en">knobbed sickle</ddm:subject>
         <ddm:subject schemeURI="http://vocab.getty.edu/aat/" subjectScheme="Art and Architecture Thesaurus" valueURI="http://vocab.getty.edu/aat/300264860" xml:lang="en">Unknown</ddm:subject>
         <dc:subject>metaal</dc:subject>
