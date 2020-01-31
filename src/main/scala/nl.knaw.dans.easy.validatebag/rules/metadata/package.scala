@@ -43,6 +43,7 @@ package object metadata extends DebugEnhancedLogging {
   val allowedAccessRights = List("ANONYMOUS", "RESTRICTED_REQUEST", "NONE")
 
   val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
+  val doiUrlPattern: Regex = raw"^((https?://(dx\.)?)?doi\.org/(urn:)?(doi:)?)?10(\.\d+)+/.+".r
   val urnPattern: Regex = "^urn:[A-Za-z0-9][A-Za-z0-9-]{0,31}:[a-z0-9()+,\\-\\\\.:=@;$_!*'%/?#]+$".r
 
   val daiPrefix = "info:eu-repo/dai/nl/"
@@ -132,6 +133,10 @@ package object metadata extends DebugEnhancedLogging {
 
   private def syntacticallyValidDoi(doi: String): Boolean = {
     doiPattern.findFirstIn(doi).nonEmpty
+  }
+
+  private def syntacticallyValidDoiUrl(doi: String): Boolean = {
+    doiUrlPattern.findFirstIn(doi).nonEmpty
   }
 
   private def syntacticallyValidUrn(urn: String): Boolean = {
@@ -407,7 +412,7 @@ package object metadata extends DebugEnhancedLogging {
   }
 
   private def validateDoiType(doi: String): Try[Unit] = {
-    if (syntacticallyValidDoi(doi))
+    if (syntacticallyValidDoiUrl(doi))
       Success(())
     else
       Try { fail(s"DOI '$doi' is not valid") }
