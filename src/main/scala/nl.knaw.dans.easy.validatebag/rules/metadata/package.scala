@@ -42,8 +42,8 @@ package object metadata extends DebugEnhancedLogging {
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
   val allowedAccessRights = List("ANONYMOUS", "RESTRICTED_REQUEST", "NONE")
 
-  val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
-  val doiUrlPattern: Regex = raw"^((https?://(dx\.)?)?doi\.org/(urn:)?(doi:)?)?10(\.\d+)+/.+".r
+  val doiPattern: Regex = "^10(\\.\\d+)+/.+".r
+  val doiUrlPattern: Regex = "^((https?://(dx\\.)?)?doi\\.org/(urn:)?(doi:)?)?10(\\.\\d+)+/.+".r
   val urnPattern: Regex = "^urn:[A-Za-z0-9][A-Za-z0-9-]{0,31}:[a-z0-9()+,\\-\\\\.:=@;$_!*'%/?#]+$".r
 
   val daiPrefix = "info:eu-repo/dai/nl/"
@@ -330,9 +330,9 @@ package object metadata extends DebugEnhancedLogging {
       ddm <- t.tryDdm
       urlAttributeValues <- getUrlTypeAttributeValues(ddm)
       urlElementValues <- getUrlTypeElementValues(ddm)
-      doiElementValues <- getDoiTypeElementValues(ddm)
-      urnElementValues <- getUrnTypeElementValues(ddm)
-      _ <- validateUrls(urlAttributeValues ++ urlElementValues ++ doiElementValues ++ urnElementValues)
+      doiElementValue <- getDoiTypeElementValues(ddm)
+      urnElementValue <- getUrnTypeElementValues(ddm)
+      _ <- validateUrls(Seq(doiElementValue, urnElementValue) ++ urlAttributeValues ++ urlElementValues)
     } yield ()
 
     result.recoverWith {
@@ -340,13 +340,16 @@ package object metadata extends DebugEnhancedLogging {
     }
   }
 
-  private def getUrlTypeAttributeValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
-    val urls = mutable.Map[(String, String), Seq[String]]()
+  private sealed abstract class UrlValidationKey
+  private case class UrlAttributeKey(name: String) extends UrlValidationKey
+  private case class UrlKey(name: String) extends UrlValidationKey
+  private case object DoiKey extends UrlValidationKey
+  private case object UrnKey extends UrlValidationKey
 
-    urls += (("URL_ATTRIBUTE", "href") -> getAttributeValues(ddm, "href"))
-    List("schemeURI", "valueURI")
-      .foreach(attribute => urls += (("URL_ATTRIBUTE", attribute) -> getAttributeValues(ddm \\ "subject", attribute)))
-    urls
+  private def getUrlTypeAttributeValues(ddm: Node): Try[Seq[(UrlValidationKey, Seq[String])]] = Try {
+    (UrlAttributeKey("href") -> getAttributeValues(ddm, "href")) ::
+      List("schemeURI", "valueURI")
+        .map(attribute => UrlAttributeKey(attribute) -> getAttributeValues(ddm \\ "subject", attribute))
   }
 
   private def getAttributeValues(nodes: NodeSeq, attribute: String): Seq[String] = {
@@ -354,20 +357,17 @@ package object metadata extends DebugEnhancedLogging {
       .map(_.text)
   }
 
-  private def getUrlTypeElementValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
-    val urls = mutable.Map[(String, String), Seq[String]]()
-
+  private def getUrlTypeElementValues(ddm: Node): Try[Seq[(UrlValidationKey, Seq[String])]] = Try {
     List("xsi:type", "scheme")
-      .foreach(attribute => urls += (("URL", attribute) -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL", "URI", "URL"))))
-    urls
+      .map(attribute => UrlKey(attribute) -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL", "URI", "URL")))
   }
 
-  private def getDoiTypeElementValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
-    Map(("DOI", "scheme") -> getElementValues(ddm, "scheme", List("DOI")))
+  private def getDoiTypeElementValues(ddm: Node): Try[(UrlValidationKey, Seq[String])] = Try {
+    DoiKey -> getElementValues(ddm, "scheme", List("DOI"))
   }
 
-  private def getUrnTypeElementValues(ddm: Node): Try[Map[(String, String), Seq[String]]] = Try {
-    Map(("URN", "scheme") -> getElementValues(ddm, "scheme", List("URN")))
+  private def getUrnTypeElementValues(ddm: Node): Try[(UrlValidationKey, Seq[String])] = Try {
+    UrnKey -> getElementValues(ddm, "scheme", List("URN"))
   }
 
   private def getElementValues(node: Node, attribute: String, attributeValues: List[String]): Seq[String] = {
@@ -379,35 +379,30 @@ package object metadata extends DebugEnhancedLogging {
       .map(_.text)
   }
 
-  private def validateUrls(urlsMap: Map[(String, String), Seq[String]]): Try[Unit] = {
-    urlsMap
-      .map { case (key, urls) =>
-        urls.map(url => validateUrl(url, key))
-          .collectResults
-      }
-      .toSeq
+  private def validateUrls(urls: Seq[(UrlValidationKey, Seq[String])]): Try[Unit] = {
+    urls
+      .flatMap { case (key, urls) => urls.map(validateUrl(key)) }
       .collectResults
       .map(_ => ())
   }
 
-  private def validateUrl(url: String, key: (String, String)): Try[Unit] = {
+  private def validateUrl(key: UrlValidationKey)(url: String): Try[Unit] = {
     key match {
-      case ("URL_ATTRIBUTE", name) => validateUrlType(url, "URL_ATTRIBUTE", name)
-      case ("URL", name) => validateUrlType(url, "URL", name)
-      case ("DOI", _) => validateDoiType(url)
-      case ("URN", _) => validateUrnType(url)
+      case UrlAttributeKey(name) => validateUrlType(url, Some(name))
+      case UrlKey(_) => validateUrlType(url)
+      case DoiKey => validateDoiType(url)
+      case UrnKey => validateUrnType(url)
     }
   }
 
-  private def validateUrlType(url: String, urlType: String, name: String): Try[Unit] = {
-    val inAttributeValue = if (urlType == "URL_ATTRIBUTE") s" (value of attribute '${ name }')"
-                        else ""
+  private def validateUrlType(url: String, name: Option[String] = None): Try[Unit] = {
+    val msg = name.fold("")(name => s" (value of attribute '$name')")
     for {
       uri <- getUri(url).recover { case _: URISyntaxException => fail(s"$url is not a valid URI") }
       _ <- if (!(urlProtocols contains uri.toString.split(":").head))
-                  Try { fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$inAttributeValue") }
-                else
-                  Success(())
+             Try { fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$msg") }
+           else
+             Success(())
     } yield ()
   }
 
