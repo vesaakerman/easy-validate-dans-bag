@@ -399,25 +399,25 @@ package object metadata extends DebugEnhancedLogging {
     val msg = name.fold("")(name => s" (value of attribute '$name')")
     for {
       uri <- getUri(url).recover { case _: URISyntaxException => fail(s"$url is not a valid URI") }
-      _ <- if (!(urlProtocols contains uri.toString.split(":").head))
-             Try { fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$msg") }
-           else
-             Success(())
+      _ = if (!(urlProtocols contains uri.toString.split(":").head))
+            fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$msg")
+          else
+            ()
     } yield ()
   }
 
-  private def validateDoiType(doi: String): Try[Unit] = {
+  private def validateDoiType(doi: String): Try[Unit] = Try {
     if (syntacticallyValidDoiUrl(doi))
-      Success(())
+      ()
     else
-      Try { fail(s"DOI '$doi' is not valid") }
+      fail(s"DOI '$doi' is not valid")
   }
 
-  private def validateUrnType(urn: String): Try[Unit] = {
+  private def validateUrnType(urn: String): Try[Unit] = Try {
     if (syntacticallyValidUrn(urn))
-      Success(())
+      ()
     else
-      Try { fail(s"URN '$urn' is not valid") }
+      fail(s"URN '$urn' is not valid")
   }
 
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
