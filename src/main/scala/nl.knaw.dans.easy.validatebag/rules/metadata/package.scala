@@ -42,9 +42,9 @@ package object metadata extends DebugEnhancedLogging {
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
   val allowedAccessRights = List("ANONYMOUS", "RESTRICTED_REQUEST", "NONE")
 
-  val doiPattern: Regex = "^10(\\.\\d+)+/.+".r
-  val doiUrlPattern: Regex = "^((https?://(dx\\.)?)?doi\\.org/(urn:)?(doi:)?)?10(\\.\\d+)+/.+".r
-  val urnPattern: Regex = "^urn:[A-Za-z0-9][A-Za-z0-9-]{0,31}:[a-z0-9()+,\\-\\\\.:=@;$_!*'%/?#]+$".r
+  val doiPattern: Regex = """^10(\.\d+)+/.+""".r
+  val doiUrlPattern: Regex = """^((https?://(dx\.)?)?doi\.org/(urn:)?(doi:)?)?10(\.\d+)+/.+""".r
+  val urnPattern: Regex = """^urn:[A-Za-z0-9][A-Za-z0-9-]{0,31}:[a-z0-9()+,\-\\.:=@;$_!*'%/?#]+$""".r
 
   val daiPrefix = "info:eu-repo/dai/nl/"
 
