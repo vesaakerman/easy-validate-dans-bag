@@ -399,8 +399,9 @@ package object metadata extends DebugEnhancedLogging {
     val msg = name.fold("")(name => s" (value of attribute '$name')")
     for {
       uri <- getUri(url).recover { case _: URISyntaxException => fail(s"$url is not a valid URI") }
-      _ = if (!(urlProtocols contains uri.toString.split(":").head))
-            fail(s"protocol '${ uri.toString.split(":").head }' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$msg")
+      scheme = uri.getScheme
+      _ = if (!(urlProtocols contains scheme))
+            fail(s"protocol '$scheme' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$msg")
           else
             ()
     } yield ()
