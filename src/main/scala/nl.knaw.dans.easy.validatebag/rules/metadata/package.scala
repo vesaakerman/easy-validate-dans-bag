@@ -20,11 +20,12 @@ import java.nio.ByteBuffer
 import java.nio.charset.{ CharacterCodingException, Charset }
 import java.nio.file.{ Path, Paths }
 
-import nl.knaw.dans.easy.validatebag.validation._ 
+import nl.knaw.dans.easy.validatebag.validation._
 import nl.knaw.dans.easy.validatebag.{ TargetBag, XmlValidator }
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
+import scala.collection._
 import scala.util.matching.Regex
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
@@ -41,9 +42,13 @@ package object metadata extends DebugEnhancedLogging {
   val allowedFilesXmlNamespaces = List(dcNamespace, dctermsNamespace)
   val allowedAccessRights = List("ANONYMOUS", "RESTRICTED_REQUEST", "NONE")
 
-  val doiPattern: Regex = raw"^10(\.\d+)+/.+".r
+  val doiPattern: Regex = """^10(\.\d+)+/.+""".r
+  val doiUrlPattern: Regex = """^((https?://(dx\.)?)?doi\.org/(urn:)?(doi:)?)?10(\.\d+)+/.+""".r
+  val urnPattern: Regex = """^urn:[A-Za-z0-9][A-Za-z0-9-]{0,31}:[a-z0-9()+,\-\\.:=@;$_!*'%/?#]+$""".r
 
   val daiPrefix = "info:eu-repo/dai/nl/"
+
+  val urlProtocols = List("http", "https")
 
   def xmlFileIfExistsConformsToSchema(xmlFile: Path, schemaName: String, validator: XmlValidator)
                                      (t: TargetBag): Try[Unit] = {
@@ -92,7 +97,7 @@ package object metadata extends DebugEnhancedLogging {
               licenseUri <- getUri(license.text).recover { case _: URISyntaxException => fail("License must be a valid URI") }
               _ = if (licenseUri.getScheme != "http" && licenseUri.getScheme != "https") fail("License URI must have scheme http or https")
               normalizedLicenseUri <- normalizeLicenseUri(licenseUri)
-              _ = if (!allowedLicenses.contains(normalizedLicenseUri)) fail (s"Found unknown or unsupported license: $licenseUri")
+              _ = if (!allowedLicenses.contains(normalizedLicenseUri)) fail(s"Found unknown or unsupported license: $licenseUri")
             } yield ()).get
             if (rightsHolders.isEmpty) fail("Valid license found, but no rightsHolder specified")
           case Nil | _ :: Nil =>
@@ -128,6 +133,14 @@ package object metadata extends DebugEnhancedLogging {
 
   private def syntacticallyValidDoi(doi: String): Boolean = {
     doiPattern.findFirstIn(doi).nonEmpty
+  }
+
+  private def syntacticallyValidDoiUrl(doi: String): Boolean = {
+    doiUrlPattern.findFirstIn(doi).nonEmpty
+  }
+
+  private def syntacticallyValidUrn(urn: String): Boolean = {
+    urnPattern.findFirstIn(urn).nonEmpty
   }
 
   /**
@@ -309,6 +322,103 @@ package object metadata extends DebugEnhancedLogging {
 
   private def formatInvalidArchisIdentifiers(results: Seq[String]): Seq[String] = {
     results.zipWithIndex.map { case (msg, index) => s"(${ index + 1 }) $msg" }
+  }
+
+  def allUrlsAreValid(t: TargetBag): Try[Unit] = {
+    trace(())
+    val result = for {
+      ddm <- t.tryDdm
+      urlAttributeValues <- getUrlTypeAttributeValues(ddm)
+      urlElementValues <- getUrlTypeElementValues(ddm)
+      doiElementValue <- getDoiTypeElementValues(ddm)
+      urnElementValue <- getUrnTypeElementValues(ddm)
+      _ <- validateUrls(Seq(doiElementValue, urnElementValue) ++ urlAttributeValues ++ urlElementValues)
+    } yield ()
+
+    result.recoverWith {
+      case ce: CompositeException => Try(fail(ce.getMessage))
+    }
+  }
+
+  private sealed abstract class UrlValidationKey
+  private case class UrlAttributeKey(name: String) extends UrlValidationKey
+  private case object UrlKey extends UrlValidationKey
+  private case object DoiKey extends UrlValidationKey
+  private case object UrnKey extends UrlValidationKey
+
+  private def getUrlTypeAttributeValues(ddm: Node): Try[Seq[(UrlValidationKey, Seq[String])]] = Try {
+    (UrlAttributeKey("href") -> getAttributeValues(ddm, "href")) ::
+      List("schemeURI", "valueURI")
+        .map(attribute => UrlAttributeKey(attribute) -> getAttributeValues(ddm \\ "subject", attribute))
+  }
+
+  private def getAttributeValues(nodes: NodeSeq, attribute: String): Seq[String] = {
+    (nodes \\ s"@$attribute")
+      .map(_.text)
+  }
+
+  private def getUrlTypeElementValues(ddm: Node): Try[Seq[(UrlValidationKey, Seq[String])]] = Try {
+    List("xsi:type", "scheme")
+      .map(attribute => UrlKey -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL", "URI", "URL")))
+  }
+
+  private def getDoiTypeElementValues(ddm: Node): Try[(UrlValidationKey, Seq[String])] = Try {
+    DoiKey -> getElementValues(ddm, "scheme", List("DOI"))
+  }
+
+  private def getUrnTypeElementValues(ddm: Node): Try[(UrlValidationKey, Seq[String])] = Try {
+    UrnKey -> getElementValues(ddm, "scheme", List("URN"))
+  }
+
+  private def getElementValues(node: Node, attribute: String, attributeValues: List[String]): Seq[String] = {
+    (node \\ "_")
+      .withFilter(_.attributes
+        .filter(_.prefixedKey == attribute)
+        .filter(attributeValues contains _.value.text)
+        .nonEmpty)
+      .map(_.text)
+  }
+
+  private def validateUrls(urls: Seq[(UrlValidationKey, Seq[String])]): Try[Unit] = {
+    urls
+      .flatMap { case (key, urls) => urls.map(validateUrl(key)) }
+      .collectResults
+      .map(_ => ())
+  }
+
+  private def validateUrl(key: UrlValidationKey)(url: String): Try[Unit] = {
+    key match {
+      case UrlAttributeKey(name) => validateUrlType(url, Some(name))
+      case UrlKey => validateUrlType(url)
+      case DoiKey => validateDoiType(url)
+      case UrnKey => validateUrnType(url)
+    }
+  }
+
+  private def validateUrlType(url: String, name: Option[String] = None): Try[Unit] = {
+    val msg = name.fold("")(name => s" (value of attribute '$name')")
+    for {
+      uri <- getUri(url).recover { case _: URISyntaxException => fail(s"$url is not a valid URI") }
+      scheme = uri.getScheme
+      _ = if (!(urlProtocols contains scheme))
+            fail(s"protocol '$scheme' in URI '$url' is not one of the accepted protocols [${ urlProtocols.mkString(",") }]$msg")
+          else
+            ()
+    } yield ()
+  }
+
+  private def validateDoiType(doi: String): Try[Unit] = Try {
+    if (syntacticallyValidDoiUrl(doi))
+      ()
+    else
+      fail(s"DOI '$doi' is not valid")
+  }
+
+  private def validateUrnType(urn: String): Try[Unit] = Try {
+    if (syntacticallyValidUrn(urn))
+      ()
+    else
+      fail(s"URN '$urn' is not valid")
   }
 
   def filesXmlHasDocumentElementFiles(t: TargetBag): Try[Unit] = {
