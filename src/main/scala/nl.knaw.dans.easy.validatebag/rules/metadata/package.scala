@@ -342,7 +342,7 @@ package object metadata extends DebugEnhancedLogging {
 
   private sealed abstract class UrlValidationKey
   private case class UrlAttributeKey(name: String) extends UrlValidationKey
-  private case class UrlKey(name: String) extends UrlValidationKey
+  private case object UrlKey extends UrlValidationKey
   private case object DoiKey extends UrlValidationKey
   private case object UrnKey extends UrlValidationKey
 
@@ -359,7 +359,7 @@ package object metadata extends DebugEnhancedLogging {
 
   private def getUrlTypeElementValues(ddm: Node): Try[Seq[(UrlValidationKey, Seq[String])]] = Try {
     List("xsi:type", "scheme")
-      .map(attribute => UrlKey(attribute) -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL", "URI", "URL")))
+      .map(attribute => UrlKey -> getElementValues(ddm, attribute, List("dcterms:URI", "dcterms:URL", "URI", "URL")))
   }
 
   private def getDoiTypeElementValues(ddm: Node): Try[(UrlValidationKey, Seq[String])] = Try {
@@ -389,7 +389,7 @@ package object metadata extends DebugEnhancedLogging {
   private def validateUrl(key: UrlValidationKey)(url: String): Try[Unit] = {
     key match {
       case UrlAttributeKey(name) => validateUrlType(url, Some(name))
-      case UrlKey(_) => validateUrlType(url)
+      case UrlKey => validateUrlType(url)
       case DoiKey => validateDoiType(url)
       case UrnKey => validateUrnType(url)
     }
