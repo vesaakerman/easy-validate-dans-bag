@@ -363,11 +363,11 @@ package object metadata extends DebugEnhancedLogging {
   }
 
   private def getDoiTypeElementValues(ddm: Node): Try[(UrlValidationKey, Seq[String])] = Try {
-    DoiKey -> getElementValues(ddm, "scheme", List("DOI"))
+    DoiKey -> getElementValues(ddm, "scheme", List("DOI", "id-type:DOI"))
   }
 
   private def getUrnTypeElementValues(ddm: Node): Try[(UrlValidationKey, Seq[String])] = Try {
-    UrnKey -> getElementValues(ddm, "scheme", List("URN"))
+    UrnKey -> getElementValues(ddm, "scheme", List("URN", "id-type:URN"))
   }
 
   private def getElementValues(node: Node, attribute: String, attributeValues: List[String]): Seq[String] = {
