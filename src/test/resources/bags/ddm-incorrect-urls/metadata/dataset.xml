@@ -21,6 +21,8 @@
         <ddm:references scheme="URL">xttp://abc.def</ddm:references>
         <ddm:references scheme="DOI">99.1234.abc</ddm:references>
         <ddm:references scheme="URN">uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66</ddm:references>
+        <ddm:isFormatOf scheme="id-type:DOI">joopajoo</ddm:isFormatOf>
+        <ddm:isFormatOf scheme="id-type:URN">niinpä</ddm:isFormatOf>
         <ddm:subject schemeURI="xttps://data.cultureelerfgoed.nl/term/id/pan/PAN" subjectScheme="PAN thesaurus ideaaltypes" valueURI="xttps://data.cultureelerfgoed.nl/term/id/pan/17-01-01" xml:lang="en">knobbed sickle</ddm:subject>
         <ddm:subject schemeURI="http://vocab.getty.edu/aat/" subjectScheme="Art and Architecture Thesaurus" valueURI="http://vocab.getty.edu/aat/300264860" xml:lang="en">Unknown</ddm:subject>
         <dc:subject>metaal</dc:subject>
