@@ -39,7 +39,7 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   }
 
   "the validate handler" should "return a 200 and the response when presented a valid bag uri" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "valid-bag") }", headers = Seq(("Accept", "application/json"))) {
+    post(uri = createValidateURL("SIP", "valid-bag"), headers = Seq(("Accept", "application/json"))) {
       status shouldBe OK_200
       val resultMessage = ResultMessage.read(body)
       resultMessage.infoPackageType shouldBe SIP
@@ -48,7 +48,7 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   }
 
   it should "return a 200 and a response including 'compliant: false' and reasons when presented an invalid bag" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "metadata-correct") }", headers = Seq(("Accept", "application/json"))) {
+    post(uri = createValidateURL("SIP", "metadata-correct"), headers = Seq(("Accept", "application/json"))) {
       status shouldBe OK_200
       val resultMessage = ResultMessage.read(body)
       resultMessage.bagUri shouldBe new URI(s"file://${ bagsDir.path.toAbsolutePath }/metadata-correct/")
@@ -64,7 +64,7 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   }
 
   it should "return a 200 and a response including 'compliant: false' and reasons when files are in the wrong dir" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "files-in-wrong-metadata-dir") }", headers = Seq(("Accept", "application/json"))) {
+    post(uri = createValidateURL("SIP", "files-in-wrong-metadata-dir"), headers = Seq(("Accept", "application/json"))) {
       status shouldBe OK_200
       val resultMessage = ResultMessage.read(body)
       resultMessage.bagUri shouldBe new URI(s"file://${ bagsDir.path.toAbsolutePath }/files-in-wrong-metadata-dir/")
@@ -73,14 +73,21 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   }
 
   it should "return a 400 if presented a non existing bag uri" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "_._metadata-correct") }", headers = Seq(("Accept", "application/json"))) {
+    post(uri = createValidateURL("SIP", "_._metadata-correct"), headers = Seq(("Accept", "application/json"))) {
       status shouldBe BAD_REQUEST_400
       body should include("Bag does not exist")
     }
   }
 
+  it should "return a 400 if the infoPackageType is not valid" in {
+    post(uri = createValidateURL("sip", "valid-bag"), headers = Seq(("Accept", "application/json"))) {
+      status shouldBe BAD_REQUEST_400
+      body shouldBe "Input error: invalid InfoPackageType 'sip'"
+    }
+  }
+
   it should "return a 200 for a bag with spaces in the name and mark it as 'compliant'" in {
-    post(uri = s"/validate?infoPackageType=SIP&uri=${ encodedURI(bagsDir / "bag with spaces") }", headers = Seq(("Accept", "application/json"))) {
+    post(uri = createValidateURL("SIP", "bag with spaces"), headers = Seq(("Accept", "application/json"))) {
       status shouldBe OK_200
       val resultMessage = ResultMessage.read(body)
       resultMessage.infoPackageType shouldBe SIP
@@ -93,6 +100,10 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
       status shouldBe OK_200
       body shouldBe s"EASY Validate DANS Bag Service running v$testVersion."
     }
+  }
+  
+  private def createValidateURL(infoPackageTypeString: String, bagName: String) = {
+    s"/validate?infoPackageType=$infoPackageTypeString&uri=${ encodedURI(bagsDir / bagName) }"
   }
 
   private def createProperties(): PropertiesConfiguration = {

@@ -23,7 +23,7 @@ import nl.knaw.dans.lib.logging.servlet._
 import org.joda.time.DateTime
 import org.scalatra._
 
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraServlet
   with ServletLogger
@@ -39,7 +39,7 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
   post("/validate") {
     val result = for {
       accept <- Try { request.getHeader("Accept") }
-      infoPackageType <- Try { InfoPackageType.withName(params.get("infoPackageType").getOrElse("SIP")) }
+      infoPackageType <- params.get("infoPackageType").map(InfoPackageType.fromString).getOrElse { Success(InfoPackageType.SIP) }
       uri <- params.get("uri").map(getFileUrl).getOrElse(Failure(new IllegalArgumentException("Required query parameter 'uri' not found")))
       message <- app.validate(uri, infoPackageType)
       body <- Try {
