@@ -15,16 +15,20 @@
  */
 package nl.knaw.dans.easy.validatebag.rules.metadata
 
+import java.io.InputStream
 import java.net.{ URI, URL }
 import java.nio.file.Paths
 
 import javax.xml.validation.SchemaFactory
+import nl.knaw.dans.easy.validatebag.InfoPackageType.{ AIP, InfoPackageType, SIP }
 import nl.knaw.dans.easy.validatebag._
+import nl.knaw.dans.easy.validatebag.rules.ProfileVersion0
+import nl.knaw.dans.easy.validatebag.validation.{ RuleViolationDetailsException, RuleViolationException }
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
   private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
@@ -142,24 +146,52 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
       inputBag = "ddm-correct-dai")
   }
 
-  "ddmContainsValidDoiIdentifier" should "succeed if one or more DOIs are present and they are valid" in {
-    testRuleSuccess(
-      rule = ddmContainsValidDoiIdentifier,
-      inputBag = "ddm-correct-doi")
+  private val allRules: Seq[NumberedRule] = {
+    val xmlValidator = new XmlValidator(null) {override def validate(is: InputStream): Try[Unit] = Success(()) }
+    val validatorMap = Map("dataset.xml" -> xmlValidator, "files.xml" -> xmlValidator, "agreements.xml" -> xmlValidator)
+    ProfileVersion0.apply(validatorMap, allowedLicences = Seq.empty, BagStore(new URI(""), 1000, 1000))
+  }
+
+  private def aRuleViolation(ruleNumber: RuleNumber, msg: String) = {
+    Failure(CompositeException(Seq(RuleViolationException(ruleNumber, msg))))
+  }
+
+  private def validateRules(bag: TargetBag,
+                            infoPackageType: InfoPackageType,
+                            rules: Seq[NumberedRule] = allRules.filterNot(rule => Seq("3.1.2", "1.2.6(a)", "1.2.6(b)").contains(rule.nr))
+                           ): Try[Unit] = {
+    validation.checkRules(bag, rules, infoPackageType)(isReadable = _.isReadable)
+  }
+
+  "new test approach" should "succeed" in pendingUntilFixed { // seems to be ok in servletSpec
+    // TODO Rewrite tests to copy the valid-bag into testDir with a variant of the ddm.
+    //  Returning a tuple with the three types of tests (rule, AIP, SIP) might make the new test approach less verbose
+    //  while still being flexible in predicting the expected results.
+    validateRules(new TargetBag(bagsDir / "valid-bag", 0), AIP, allRules) shouldBe Success(())
+  }
+
+  "ddmContainsDoiIdentifier" should "succeed if one or more DOIs are present" in {
+    val bag = new TargetBag(bagsDir / "ddm-correct-doi", 0)
+    ddmContainsDoiIdentifier(bag) shouldBe Success(())
+    validateRules(bag, AIP) shouldBe Success(())
+    validateRules(bag, SIP) shouldBe Success(())
   }
 
   it should "fail if there is no DOI-identifier" in {
-    testRuleViolation(
-      rule = ddmContainsValidDoiIdentifier,
-      inputBag = "ddm-missing-doi",
-      includedInErrorMsg = "DOI identifier is missing")
+    val msg = "DOI identifier is missing"
+    val bag = new TargetBag(bagsDir / "ddm-missing-doi", 0)
+    ddmContainsDoiIdentifier(bag) shouldBe Failure(RuleViolationDetailsException(msg))
+    validateRules(bag, SIP) shouldBe Success(())
+    validateRules(bag, AIP) shouldBe aRuleViolation("3.1.3(a)", msg)
   }
 
-  it should "report invalid DOI-identifiers" in {
-    testRuleViolation(
-      rule = ddmContainsValidDoiIdentifier,
-      inputBag = "ddm-incorrect-doi",
-      includedInErrorMsg = "Invalid DOIs: 11.1234/fantasy-doi-id, 10/1234/fantasy-doi-id, 10.1234.fantasy-doi-id, http://doi.org/10.1234.567/issn-987-654, https://doi.org/10.1234.567/issn-987-654")
+  "ddmDoiIdentifiersAreValid" should "report invalid DOI-identifiers" in {
+    val msg = "Invalid DOIs: 11.1234/fantasy-doi-id, 10/1234/fantasy-doi-id, 10.1234.fantasy-doi-id, http://doi.org/10.1234.567/issn-987-654, https://doi.org/10.1234.567/issn-987-654"
+    val bag = new TargetBag(bagsDir / "ddm-incorrect-doi", 0)
+    ddmContainsDoiIdentifier(bag) shouldBe Success(())
+    ddmDoiIdentifiersAreValid(bag) shouldBe Failure(RuleViolationDetailsException(msg))
+    validateRules(bag, AIP) shouldBe aRuleViolation("3.1.3(b)", msg)
+    validateRules(bag, SIP) shouldBe aRuleViolation("3.1.3(b)", msg)
   }
 
   "allUrlsAreValid" should "succeed with valid urls" in {
