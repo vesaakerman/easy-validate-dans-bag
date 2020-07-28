@@ -36,7 +36,7 @@ object Command extends App with DebugEnhancedLogging {
     verify()
   }
   debug("Creating application object...")
-  val app = new EasyValidateDansBagApp(configuration)
+  val app = new EasyValidateDansBagApp(configuration, commandLine.bagStore.toOption)
 
   debug(s"Executing command line: ${ args.mkString(" ") }")
   runSubcommand(app).doIfSuccess { case (ok, msg) =>

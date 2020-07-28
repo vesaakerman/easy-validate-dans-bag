@@ -15,6 +15,9 @@
  */
 package nl.knaw.dans.easy
 
+import java.net.URL
+import java.util.UUID
+
 import better.files._
 import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }
 

@@ -28,7 +28,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Try }
 
-class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhancedLogging {
+class EasyValidateDansBagApp(configuration: Configuration, storeName: Option[String]) extends DebugEnhancedLogging {
   logger.info("Creating XML Schema factory...")
   private val schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema")
   logger.info("XML Schema factory created.")
@@ -48,6 +48,7 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
   )
 
   private val bagStore = BagStore(new URI(configuration.properties.getString("bagstore-service.base-url")),
+    storeName,
     configuration.properties.getInt("bagstore-service.connection-timeout-milliseconds", 1000),
     configuration.properties.getInt("bagstore-service.read-timeout-milliseconds", 5000))
 
