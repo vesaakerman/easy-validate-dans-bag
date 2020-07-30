@@ -15,9 +15,6 @@
  */
 package nl.knaw.dans.easy
 
-import java.net.URL
-import java.util.UUID
-
 import better.files._
 import nl.knaw.dans.easy.validatebag.rules.{ ProfileVersion0, ProfileVersion1 }
 
@@ -39,7 +36,7 @@ package object validatebag {
   object InfoPackageType extends Enumeration {
     type InfoPackageType = Value
     val SIP, AIP, BOTH = Value
-    
+
     def fromString(s: String): Try[InfoPackageType] = {
       Try { InfoPackageType.withName(s) }
         .recoverWith { case e => Failure(new IllegalArgumentException(s"invalid InfoPackageType '$s'", e)) }

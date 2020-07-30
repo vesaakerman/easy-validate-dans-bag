@@ -7,7 +7,7 @@ Determines whether a DANS bag is valid according to the DANS BagIt Profile.
 SYNOPSIS
 --------
 
-    easy-validate-dans-bag [--aip] [--bag-store <uri>] [--response-format,-f json|text] <bag>
+    easy-validate-dans-bag [--aip] [--bag-store <name>] [--response-format,-f json|text] <bag>
     easy-validate-dans-bag run-service
 
 

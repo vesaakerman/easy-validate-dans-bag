@@ -99,7 +99,7 @@ trait BagStore extends DebugEnhancedLogging {
 object BagStore {
   def apply(baseUrl: URI, storeName: Option[String], cto: Int, rto: Int): BagStore = new BagStore() {
     override val bagStoreBaseUrl: URI = baseUrl
-    override val bagStoreUrl: URI = storeName.map(store => baseUrl.resolve("stores/" + store)).orNull
+    override val bagStoreUrl: URI = storeName.map(store => baseUrl.resolve("stores/" + store + "/")).orNull
     override val connectionTimeoutMs: Int = cto
     override val readTimeoutMs: Int = rto
   }

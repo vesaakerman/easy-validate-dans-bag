@@ -60,24 +60,30 @@ package object sequence extends DebugEnhancedLogging {
         .flatMap(_.getOrElse(Success(())))
     }
     else {
-      logger.info(s"Deep Validation not performed as there was no bag-store provided.")
+      logger.info(s"Deep Validation for the store not performed as there was no bag-store provided.")
       Success(())
     }
   }
 
   def userSameAsInArchivedBag(bagStore: BagStore)(t: TargetBag): Try[Unit] = {
     trace(())
-    getBagInfoTxtValue(t, "Is-Version-Of")
-      .map(_.map(isVersionOf =>
-        for {
-          uuid <- getUuidFromIsVersionOfValue(isVersionOf)
-          user = getUser(t)
-          referredBagInfoText <- bagStore.getBagInfoText(uuid)
-          referredBagUser <- getReferredBagUser(uuid, referredBagInfoText.lines.filter(_.startsWith("EASY-User-Account")))
-          _ = if (user != referredBagUser) fail(s"User $user is different from the user $referredBagUser in bag $isVersionOf")
-        } yield ()
-      ))
-      .flatMap(_.getOrElse(Success(())))
+    val user = getUser(t)
+    if (user.nonEmpty) {
+      getBagInfoTxtValue(t, "Is-Version-Of")
+        .map(_.map(isVersionOf =>
+          for {
+            uuid <- getUuidFromIsVersionOfValue(isVersionOf)
+            referredBagInfoText <- bagStore.getBagInfoText(uuid)
+            referredBagUser <- getReferredBagUser(uuid, referredBagInfoText.lines.filter(_.startsWith("EASY-User-Account")))
+            _ = if (user != referredBagUser) fail(s"User $user is different from the user $referredBagUser in bag $isVersionOf, pointed to by Is-Version-Of field in bag-info.txt")
+          } yield ()
+        ))
+        .flatMap(_.getOrElse(Success(())))
+    }
+    else {
+      logger.info(s"Deep Validation for the user not performed as there was no user provided in bag-info.txt.")
+      Success(())
+    }
   }
 
   private def getUuidFromIsVersionOfValue(s: String): Try[UUID] = Try {
