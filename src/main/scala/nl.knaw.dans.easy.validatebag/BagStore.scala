@@ -22,16 +22,16 @@ import nl.knaw.dans.easy.validatebag.validation.fail
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import scalaj.http.{ Http, HttpResponse }
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Success, Try }
 
 /**
  * Simple, incomplete interface to the bag store service that provides only the methods necessary to perform validations.
  */
 trait BagStore extends DebugEnhancedLogging {
   val bagStoreBaseUrl: URI
-  val bagStoreUrl: URI
   val connectionTimeoutMs: Int
   val readTimeoutMs: Int
+  var bagStoreUrl: Option[URI] // store url that is used in deep validation
 
   /**
    * Determines if a bag with the given UUID exists in one of the bag stores managed by the service.
@@ -51,14 +51,14 @@ trait BagStore extends DebugEnhancedLogging {
   }
 
   /**
-   * Checks existence of a bag for a given UUID in this specific store.
+   * Checks existence of a bag for a given UUID in the specific store.
    *
    * @param uuid the bag-id of the bag
    * @return boolean
    */
   def bagExistsInThisStore(uuid: UUID): Try[Boolean] = Try {
     trace(uuid)
-    val bagUrl = bagStoreUrl.resolve(s"bags/$uuid").toASCIIString
+    val bagUrl = getBagStoreUrl.resolve(s"bags/$uuid").toASCIIString
     debug(s"Requesting: $bagUrl")
     Http(bagUrl)
       .header("Accept", "text/plain")
@@ -92,15 +92,15 @@ trait BagStore extends DebugEnhancedLogging {
   }
 
   def getBagStoreUrl: URI = {
-    bagStoreUrl
+    bagStoreUrl.orNull
   }
 }
 
 object BagStore {
-  def apply(baseUrl: URI, storeName: Option[String], cto: Int, rto: Int): BagStore = new BagStore() {
+  def apply(baseUrl: URI, cto: Int, rto: Int): BagStore = new BagStore() {
     override val bagStoreBaseUrl: URI = baseUrl
-    override val bagStoreUrl: URI = storeName.map(store => baseUrl.resolve("stores/" + store + "/")).orNull
     override val connectionTimeoutMs: Int = cto
     override val readTimeoutMs: Int = rto
+    override var bagStoreUrl: Option[URI] = None
   }
 }

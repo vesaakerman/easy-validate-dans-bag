@@ -31,7 +31,7 @@ class EasyValidateDansBagServletSpec extends TestSupportFixture
   with ScalatraSuite {
   private val testVersion = "1.0.0"
   val bagStore = Option("easy")
-  private val app = new EasyValidateDansBagApp(Configuration(testVersion, createProperties(), Seq(new URI("http://creativecommons.org/licenses/by-sa/4.0"))), bagStore)
+  private val app = new EasyValidateDansBagApp(Configuration(testVersion, createProperties(), Seq(new URI("http://creativecommons.org/licenses/by-sa/4.0"))))
   private val validateBagServlet = new EasyValidateDansBagServlet(app)
   addServlet(validateBagServlet, "/*")
 

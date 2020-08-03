@@ -15,9 +15,6 @@
  */
 package nl.knaw.dans.easy.validatebag
 
-import java.net.URL
-import java.util.UUID
-
 import better.files._
 import gov.loc.repository.bagit.reader.BagReader
 import nl.knaw.dans.easy.validatebag.InfoPackageType.{ InfoPackageType, _ }

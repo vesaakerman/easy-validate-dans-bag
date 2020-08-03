@@ -96,6 +96,10 @@
             <artifactId>scalatra-scalate_2.12</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.typelevel</groupId>
+            <artifactId>cats-core_2.12</artifactId>
+        </dependency>
+        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
