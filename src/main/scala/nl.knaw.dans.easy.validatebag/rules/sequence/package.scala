@@ -44,12 +44,67 @@ package object sequence extends DebugEnhancedLogging {
       .flatMap(_.getOrElse(Success(())))
   }
 
+  def storeSameAsInArchivedBag(bagStore: BagStore)(t: TargetBag): Try[Unit] = {
+    trace(())
+    if (bagStore.getBagStoreUrl != null) {
+      getBagInfoTxtValue(t, "Is-Version-Of")
+        .map(_.map(isVersionOf =>
+          for {
+            uuid <- getUuidFromIsVersionOfValue(isVersionOf)
+            exists <- bagStore.bagExistsInThisStore(uuid).recoverWith {
+              case _: IOException => Try(fail(s"Bag with bag-id $uuid, pointed to by Is-Version-Of field in bag-info.txt, could not be verified, because of an I/O error"))
+            }
+            _ = if (!exists) fail(s"Bag with bag-id $uuid, pointed to by Is-Version-Of field in bag-info.txt, is not found in bag store ${ bagStore.getBagStoreUrl }")
+          } yield ()
+        ))
+        .flatMap(_.getOrElse(Success(())))
+    }
+    else {
+      logger.info(s"Deep Validation for the store not performed as there was no bag-store provided.")
+      Success(())
+    }
+  }
+
+  def userSameAsInArchivedBag(bagStore: BagStore)(t: TargetBag): Try[Unit] = {
+    trace(())
+    val user = getUser(t)
+    if (user.nonEmpty) {
+      getBagInfoTxtValue(t, "Is-Version-Of")
+        .map(_.map(isVersionOf =>
+          for {
+            uuid <- getUuidFromIsVersionOfValue(isVersionOf)
+            referredBagInfoText <- bagStore.getBagInfoText(uuid)
+            referredBagUser <- getReferredBagUser(uuid, referredBagInfoText.lines.filter(_.startsWith("EASY-User-Account")))
+            _ = if (user != referredBagUser) fail(s"User $user is different from the user $referredBagUser in bag $isVersionOf, pointed to by Is-Version-Of field in bag-info.txt")
+          } yield ()
+        ))
+        .flatMap(_.getOrElse(Success(())))
+    }
+    else {
+      logger.info(s"Deep Validation for the user not performed as there was no user provided in bag-info.txt.")
+      Success(())
+    }
+  }
+
   private def getUuidFromIsVersionOfValue(s: String): Try[UUID] = Try {
     val uri = new URI(s)
     failIfNotTrueWithMessage(uri.getScheme == "urn", "Is-Version-Of value must be a URN")
     failIfNotTrueWithMessage(uri.getSchemeSpecificPart.startsWith("uuid:"), "Is-Version-Of URN must be of subtype UUID")
     val Array(_, uuidStr) = uri.getSchemeSpecificPart.split(':')
     uuidStr.toUUID.toTry.getOrRecover(e => fail(e.getMessage))
+  }
+
+  private def getUser(t: TargetBag): String = {
+    getBagInfoTxtValue(t, "EASY-User-Account").getOrElse(fail(s"Could not read the user account from bag-info.txt in ${ t.bagDir }")).getOrElse("")
+  }
+
+  def getReferredBagUser(versionOfId: UUID, userLines: Iterator[String]): Try[String] = {
+    if (userLines.hasNext) {
+      val userLine = userLines.next
+      Try(userLine.substring(userLine.indexOf(":") + 1).trim)
+    }
+    else
+      fail(s"No user found for isVersionOf bag $versionOfId")
   }
 
   private def failIfNotTrueWithMessage(bool: Boolean, msg: String): Unit = {

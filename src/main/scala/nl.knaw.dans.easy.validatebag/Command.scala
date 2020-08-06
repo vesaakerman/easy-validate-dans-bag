@@ -37,7 +37,6 @@ object Command extends App with DebugEnhancedLogging {
   }
   debug("Creating application object...")
   val app = new EasyValidateDansBagApp(configuration)
-
   debug(s"Executing command line: ${ args.mkString(" ") }")
   runSubcommand(app).doIfSuccess { case (ok, msg) =>
     if (ok) Console.err.println(s"OK: $msg")
@@ -60,7 +59,7 @@ object Command extends App with DebugEnhancedLogging {
         if (commandLine.bag.isEmpty) Failure(new IllegalArgumentException("Parameter 'bag' required if not running as a service"))
         else
           app.validate(commandLine.bag().toUri, if (commandLine.aip()) AIP
-                                                else SIP).map {
+                                                else SIP, commandLine.bagStore.toOption).map {
             msg =>
               if (commandLine.responseFormat() == "json") (msg.isCompliant, msg.toJson)
               else (msg.isCompliant, msg.toPlainText)

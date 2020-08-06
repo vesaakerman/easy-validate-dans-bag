@@ -24,6 +24,7 @@ import org.joda.time.DateTime
 import org.scalatra._
 
 import scala.util.{ Failure, Success, Try }
+import cats.implicits._
 
 class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraServlet
   with ServletLogger
@@ -40,8 +41,9 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
     val result = for {
       accept <- Try { request.getHeader("Accept") }
       infoPackageType <- params.get("infoPackageType").map(InfoPackageType.fromString).getOrElse { Success(InfoPackageType.SIP) }
+      bagStoreUrl <- params.get("bag-store").map(getBagStoreUrl).sequence[Try, URI]
       uri <- params.get("uri").map(getFileUrl).getOrElse(Failure(new IllegalArgumentException("Required query parameter 'uri' not found")))
-      message <- app.validate(uri, infoPackageType)
+      message <- app.validate(uri, infoPackageType, bagStoreUrl)
       body <- Try {
         if (accept == "application/json") message.toJson
         else message.toPlainText
@@ -56,6 +58,10 @@ class EasyValidateDansBagServlet(app: EasyValidateDansBagApp) extends ScalatraSe
         logger.error(s"Server error: ${ t.getMessage }", t)
         InternalServerError(s"[${ new DateTime() }] The server encountered an error. Consult the logs.")
     }
+  }
+
+  private def getBagStoreUrl(bagStoreUrl: String): Try[URI] = Try {
+    new URI(bagStoreUrl)
   }
 
   private def getFileUrl(uriStr: String): Try[URI] = Try {

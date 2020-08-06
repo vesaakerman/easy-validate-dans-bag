@@ -58,7 +58,8 @@ class EasyValidateDansBagApp(configuration: Configuration) extends DebugEnhanced
       1 -> ProfileVersion1(xmlValidators))
   }
 
-  def validate(uri: URI, infoPackageType: InfoPackageType): Try[ResultMessage] = {
+  def validate(uri: URI, infoPackageType: InfoPackageType, bagStoreUrl: Option[URI]): Try[ResultMessage] = {
+    bagStore.bagStoreUrl = bagStoreUrl // store name used in deep validation
     val bagName = resolveAndLogBagName(uri)
     for {
       bag <- getBagPath(uri)

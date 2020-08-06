@@ -18,10 +18,11 @@ package nl.knaw.dans.easy.validatebag
 import java.net.URI
 import java.util.UUID
 
+import nl.knaw.dans.easy.validatebag.validation.fail
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import scalaj.http.Http
+import scalaj.http.{ Http, HttpResponse }
 
-import scala.util.Try
+import scala.util.{ Success, Try }
 
 /**
  * Simple, incomplete interface to the bag store service that provides only the methods necessary to perform validations.
@@ -30,6 +31,7 @@ trait BagStore extends DebugEnhancedLogging {
   val bagStoreBaseUrl: URI
   val connectionTimeoutMs: Int
   val readTimeoutMs: Int
+  var bagStoreUrl: Option[URI] // store url that is used in deep validation
 
   /**
    * Determines if a bag with the given UUID exists in one of the bag stores managed by the service.
@@ -47,6 +49,51 @@ trait BagStore extends DebugEnhancedLogging {
       .method("HEAD")
       .asBytes.code == 200
   }
+
+  /**
+   * Checks existence of a bag for a given UUID in the specific store.
+   *
+   * @param uuid the bag-id of the bag
+   * @return boolean
+   */
+  def bagExistsInThisStore(uuid: UUID): Try[Boolean] = Try {
+    trace(uuid)
+    val bagUrl = getBagStoreUrl.resolve(s"bags/$uuid").toASCIIString
+    debug(s"Requesting: $bagUrl")
+    Http(bagUrl)
+      .header("Accept", "text/plain")
+      .timeout(connTimeoutMs = connectionTimeoutMs, readTimeoutMs = readTimeoutMs)
+      .method("HEAD")
+      .asBytes.code == 200
+  }
+
+  /**
+   * Fetches bag info.txt for a given UUID.
+   *
+   * @param uuid the bag-id of the bag
+   * @return bag info.txt
+   */
+  def getBagInfoText(uuid: UUID): Try[String] = {
+    val url = bagStoreBaseUrl.resolve(s"bags/$uuid/bag-info.txt").toASCIIString
+    debug(s"calling $url")
+
+    Try {
+      Http(url)
+        .timeout(connTimeoutMs = connectionTimeoutMs, readTimeoutMs = readTimeoutMs)
+        .asString
+    }
+      .flatMap {
+        case HttpResponse(body, 200, _) =>
+          Success(body)
+        case HttpResponse(body, code, _) =>
+          logger.error(s"call to $url failed: $code - $body")
+          fail(s"Could not read from bagstore, at '$url' (code: $code)")
+      }
+  }
+
+  def getBagStoreUrl: URI = {
+    bagStoreUrl.orNull
+  }
 }
 
 object BagStore {
@@ -54,5 +101,6 @@ object BagStore {
     override val bagStoreBaseUrl: URI = baseUrl
     override val connectionTimeoutMs: Int = cto
     override val readTimeoutMs: Int = rto
+    override var bagStoreUrl: Option[URI] = None
   }
 }

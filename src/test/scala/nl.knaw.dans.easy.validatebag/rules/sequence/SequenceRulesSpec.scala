@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.validatebag.rules.sequence
 
 import java.io.IOException
+import java.net.URI
 import java.util.UUID
 
 import nl.knaw.dans.easy.validatebag.{ BagStore, TestSupportFixture }
@@ -25,6 +26,18 @@ import scala.util.{ Failure, Success }
 
 class SequenceRulesSpec extends TestSupportFixture with MockFactory {
   private val bagStoreMock = mock[BagStore]
+  private val isVersionOfBagInfo_1 =
+    """Payload-Oxum: 0.1
+      |Bagging-Date: 2018-09-03
+      |Bag-Size: 0.4 KB
+      |Created: 2015-05-19T00:00:00.000+02:00
+      |EASY-User-Account: user001""".stripMargin
+  private val isVersionOfBagInfo_2 =
+    """Payload-Oxum: 0.1
+      |Bagging-Date: 2018-09-03
+      |Bag-Size: 0.4 KB
+      |Created: 2015-05-19T00:00:00.000+02:00
+      |EASY-User-Account: user002""".stripMargin
 
   private def expectUuidDoesNotExist(): Unit = {
     (bagStoreMock.bagExists(_: UUID)) expects * anyNumberOfTimes() returning Success(false)
@@ -32,6 +45,24 @@ class SequenceRulesSpec extends TestSupportFixture with MockFactory {
 
   private def expectUuidExists(): Unit = {
     (bagStoreMock.bagExists(_: UUID)) expects * anyNumberOfTimes() returning Success(true)
+  }
+
+  private def expectUuidDoesNotExistInThisStore(): Unit = {
+    (bagStoreMock.getBagStoreUrl _) expects() twice() returning (new URI("https://host:99999/stores/wrongstore"))
+    (bagStoreMock.bagExistsInThisStore(_: UUID)) expects * anyNumberOfTimes() returning Success(false)
+  }
+
+  private def expectUuidExistsInThisStore(): Unit = {
+    (bagStoreMock.getBagStoreUrl _) expects() once() returning (null)
+    (bagStoreMock.bagExistsInThisStore(_: UUID)) expects * never()
+  }
+
+  private def expectDifferentUser(): Unit = {
+    (bagStoreMock.getBagInfoText(_: UUID)) expects * once() returning Success(isVersionOfBagInfo_2)
+  }
+
+  private def expectSameUser(): Unit = {
+    (bagStoreMock.getBagInfoText(_: UUID)) expects * once() returning Success(isVersionOfBagInfo_1)
   }
 
   private def expectBagStoreIoException(): Unit = {
@@ -71,5 +102,25 @@ class SequenceRulesSpec extends TestSupportFixture with MockFactory {
   it should "fail if the UUID is NOT in canonical textual representation" in {
     expectUuidDoesNotExist()
     testRuleViolation(rule = bagInfoIsVersionOfIfExistsPointsToArchivedBag(bagStoreMock), inputBag = "baginfo-with-is-version-of-invalid-uuid", includedInErrorMsg = "String '75fc6989/hierook-4c7a-b49d-superinvalidenzo' is not a UUID", doubleCheckBagItValidity = false)
+  }
+
+  "storeSameAsInArchivedBag" should "fail if UUID not found in this bag-store" in {
+    expectUuidDoesNotExistInThisStore()
+    testRuleViolation(rule = storeSameAsInArchivedBag(bagStoreMock), inputBag = "baginfo-with-is-version-of", includedInErrorMsg = "not found in bag store https://host:99999/stores/wrongstore", doubleCheckBagItValidity = false)
+  }
+
+  it should "succeed if bag was found in this bag-store" in {
+    expectUuidExistsInThisStore()
+    testRuleSuccess(rule = storeSameAsInArchivedBag(bagStoreMock), inputBag = "baginfo-with-is-version-of", doubleCheckBagItValidity = false)
+  }
+
+  "userSameAsInArchivedBag" should "fail if the user is different in Is-Version-Of bag" in {
+    expectDifferentUser()
+    testRuleViolation(rule = userSameAsInArchivedBag(bagStoreMock), inputBag = "baginfo-with-is-version-of", includedInErrorMsg = "User user001 is different from the user user002", doubleCheckBagItValidity = false)
+  }
+
+  it should "succeed when the user is the same in Is-Version-Of bag" in {
+    expectSameUser()
+    testRuleSuccess(rule = userSameAsInArchivedBag(bagStoreMock), inputBag = "baginfo-with-is-version-of", doubleCheckBagItValidity = false)
   }
 }
