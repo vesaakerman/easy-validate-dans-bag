@@ -153,7 +153,7 @@ class MetadataRulesSpec extends TestSupportFixture with CanConnectFixture {
   }
 
   private val allRules: Seq[NumberedRule] = {
-    val xmlValidator = new XmlValidator(null) {
+    val xmlValidator = new XmlValidator(schemaFactory.newSchema) {
       override def validate(is: InputStream): Try[Unit] = Success(())
     }
     val validatorMap = Map("dataset.xml" -> xmlValidator, "files.xml" -> xmlValidator, "agreements.xml" -> xmlValidator)
